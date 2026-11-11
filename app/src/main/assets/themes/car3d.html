@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Aracım</title>
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--a:#5CC8B0;--bg:#0B0E13;--fg:#F3F5F7;--card:#161B23;--muted:#A3ADBA;--sep:#232A35;--chip:#1E252F}
+body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
+.sg{font-family:'Space Grotesk',sans-serif;font-weight:700}
+.r{width:100vw;height:100vh;padding:2.78vh;display:flex;gap:2.22vh}
+#stage{flex:1;min-width:0;border-radius:3.33vh;overflow:hidden;position:relative;background:radial-gradient(120% 90% at 50% 35%,#1A212B 0%,#0E1217 70%)}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.chip{border:none;border-radius:1.67vh;background:var(--chip);color:var(--fg);height:6.67vh;padding:0 2.22vh;font-size:2.22vh;font-weight:600;white-space:nowrap}
+.chip.on{background:var(--a);color:#0B0E13}
+#views{position:absolute;left:2.22vh;right:2.22vh;bottom:2.22vh;display:flex;gap:1.11vh;justify-content:center;flex-wrap:wrap}
+#top{position:absolute;left:2.22vh;right:2.22vh;top:2.22vh;display:flex;align-items:center;gap:1.67vh}
+.sw{width:4.72vh;height:4.72vh;border-radius:50%;border:.33vh solid rgba(255,255,255,.18);padding:0}
+.sw.on{border-color:#fff}
+#load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:2.5vh}
+#side{width:min(66.67vh,38vw);flex-shrink:0;display:flex;flex-direction:column;gap:2.22vh;min-height:0}
+.card{border-radius:3.33vh;background:var(--card);padding:2.78vh 3.06vh}
+.row{display:flex;align-items:baseline;justify-content:space-between;gap:1.67vh;padding:1.25vh 0;border-bottom:1px solid var(--sep)}
+.row:last-child{border-bottom:none}
+.row span{font-size:2.08vh;color:var(--muted);white-space:nowrap}
+.row b{font-size:2.64vh;font-weight:600;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:5}
+#sheet .box{width:min(110vh,92vw);max-height:92vh;overflow:auto;border-radius:3.33vh;background:var(--card);padding:3.33vh}
+#sheet label{display:flex;flex-direction:column;gap:.83vh;font-size:1.94vh;color:var(--muted)}
+#sheet input{height:6.67vh;border-radius:1.67vh;border:1px solid #2E3744;background:#0F141B;color:var(--fg);font-size:2.5vh;padding:0 1.94vh;font-family:inherit}
+</style>
+</head>
+<body>
+<div class="r">
+<div id="stage">
+<canvas id="c"></canvas>
+<div id="load">Model hazırlanıyor…</div>
+<div id="top">
+<button class="key chip" id="back">‹ Geri</button>
+<div style="flex:1"></div>
+<div id="colors" style="display:flex;gap:1.11vh"></div>
+<button class="key chip on" id="spin">360° dönüş</button>
+</div>
+<div id="views"></div>
+</div>
+<div id="side">
+<div class="card" style="display:flex;flex-direction:column;gap:.56vh">
+<span style="font-size:1.94vh;color:var(--a);letter-spacing:.28vh;font-weight:700">MYDS</span>
+<span class="sg" style="font-size:4.72vh;line-height:1.05" id="iModel">Citroën DS4</span>
+<span style="font-size:2.36vh;color:var(--muted)" id="iSub">2013 · 10 KE 424</span>
+<div style="display:flex;align-items:baseline;gap:1.11vh;margin-top:1.67vh"><span class="sg" style="font-size:7.22vh;line-height:1" id="odo">—</span><span style="font-size:2.5vh;color:var(--muted)">km</span></div>
+<span style="font-size:1.81vh;color:var(--muted)" id="odoNote">Kilometreyi girmek için Düzenle'ye dokun</span>
+</div>
+<div class="card" style="flex:1;min-height:0;overflow:auto;padding-top:1.39vh;padding-bottom:1.39vh" id="info"></div>
+<div style="display:flex;gap:1.67vh">
+<button class="key chip" style="flex:1;height:7.78vh" id="edit">Düzenle</button>
+<button class="key chip" style="flex:1;height:7.78vh" id="logs">Bakım & yakıt</button>
+</div>
+</div>
+</div>
+
+<div id="sheet"><div class="box">
+<div class="sg" style="font-size:3.61vh;margin-bottom:2.22vh">Araç bilgileri</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.94vh" id="form"></div>
+<div style="display:flex;gap:1.67vh;margin-top:2.78vh;justify-content:flex-end">
+<button class="key chip" id="cancel">Vazgeç</button>
+<button class="key chip on" id="save">Kaydet</button>
+</div>
+</div></div>
+
+<script src="common.js"></script>
+<script src="3d/three.min.js"></script>
+<script src="3d/OrbitControls.js"></script>
+<script src="3d/GLTFLoader.js"></script>
+<script src="3d/RoomEnvironment.js"></script>
+<script>
+// ---- Vehicle info (kept on the unit) ----------------------------------------------------------
+var FIELDS = [['model', 'Model', 'Citroën DS4'], ['year', 'Model yılı', '2013'], ['plate', 'Plaka', '10 KE 424'],
+  ['engine', 'Motor', '1.6 e-HDi'], ['fuel', 'Yakıt tipi', 'Dizel'], ['gear', 'Şanzıman', ''], ['color', 'Renk', ''],
+  ['vin', 'Şasi no', ''], ['insurance', 'Sigorta bitişi', ''], ['odo', 'Kilometre (gösterge)', '']];
+var info = {};
+try { info = JSON.parse(store('myds.car') || '{}') || {}; } catch (e) { info = {}; }
+function val(k) { for (var i = 0; i < FIELDS.length; i++) if (FIELDS[i][0] === k) return info[k] !== undefined && info[k] !== '' ? info[k] : FIELDS[i][2]; return ''; }
+var live = {};
+function fmtKm(v) { return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function paintInfo() {
+  $('iModel').textContent = val('model');
+  $('iSub').textContent = [val('year'), val('plate')].filter(Boolean).join(' · ');
+  if (live.odo !== undefined) { $('odo').textContent = fmtKm(live.odo); $('odoNote').textContent = 'Girilen değer + GPS ile sürülen yol'; }
+  var rows = [['Motor', val('engine')], ['Yakıt tipi', val('fuel')], ['Şanzıman', val('gear')], ['Renk', val('color')],
+    ['Depo', live.tank ? Math.round(live.tank) + ' L' : ''],
+    ['Depoda kalan', live.fuelLeft !== undefined ? num(live.fuelLeft, 1) + ' L' : ''],
+    ['Ortalama tüketim', live.avgL100 ? num(live.avgL100, 1) + ' L/100 km' : ''],
+    ['Menzil', live.range ? Math.round(live.range) + ' km' : ''],
+    ['Yağ bakımı', live.oilKm ? fmtKm(live.oilKm) + ' km' + (live.oilDate ? ' · ' + live.oilDate : '') : (live.oilDate || '')],
+    ['Muayene / tescil', live.regDate || ''], ['Sigorta bitişi', val('insurance')], ['Şasi no', val('vin')]];
+  $('info').innerHTML = rows.filter(function (r) { return r[1]; }).map(function (r) {
+    return '<div class="row"><span>' + r[0] + '</span><b>' + String(r[1]).replace(/</g, '&lt;') + '</b></div>'; }).join('')
+    || '<div class="row"><span>Bilgi eklemek için Düzenle</span></div>';
+}
+car.on(function (s) { live = s; paintInfo(); });
+paintInfo();
+
+FIELDS.forEach(function (f) {
+  var l = document.createElement('label'); l.textContent = f[1];
+  var i = document.createElement('input'); i.id = 'f_' + f[0]; i.placeholder = f[2];
+  if (f[0] === 'odo' || f[0] === 'year') i.inputMode = 'numeric';
+  l.appendChild(i); $('form').appendChild(l);
+});
+$('edit').onclick = function () {
+  FIELDS.forEach(function (f) { $('f_' + f[0]).value = f[0] === 'odo' ? (live.odo !== undefined ? Math.round(live.odo) : '') : (info[f[0]] || ''); });
+  $('sheet').style.display = 'flex';
+};
+$('cancel').onclick = function () { $('sheet').style.display = 'none'; };
+$('save').onclick = function () {
+  FIELDS.forEach(function (f) { if (f[0] !== 'odo') info[f[0]] = $('f_' + f[0]).value.trim(); });
+  store('myds.car', JSON.stringify(info));
+  var km = parseFloat(($('f_odo').value || '').replace(/[.\s]/g, '').replace(',', '.'));
+  if (!isNaN(km) && km >= 0 && (live.odo === undefined || Math.round(live.odo) !== Math.round(km))) call('setOdometer', km);
+  $('sheet').style.display = 'none'; paintInfo();
+};
+$('logs').onclick = function () { call('open', 'vehicleNative'); };
+$('back').onclick = function () { call('open', 'themehome'); };
+
+// ---- 3D -------------------------------------------------------------------------------------
+var stage = $('stage'), canvas = $('c');
+var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+renderer.physicallyCorrectLights = true;
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setClearColor(0x000000, 0);
+
+var scene = new THREE.Scene();
+var pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+
+var camera = new THREE.PerspectiveCamera(32, 1, 0.05, 100);
+var TARGET = new THREE.Vector3(0, 0.62, 0);
+camera.position.set(-9, 3.2, 12);
+var controls = new THREE.OrbitControls(camera, canvas);
+controls.target.copy(TARGET);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.enablePan = false;
+controls.minDistance = 3.2; controls.maxDistance = 14;
+controls.maxPolarAngle = Math.PI / 2 - 0.04;
+controls.rotateSpeed = 0.7;
+controls.autoRotate = false; controls.autoRotateSpeed = 1.2;
+
+var key = new THREE.DirectionalLight(0xffffff, 2.0);
+key.position.set(4, 7, 3); key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0005;
+key.shadow.camera.left = -3.5; key.shadow.camera.right = 3.5; key.shadow.camera.top = 3.5; key.shadow.camera.bottom = -3.5;
+scene.add(key);
+scene.add(new THREE.HemisphereLight(0xcfdcff, 0x202020, 0.45));
+var rim = new THREE.DirectionalLight(0x9fe7d6, 0.8); rim.position.set(-5, 3, -4); scene.add(rim);
+
+var ground = new THREE.Mesh(new THREE.CircleGeometry(6, 64), new THREE.ShadowMaterial({ opacity: 0.45 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+var ring = new THREE.Mesh(new THREE.RingGeometry(2.75, 2.8, 96), new THREE.MeshBasicMaterial({ color: 0x5CC8B0, transparent: true, opacity: 0.35 }));
+ring.rotation.x = -Math.PI / 2; ring.position.y = 0.005; scene.add(ring);
+
+var bodyMats = [], model = null;
+function b64ToBuf(s) { var bin = atob(s), n = bin.length, u = new Uint8Array(n); for (var i = 0; i < n; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
+function loadModel() {
+  if (!window.DS4_GLB) {
+    if (loadModel.tried) { $('load').textContent = 'Model bulunamadı.'; return; }
+    loadModel.tried = true;
+    var sc = document.createElement('script'); sc.src = '3d/ds4model.js';
+    sc.onload = loadModel; sc.onerror = function () { $('load').textContent = 'Model bulunamadı.'; };
+    document.body.appendChild(sc);
+    return;
+  }
+  try {
+    new THREE.GLTFLoader().parse(b64ToBuf(window.DS4_GLB), '', function (gltf) {
+      model = gltf.scene;
+      model.traverse(function (o) {
+        if (!o.isMesh) return;
+        o.castShadow = true; o.receiveShadow = true;
+        var ms = Array.isArray(o.material) ? o.material : [o.material];
+        ms.forEach(function (m, k) {
+          if (m.name === 'body') {
+            var pm = new THREE.MeshPhysicalMaterial({ color: 0xf2f1ee, metalness: 0.25, roughness: 0.28, clearcoat: 1, clearcoatRoughness: 0.04, side: THREE.DoubleSide });
+            pm.name = 'body';
+            if (Array.isArray(o.material)) o.material[k] = pm; else o.material = pm;
+            bodyMats.push(pm);
+          }
+          if (m.transparent) { m.depthWrite = false; o.castShadow = false; o.renderOrder = 2; }
+        });
+      });
+      scene.add(model);
+      setColor(parseInt(store('myds.color') || '0', 10) || 0);
+      $('load').style.display = 'none';
+      intro();
+    }, function (err) { $('load').textContent = 'Model yüklenemedi.'; });
+  } catch (e) { $('load').textContent = 'Bu cihaz 3D görüntüyü desteklemiyor.'; }
+}
+
+// Body colours
+var COLORS = [['Beyaz', 0xf2f1ee], ['Şampanya', 0x95836a], ['Siyah', 0x0c0c0e], ['Gri', 0x5a5e63], ['Kırmızı', 0x8c1018], ['Mavi', 0x1f3460]];
+COLORS.forEach(function (c, i) {
+  var b = document.createElement('button'); b.className = 'key sw'; b.title = c[0];
+  b.style.background = '#' + ('00000' + c[1].toString(16)).slice(-6);
+  b.onclick = function () { setColor(i); store('myds.color', i); };
+  $('colors').appendChild(b);
+});
+function setColor(i) {
+  bodyMats.forEach(function (m) { m.color.setHex(COLORS[i][1]); });
+  var s = $('colors').children; for (var k = 0; k < s.length; k++) s[k].classList.toggle('on', k === i);
+}
+
+// ---- Camera animations --------------------------------------------------------------------------
+// The car's nose points along +x. Each view: azimuth (deg, 0 = front), elevation (deg), distance.
+var VIEWS = [['Ön', 0, 8, 6.4], ['¾ Ön', 45, 14, 7.6], ['Yan', 90, 8, 8.2], ['¾ Arka', 135, 14, 7.6], ['Arka', 180, 8, 6.4], ['Üst', 90, 82, 9.2]];
+// Narrow stages (800×480 units) need the camera further back so the whole car fits.
+function fit(d) { return d * Math.max(1, 1.45 / camera.aspect); }
+function sph(az, el, d) {
+  var a = az * Math.PI / 180, e = el * Math.PI / 180;
+  return new THREE.Vector3(Math.cos(a) * Math.cos(e) * d, Math.sin(e) * d, Math.sin(a) * Math.cos(e) * d).add(TARGET);
+}
+function toSph(p) {
+  var v = p.clone().sub(TARGET), d = v.length();
+  return { az: Math.atan2(v.z, v.x), el: Math.asin(Math.max(-1, Math.min(1, v.y / d))), d: d };
+}
+var tween = null;
+function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+function flyTo(az, el, d, ms, done) {
+  d = fit(d);
+  var a = toSph(camera.position), bAz = az * Math.PI / 180, bEl = el * Math.PI / 180;
+  var dAz = bAz - a.az; while (dAz > Math.PI) dAz -= 2 * Math.PI; while (dAz < -Math.PI) dAz += 2 * Math.PI;
+  tween = { t0: performance.now(), ms: ms, az: a.az, dAz: dAz, el: a.el, dEl: bEl - a.el, d: a.d, dD: d - a.d, done: done };
+  controls.enabled = false;
+}
+function stepTween(now) {
+  if (!tween) return;
+  var t = Math.min(1, (now - tween.t0) / tween.ms), k = ease(t);
+  var az = tween.az + tween.dAz * k, el = tween.el + tween.dEl * k, d = tween.d + tween.dD * k;
+  camera.position.set(Math.cos(az) * Math.cos(el) * d, Math.sin(el) * d, Math.sin(az) * Math.cos(el) * d).add(TARGET);
+  camera.lookAt(TARGET);
+  if (t >= 1) { var cb = tween.done; tween = null; controls.enabled = true; controls.update(); if (cb) cb(); }
+}
+VIEWS.forEach(function (v, i) {
+  var b = document.createElement('button'); b.className = 'key chip'; b.textContent = v[0];
+  b.onclick = function () { setSpin(false); markView(i); flyTo(v[1], v[2], v[3], 1100); };
+  $('views').appendChild(b);
+});
+function markView(i) { var s = $('views').children; for (var k = 0; k < s.length; k++) s[k].classList.toggle('on', k === i); }
+
+// Auto 360° turn: on after the intro, paused while touching, back on after a quiet spell.
+var spinWanted = store('myds.spin') !== '0', idleTimer = null;
+function setSpin(on) { controls.autoRotate = on; $('spin').classList.toggle('on', on); }
+$('spin').onclick = function () { spinWanted = !controls.autoRotate; store('myds.spin', spinWanted ? '1' : '0'); setSpin(spinWanted); markView(-1); };
+controls.addEventListener('start', function () { clearTimeout(idleTimer); controls.autoRotate = false; markView(-1); });
+controls.addEventListener('end', function () {
+  clearTimeout(idleTimer);
+  if (spinWanted) idleTimer = setTimeout(function () { setSpin(true); }, 8000);
+});
+
+// Entrance: the camera sweeps in from afar round the front and settles on the ¾ front view.
+function intro() {
+  camera.position.copy(sph(-120, 30, 13)); camera.lookAt(TARGET);
+  ring.material.opacity = 0;
+  flyTo(45, 14, 7.6, 2600, function () { markView(1); if (spinWanted) setTimeout(function () { if (!tween) setSpin(true); }, 1500); });
+}
+
+function resize() {
+  var w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize); resize();
+function loop(now) {
+  stepTween(now);
+  if (!tween) controls.update();
+  if (ring.material.opacity < 0.35) ring.material.opacity = Math.min(0.35, ring.material.opacity + 0.004);
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+setTimeout(loadModel, 30);
+</script>
+</body>
+</html>

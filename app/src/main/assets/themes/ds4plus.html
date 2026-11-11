@@ -64,10 +64,11 @@ var IC = {
   ytm: '<circle cx="12" cy="12" r="9"/><polygon points="10 8.5 15.5 12 10 15.5 10 8.5" fill="#fff"/>',
   yt: '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><polygon points="10 9 15 12 10 15 10 9" fill="#fff"/>',
   aa: '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M10 18h4"/><path d="M9.5 9.5l2.5-2.5 2.5 2.5M12 7v6"/>',
+  car: '<path d="M4 16h16l-1.8-6.2A2 2 0 0 0 16.3 8.4H7.7a2 2 0 0 0-1.9 1.4z"/><circle cx="7.5" cy="16.5" r="1.8"/><circle cx="16.5" cy="16.5" r="1.8"/>',
   rad: '<rect x="2" y="8" width="20" height="13" rx="2"/><path d="M6 8l12-5"/><circle cx="8" cy="14.5" r="2.5"/><path d="M14 13h4M14 16h4"/>'
 };
 [['Haritalar','Google Maps','#2F80ED','map','gmaps'],['Spotify','Müzik','#1F9D55','sp','spotify'],['YT Music','YouTube Music','#D93636','ytm','ytmusic'],
- ['YouTube','Video','#C62828','yt','youtube'],['Android Auto','ZLink','#5A6B85','aa','aa'],['Radyo','FM / AM','#C98A3A','rad','radio']].forEach(function (a) {
+ ['YouTube','Video','#C62828','yt','youtube'],['Android Auto','ZLink','#5A6B85','aa','aa'],['Aracım','3D · bilgiler','#3E7F72','car','vehicle']].forEach(function (a) {
   var b = document.createElement('button'); b.className = 'key tile';
   b.innerHTML = '<i style="background:' + a[2] + '"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + IC[a[3]] + '</svg></i><div style="display:flex;flex-direction:column;gap:.56vh"><span class="sg" style="font-size:3.89vh">' + a[0] + '</span><span style="font-size:2.22vh;color:var(--muted)">' + a[1] + '</span></div>';
   b.onclick = function () { b.style.outline = '3px solid var(--a)'; b.style.outlineOffset = '-3px'; setTimeout(function () { b.style.outline = 'none'; }, 1200); call('open', a[4]); };

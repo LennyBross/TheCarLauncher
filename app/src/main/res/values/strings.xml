@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Car Launcher</string>
+    <string name="app_name">MYDS</string>
     <string name="media_listener_label">Car Launcher media controls</string>
     <string name="navigation">Navigation</string>
     <string name="media">Media</string>

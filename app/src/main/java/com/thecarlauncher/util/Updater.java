@@ -281,8 +281,8 @@ public final class Updater {
         if (busy || r == null) return;
         if (!mayInstall(c)) {
             askInstallPermission(c);
-            LoadingBanner.flash("update", LoadingBanner.t("Dozvoli instaliranje aplikacija za Car Launcher, pa ponovo",
-                    "Allow installing apps for Car Launcher, then try again"), 3500);
+            LoadingBanner.flash("update", LoadingBanner.t("Dozvoli instaliranje aplikacija za MYDS, pa ponovo",
+                    "Allow installing apps for MYDS, then try again"), 3500);
             return;
         }
         busy = true;

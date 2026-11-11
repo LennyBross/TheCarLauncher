@@ -101,10 +101,23 @@ public class ThemeScreen extends Screen {
 
     /** Loads this theme's driving-mode page (edge panel button). */
     public void openDrive() {
+        load(theme == DS4PLUS ? "ds4plus-drive.html" : "drive.html");
+    }
+
+    private void load(String pg) {
         if (web == null) return;
-        String pg = theme == DS4PLUS ? "ds4plus-drive.html" : "drive.html";
         ready = false;
         web.loadUrl("file:///android_asset/themes/" + pg);
+    }
+
+    /** Back from a sub-page (vehicle, driving mode) returns to the theme's home page. */
+    @Override
+    public boolean onBack() {
+        if (web == null) return false;
+        String u = web.getUrl();
+        if (u == null || u.endsWith("/" + page()) || u.contains("/" + page() + "#")) return false;
+        load(page());
+        return true;
     }
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
@@ -191,6 +204,13 @@ public class ThemeScreen extends Screen {
         float temp = Prefs.of(act).getFloat("weather_temp", Float.NaN);
         if (!Float.isNaN(temp)) o.put("temp", Math.round(temp));
         o.put("hasMaps", installed(PKG_MAPS));
+        CarData cd = CarData.get(act);
+        if (cd.hasOdometer()) o.put("odo", cd.odometer());
+        double avg = cd.averageConsumption();
+        if (avg > 0) o.put("avgL100", avg);
+        if (cd.oilDueKm() > 0) o.put("oilKm", cd.oilDueKm());
+        if (cd.oilDueDate() > 0) o.put("oilDate", CarData.date(cd.oilDueDate()));
+        if (cd.registrationDate() > 0) o.put("regDate", CarData.date(cd.registrationDate()));
         Guidance g = Guidance.get(act);
         if (g.route() != null && g.route().distance > 0) {
             o.put("navActive", true);
@@ -248,7 +268,9 @@ public class ThemeScreen extends Screen {
                         case "phone": act.openPhone(); break;
                         case "aa": act.openProjection(); break;
                         case "apps": act.show(LauncherActivity.APPS, true); break;
-                        case "vehicle": act.show(LauncherActivity.VEHICLE, true); break;
+                        case "vehicle": load("car3d.html"); break;
+                        case "vehicleNative": act.show(LauncherActivity.VEHICLE, true); break;
+                        case "themehome": load(page()); break;
                         case "settings": act.show(LauncherActivity.SETTINGS, true); break;
                         case "sound": act.show(LauncherActivity.SOUND, true); break;
                         case "spotify": openSpotify(); break;
@@ -260,6 +282,16 @@ public class ThemeScreen extends Screen {
                         case "home": set(act, Prefs.integer(act, P_PREV, CLASSIC)); act.restartUi(); break;
                         default: break;
                     }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void setOdometer(final double km) {
+            ui(new Runnable() {
+                public void run() {
+                    if (km >= 0 && km < 3000000) CarData.get(act).setOdometer(km);
+                    push();
                 }
             });
         }
