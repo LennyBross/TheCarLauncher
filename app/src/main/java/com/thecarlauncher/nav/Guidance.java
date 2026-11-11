@@ -80,13 +80,6 @@ public final class Guidance implements LocationTracker.Listener {
         return route.duration * remaining() / route.distance;
     }
 
-    /** Metres to the next manoeuvre, or -1. */
-    public double toNext() {
-        OsmApi.Step s = nextStep();
-        if (s == null || route == null || s.index < 0 || s.index >= route.along.length) return -1;
-        return Math.max(0, route.along[s.index] - done);
-    }
-
     public OsmApi.Step nextStep() {
         return route == null || next < 0 || next >= route.steps.size() ? null : route.steps.get(next);
     }
