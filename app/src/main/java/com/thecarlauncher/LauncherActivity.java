@@ -282,6 +282,10 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        if ("drive".equals(intent.getStringExtra(EXTRA_SCREEN))) {
+            openDrive();
+            return;
+        }
         int target = screenFromIntent(intent, -1);
         if (target >= 0) {
             show(target, true);
@@ -289,6 +293,17 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
             // Home key: back to MENU, like the factory MENU button.
             if (current >= 0) while (screens[current].onBack()) { /* unwind sub-pages */ }
             show(MENU, true);
+        }
+    }
+
+    /** Driving mode from the edge panel: the theme's driving page, or the navigation screen. */
+    private void openDrive() {
+        if (screens[MENU] instanceof com.thecarlauncher.screens.ThemeScreen) {
+            if (current >= 0) while (screens[current].onBack()) { /* unwind sub-pages */ }
+            show(MENU, true);
+            ((com.thecarlauncher.screens.ThemeScreen) screens[MENU]).openDrive();
+        } else {
+            show(NAV, true);
         }
     }
 
@@ -316,6 +331,7 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
     @Override
     protected void onResume() {
         super.onResume();
+        com.thecarlauncher.util.EdgePanel.launcherFront(this, true);
         // Remember the connected phone for "Start-up connections" (unit service calls: background).
         final android.content.Context app = getApplicationContext();
         new Thread(new Runnable() {
@@ -343,6 +359,7 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
     @Override
     protected void onPause() {
         if (current >= 0) screens[current].onHide();
+        com.thecarlauncher.util.EdgePanel.launcherFront(this, false);
         super.onPause();
     }
 

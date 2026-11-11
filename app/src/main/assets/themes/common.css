@@ -13,3 +13,5 @@ button{font:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;appeara
 .key{transition:transform 90ms ease-out,border-bottom-width 90ms ease-out,filter 90ms}
 .key:active{transform:translateY(0.42vh);filter:brightness(0.92)}
 svg{display:block}
+@font-face{font-family:'Space Grotesk';src:url(fonts/SpaceGrotesk.ttf);font-weight:300 700}
+@font-face{font-family:'Inter';src:url(fonts/Inter.ttf);font-weight:100 900}

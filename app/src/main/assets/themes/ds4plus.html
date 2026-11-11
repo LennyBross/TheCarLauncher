@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>DS4+</title>
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--a:#5CC8B0;--as:rgba(92,200,176,.15);--bg:#0B0E13;--fg:#F3F5F7;--card:#161B23;--muted:#A3ADBA;--track:#262D38}
+body.day{--bg:#EEF1F4;--fg:#11161D;--card:#FFFFFF;--muted:#56606C;--track:#E3E8EE;--a:#1F8F78;--as:rgba(31,143,120,.14)}
+body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;transition:background .3s,color .3s}
+.r{width:100vw;height:100vh;padding:4.44vh;display:flex;flex-direction:column;gap:3.33vh}
+.sg{font-family:'Space Grotesk',sans-serif;font-weight:700}
+.c{border-radius:3.89vh;background:var(--card)}
+.tile{border:none;border-radius:3.89vh;background:var(--card);color:var(--fg);padding:3.89vh;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;min-height:0}
+.tile i{width:11.67vh;height:11.67vh;border-radius:3.33vh;display:flex;align-items:center;justify-content:center}
+.tile i svg{width:6.11vh;height:6.11vh}
+.dock{height:10vh;border-radius:3.33vh;background:var(--card);display:flex;align-items:center;justify-content:space-around;padding:0 3.33vh;flex-shrink:0}
+.db{width:16.67vh;height:7.78vh;border:none;border-radius:2.22vh;background:transparent;color:var(--fg);display:flex;align-items:center;justify-content:center}
+.db svg{width:3.89vh;height:3.89vh}
+.mb{border:none;border-radius:50%;display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+<div class="r">
+<div style="display:flex;gap:3.33vh;flex:1;min-height:0">
+<div style="width:min(55.56vh,34vw);display:flex;flex-direction:column;gap:2.22vh">
+<div class="c" style="flex:1;min-height:0;padding:3.33vh 3.89vh;display:flex;flex-direction:column;justify-content:space-between">
+<div style="display:flex;flex-direction:column;gap:.56vh"><div class="sg" style="font-size:11.67vh;line-height:1;letter-spacing:-.42vh" id="clock">--:--</div><div style="font-size:3.06vh;color:var(--muted)" id="date"></div></div>
+<div style="display:flex;flex-direction:column;gap:2.5vh">
+<div style="display:flex;align-items:center;gap:1.94vh"><svg style="width:5vh;height:5vh" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H8a5 5 0 1 1 1-9.9A6 6 0 0 1 20 11a4 4 0 0 1-2.5 8z"/></svg><span style="font-size:3.06vh;font-weight:600" id="temp">—</span><span style="font-size:2.22vh;color:var(--muted)">Hava durumu</span></div>
+<div style="display:flex;flex-direction:column;gap:1.39vh">
+<div style="display:flex;align-items:center;gap:1.67vh"><svg style="width:4.44vh;height:4.44vh" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" id="fuelIcon"><path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17"/><line x1="2" y1="22" x2="15" y2="22"/><line x1="6" y1="8" x2="11" y2="8"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg><span style="font-size:2.22vh;color:var(--muted)">Yakıt</span><div style="flex:1"></div><span class="sg" style="font-size:4.17vh;color:var(--a)" id="pct">—</span></div>
+<div style="height:1.94vh;border-radius:.97vh;background:var(--track);overflow:hidden"><div id="bar" style="height:100%;border-radius:.97vh;width:0;background:var(--a);transition:width .4s"></div></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.11vh">
+<div style="display:flex;flex-direction:column"><span style="font-size:2.78vh;font-weight:600" id="liters">— L</span><span style="font-size:1.81vh;color:var(--muted)">Depoda</span></div>
+<div style="display:flex;flex-direction:column"><span style="font-size:2.78vh;font-weight:600" id="cons">—</span><span style="font-size:1.81vh;color:var(--muted)">L/100 km</span></div>
+<div style="display:flex;flex-direction:column"><span style="font-size:2.78vh;font-weight:600" id="price">—</span><span style="font-size:1.81vh;color:var(--muted)">₺ / litre</span></div>
+</div></div></div></div>
+<div class="c" style="padding:2.78vh 3.33vh;display:flex;flex-direction:column;gap:1.94vh">
+<div style="display:flex;align-items:center;gap:1.94vh;min-width:0"><div style="width:7.78vh;height:7.78vh;flex-shrink:0;border-radius:1.94vh;background:var(--as);display:flex;align-items:center;justify-content:center"><svg style="width:3.89vh;height:3.89vh" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+<div style="display:flex;flex-direction:column;min-width:0"><span style="font-size:1.81vh;color:var(--muted);text-transform:uppercase;letter-spacing:.14vh">Şu an çalıyor</span><span style="font-size:2.78vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="title">Çalan bir şey yok</span><span style="font-size:2.08vh;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="artist"></span></div></div>
+<div style="display:flex;justify-content:space-between;align-items:center">
+<button class="key mb" id="prev" aria-label="Önceki" style="width:8.89vh;height:8.89vh;background:transparent;color:var(--fg)"><svg style="width:4.17vh;height:4.17vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+<button class="key mb" id="play" aria-label="Oynat / duraklat" style="width:11.11vh;height:11.11vh;background:var(--a);color:#0B0E13"><svg id="playIcon" style="width:4.44vh;height:4.44vh" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"/></svg></button>
+<button class="key mb" id="next" aria-label="Sonraki" style="width:8.89vh;height:8.89vh;background:transparent;color:var(--fg)"><svg style="width:4.17vh;height:4.17vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+</div></div>
+</div>
+<div style="flex:1;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:2.22vh" id="apps"></div>
+</div>
+<div class="dock">
+<button class="key db" aria-label="Ana ekran" style="background:var(--as);color:var(--a)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></button>
+<button class="key db" data-go="phone" aria-label="Telefon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></button>
+<button class="key" id="drive" style="width:41.67vh;height:7.78vh;border:none;border-radius:2.22vh;background:var(--a);color:#0B0E13;display:flex;align-items:center;justify-content:center;gap:1.67vh;font-size:2.78vh;font-weight:700"><svg style="width:3.89vh;height:3.89vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Sürüş modu</button>
+<button class="key db" data-go="apps" aria-label="Tüm uygulamalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+<button class="key db" data-go="settings" aria-label="Ayarlar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</div>
+</div>
+<script src="common.js"></script>
+<script>
+var IC = {
+  map: '<path d="M12 22s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/>',
+  sp: '<circle cx="12" cy="12" r="9"/><path d="M8 10c2.5-1 5.5-1 8 .5"/><path d="M8.5 13c2-.7 4.5-.6 6.5.6"/><path d="M9 15.8c1.6-.5 3.3-.4 4.8.4"/>',
+  ytm: '<circle cx="12" cy="12" r="9"/><polygon points="10 8.5 15.5 12 10 15.5 10 8.5" fill="#fff"/>',
+  yt: '<rect x="2.5" y="5.5" width="19" height="13" rx="4"/><polygon points="10 9 15 12 10 15 10 9" fill="#fff"/>',
+  aa: '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M10 18h4"/><path d="M9.5 9.5l2.5-2.5 2.5 2.5M12 7v6"/>',
+  rad: '<rect x="2" y="8" width="20" height="13" rx="2"/><path d="M6 8l12-5"/><circle cx="8" cy="14.5" r="2.5"/><path d="M14 13h4M14 16h4"/>'
+};
+[['Haritalar','Google Maps','#2F80ED','map','gmaps'],['Spotify','Müzik','#1F9D55','sp','spotify'],['YT Music','YouTube Music','#D93636','ytm','ytmusic'],
+ ['YouTube','Video','#C62828','yt','youtube'],['Android Auto','ZLink','#5A6B85','aa','aa'],['Radyo','FM / AM','#C98A3A','rad','radio']].forEach(function (a) {
+  var b = document.createElement('button'); b.className = 'key tile';
+  b.innerHTML = '<i style="background:' + a[2] + '"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + IC[a[3]] + '</svg></i><div style="display:flex;flex-direction:column;gap:.56vh"><span class="sg" style="font-size:3.89vh">' + a[0] + '</span><span style="font-size:2.22vh;color:var(--muted)">' + a[1] + '</span></div>';
+  b.onclick = function () { b.style.outline = '3px solid var(--a)'; b.style.outlineOffset = '-3px'; setTimeout(function () { b.style.outline = 'none'; }, 1200); call('open', a[4]); };
+  $('apps').appendChild(b);
+});
+document.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { call('open', b.getAttribute('data-go')); }; });
+$('play').onclick = function () { call('media', 'play'); };
+$('prev').onclick = function () { call('media', 'prev'); };
+$('next').onclick = function () { call('media', 'next'); };
+$('drive').onclick = function () { location.href = 'ds4plus-drive.html'; };
+car.on(function (s) {
+  document.body.classList.toggle('day', !s.night);
+  $('clock').textContent = s.time || '--:--';
+  $('date').textContent = s.date || '';
+  $('temp').textContent = s.temp !== undefined ? s.temp + '°C' : '—';
+  var pct = s.fuelLeft !== undefined && s.tank ? Math.round(s.fuelLeft / s.tank * 100) : null;
+  var low = pct !== null && pct <= 15, col = low ? '#F2994A' : 'var(--a)';
+  $('pct').textContent = pct === null ? '—' : '%' + pct; $('pct').style.color = col;
+  $('bar').style.width = (pct || 0) + '%'; $('bar').style.background = col;
+  $('fuelIcon').setAttribute('stroke', low ? '#F2994A' : 'currentColor'); $('fuelIcon').style.color = low ? '' : 'var(--a)';
+  $('liters').textContent = s.fuelLeft !== undefined ? num(s.fuelLeft, 1) + ' L' : '— L';
+  $('cons').textContent = num(s.l100, 1);
+  $('price').textContent = num(s.price, 2);
+  $('title').textContent = s.title || 'Çalan bir şey yok';
+  $('artist').textContent = s.artist || '';
+  $('playIcon').innerHTML = s.playing ? '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>' : '<polygon points="7 4 20 12 7 20 7 4"/>';
+});
+</script>
+</body>
+</html>

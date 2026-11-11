@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>DS4+ Sürüş modu</title>
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--a:#5CC8B0;--bg:#0B0E13;--fg:#F3F5F7;--card:#161B23;--muted:#A3ADBA;--track:#262D38;--sep:#2A323E}
+body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
+.sg{font-family:'Space Grotesk',sans-serif;font-weight:700}
+.r{width:100vw;height:100vh;padding:2.78vh;display:flex;flex-direction:column;gap:2.22vh}
+.top{height:8.89vh;flex-shrink:0;display:flex;align-items:center;gap:2.78vh;padding:0 1.11vh}
+.strip{flex:1;min-width:0;height:7.78vh;padding:0 2.5vh;border-radius:2.22vh;background:var(--card);display:flex;align-items:center;gap:2.22vh;overflow:hidden}
+.kv{display:flex;flex-direction:column;line-height:1.15;white-space:nowrap}.kv b{font-size:3.06vh}.kv span{font-size:1.67vh;color:var(--muted)}
+.sep{width:1px;height:4.44vh;background:var(--sep);flex-shrink:0}
+.mb{border:none;border-radius:50%;background:transparent;color:var(--fg);display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+<div class="r">
+<div class="top">
+<button class="key" id="home" style="height:7.78vh;padding:0 2.78vh;border:none;border-radius:2.22vh;background:var(--card);color:var(--fg);display:flex;align-items:center;gap:1.39vh;font-size:2.5vh;font-weight:600"><svg style="width:3.33vh;height:3.33vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Ana ekran</button>
+<span class="sg" style="font-size:4.72vh" id="clock">--:--</span>
+<div class="strip">
+<svg style="width:3.61vh;height:3.61vh;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" id="fuelIcon"><path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17"/><line x1="2" y1="22" x2="15" y2="22"/><line x1="6" y1="8" x2="11" y2="8"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg>
+<div style="width:15.28vh;height:1.39vh;border-radius:.7vh;background:var(--track);overflow:hidden;flex-shrink:0"><div id="bar" style="height:100%;width:0;background:var(--a)"></div></div>
+<div class="kv"><b class="sg" id="liters">— L</b><span id="pct">Depoda</span></div><div class="sep"></div>
+<div class="kv"><b class="sg" id="inst">—</b><span>Anlık L/100 km</span></div><div class="sep"></div>
+<div class="kv"><b class="sg" id="price">—</b><span>₺ / litre</span></div><div class="sep"></div>
+<div class="kv"><b class="sg" id="per100">—</b><span>₺ / 100 km</span></div><div class="sep"></div>
+<div class="kv"><b class="sg" id="range">— km</b><span>Menzil</span></div>
+<span style="font-size:2.08vh;font-weight:600;color:#F2994A;display:none" id="low">Yakıt az</span>
+</div>
+</div>
+<div style="flex:1;display:flex;gap:2.22vh;min-height:0">
+<div id="map" style="flex:1;min-width:0;border-radius:3.33vh;background:#121821;position:relative;overflow:hidden">
+<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true"><rect width="800" height="600" fill="#121821"/><path d="M-20 140 L820 90" stroke="#232C38" stroke-width="18"/><path d="M-20 420 L820 470" stroke="#232C38" stroke-width="22"/><path d="M180 -20 L230 620" stroke="#232C38" stroke-width="16"/><path d="M560 -20 L520 620" stroke="#232C38" stroke-width="20"/><path d="M-20 290 C200 260 360 330 820 280" stroke="#1C2430" stroke-width="10" fill="none"/><path d="M380 620 C390 420 420 300 540 200 C600 150 620 110 640 -20" stroke="#5CC8B0" stroke-width="12" fill="none" stroke-linecap="round"/><circle cx="388" cy="520" r="20" fill="#5CC8B0" opacity=".25"/><polygon points="388,500 402,532 388,524 374,532" fill="#fff"/></svg>
+<div style="position:absolute;top:2.78vh;left:2.78vh;width:min(47.22vh,40vw);border-radius:2.78vh;background:var(--a);color:#0B0E13;padding:2.5vh 3.06vh;display:flex;align-items:center;gap:2.22vh">
+<svg id="turnIcon" style="width:6.67vh;height:6.67vh;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V5"/><path d="M6 11l6-6 6 6"/></svg>
+<div style="display:flex;flex-direction:column;min-width:0"><span class="sg" style="font-size:4.72vh;line-height:1.1" id="turnDist">Rota yok</span><span style="font-size:2.5vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="turnName">Haritaya dokun</span></div>
+</div>
+<div style="position:absolute;left:2.78vh;bottom:2.78vh;border-radius:2.5vh;background:var(--card);padding:1.94vh 2.78vh;display:flex;gap:3.33vh;align-items:center">
+<div style="display:flex;flex-direction:column"><span style="font-size:1.94vh;color:var(--muted)">Varış</span><span style="font-size:3.06vh;font-weight:600" id="arrive">--:--</span></div>
+<div style="display:flex;flex-direction:column"><span style="font-size:1.94vh;color:var(--muted)">Kalan</span><span style="font-size:3.06vh;font-weight:600" id="left">— km</span></div>
+</div>
+<button class="key" id="gmaps" style="position:absolute;right:2.78vh;bottom:2.78vh;border:none;border-radius:1.67vh;background:var(--card);color:var(--fg);padding:1.39vh 2.22vh;font-size:2.08vh;font-weight:600">Google Maps'te aç</button>
+</div>
+<div style="width:min(61.11vh,36vw);flex-shrink:0;border-radius:3.33vh;background:var(--card);padding:2.78vh;display:flex;flex-direction:column;gap:2.22vh">
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.11vh;background:#0F141B;border-radius:2.22vh;padding:.83vh" id="src"></div>
+<div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center"><div id="art" style="width:min(27.78vh,100%);aspect-ratio:1;border-radius:2.78vh;background:#1F9D55;display:flex;align-items:center;justify-content:center"><svg style="width:10vh;height:10vh" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div></div>
+<div style="display:flex;flex-direction:column;gap:.56vh;min-width:0"><span style="font-size:3.33vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="title">Çalan bir şey yok</span><span style="font-size:2.36vh;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="artist"></span></div>
+<div style="display:flex;justify-content:space-between;align-items:center">
+<button class="key mb" id="prev" aria-label="Önceki" style="width:10vh;height:10vh"><svg style="width:4.72vh;height:4.72vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+<button class="key mb" id="play" aria-label="Oynat / duraklat" style="width:13.33vh;height:13.33vh;background:var(--a);color:#0B0E13"><svg id="playIcon" style="width:5.28vh;height:5.28vh" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"/></svg></button>
+<button class="key mb" id="next" aria-label="Sonraki" style="width:10vh;height:10vh"><svg style="width:4.72vh;height:4.72vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+</div>
+</div>
+</div>
+</div>
+<script src="common.js"></script>
+<script>
+var SRC = [['Spotify', 'spotify', '#1F9D55'], ['YT Music', 'ytmusic', '#D93636'], ['YouTube', 'youtube', '#C62828']];
+var cur = parseInt(store('ds4p.src') || '0', 10);
+function paintSrc() {
+  var b = $('src').children;
+  for (var i = 0; i < b.length; i++) { b[i].style.background = i === cur ? '#2A323E' : 'transparent'; b[i].style.color = i === cur ? '#F3F5F7' : '#A3ADBA'; }
+  $('art').style.background = SRC[cur][2];
+}
+SRC.forEach(function (s, i) {
+  var b = document.createElement('button'); b.className = 'key'; b.textContent = s[0];
+  b.style.cssText = 'height:6.67vh;border:none;border-radius:1.67vh;font-size:2.22vh;font-weight:600';
+  b.onclick = function () { cur = i; store('ds4p.src', i); paintSrc(); call('open', s[1]); };
+  $('src').appendChild(b);
+});
+paintSrc();
+var TURN = { left: '<path d="M16 20V11H6"/><path d="M10 7L6 11l4 4"/>', right: '<path d="M8 20V11h10"/><path d="M14 7l4 4-4 4"/>',
+  'slight left': '<path d="M15 20v-6l-6-6"/><path d="M9 13V8h5"/>', 'slight right': '<path d="M9 20v-6l6-6"/><path d="M15 13V8h-5"/>',
+  uturn: '<path d="M8 20V9a4 4 0 0 1 8 0v4"/><path d="M12 10l4 4 4-4"/>', straight: '<path d="M12 20V5"/><path d="M6 11l6-6 6 6"/>',
+  arrive: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>' };
+$('home').onclick = function () { location.href = 'ds4plus.html'; };
+$('gmaps').onclick = function (e) { e.stopPropagation(); call('open', 'gmaps'); };
+$('map').onclick = function () { call('open', 'nav'); };
+$('play').onclick = function () { call('media', 'play'); };
+$('prev').onclick = function () { call('media', 'prev'); };
+$('next').onclick = function () { call('media', 'next'); };
+function dist(m) { return m >= 1000 ? num(m / 1000, 1) + ' km' : (Math.round(m / 10) * 10) + ' m'; }
+car.on(function (s) {
+  $('clock').textContent = s.time || '--:--';
+  var pct = s.fuelLeft !== undefined && s.tank ? Math.round(s.fuelLeft / s.tank * 100) : null;
+  var low = pct !== null && pct <= 15, col = low ? '#F2994A' : '#5CC8B0';
+  $('bar').style.width = (pct || 0) + '%'; $('bar').style.background = col; $('fuelIcon').style.color = col;
+  $('liters').textContent = s.fuelLeft !== undefined ? num(s.fuelLeft, 1) + ' L' : '— L'; $('liters').style.color = col;
+  $('pct').textContent = 'Depoda' + (pct !== null ? ' · %' + pct : '');
+  $('low').style.display = low ? 'inline' : 'none';
+  $('price').textContent = num(s.price, 2);
+  $('per100').textContent = s.per100 ? Math.round(s.per100) : '—';
+  $('range').textContent = (s.range ? Math.round(s.range) : '—') + ' km';
+  $('title').textContent = s.title || 'Çalan bir şey yok';
+  $('artist').textContent = s.artist || '';
+  $('playIcon').innerHTML = s.playing ? '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>' : '<polygon points="7 4 20 12 7 20 7 4"/>';
+  $('gmaps').style.display = s.hasMaps ? 'block' : 'none';
+  if (s.navActive) {
+    var mod = s.nextType === 'arrive' ? 'arrive' : (s.nextMod || 'straight');
+    $('turnIcon').innerHTML = TURN[mod] || TURN.straight;
+    $('turnDist').textContent = s.nextDist >= 0 ? dist(s.nextDist) : '—';
+    $('turnName').textContent = s.nextName || s.navDest || '';
+    $('arrive').textContent = s.navArrive || '--:--';
+    $('left').textContent = num(s.navKm, s.navKm < 10 ? 1 : 0) + ' km';
+  } else {
+    $('turnIcon').innerHTML = TURN.straight; $('turnDist').textContent = 'Rota yok'; $('turnName').textContent = 'Haritaya dokun';
+    $('arrive').textContent = '--:--'; $('left').textContent = '— km';
+  }
+});
+</script>
+</body>
+</html>

@@ -341,6 +341,17 @@ public class SettingsScreen extends Screen {
                 }
             });
         }
+        // Edge panel: a handle on the right edge over other apps (clock, speed, fuel, music, home / driving mode).
+        checkRowWithAction(s("Bočni panel preko aplikacija", "Edge panel over apps"), com.thecarlauncher.util.EdgePanel.on(act), new Runnable() {
+            public void run() {
+                if (!com.thecarlauncher.util.NightDim.canDraw(act)) {
+                    com.thecarlauncher.util.NightDim.request(act);
+                    return;
+                }
+                com.thecarlauncher.util.EdgePanel.setOn(act, !com.thecarlauncher.util.EdgePanel.on(act));
+                refreshKeep();
+            }
+        });
         // Extra dimming: a dark layer over every app (navigation too), below the unit's lowest level.
         final boolean dimOn = com.thecarlauncher.util.NightDim.on(act);
         checkRowWithAction(s("Dodatno zatamnjenje", "Extra dimming"), dimOn, new Runnable() {

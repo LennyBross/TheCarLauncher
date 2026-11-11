@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Kokpit</title>
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--a:#C9A27A;--bg:#0B0D11;--card:#161920;--card2:#22262F;--inner:#20242C;--text:#F4F2EE;--sub:#9EA3AD}
+body.day{--bg:#E9ECF0;--card:#FFFFFF;--card2:#F6F7F9;--inner:#EEF0F3;--text:#15171B;--sub:#565B64;--a:#8A6438}
+body{background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif;transition:background .3s,color .3s}
+.g{width:100vw;height:100vh;display:grid;grid-template-columns:min(52.78vh,30vw) minmax(0,1fr) min(45.83vh,27vw);grid-template-rows:41.67vh minmax(0,1fr);gap:2.22vh;padding:2.22vh}
+.c{border-radius:3.89vh;background:var(--card);padding:2.78vh 3.06vh;display:flex;flex-direction:column;min-width:0;min-height:0}
+.lab{font-size:1.94vh;font-weight:700;letter-spacing:.28vh;color:var(--sub)}
+.st{border-radius:2.5vh;background:var(--inner);padding:1.67vh 1.94vh;display:flex;flex-direction:column;justify-content:center;gap:.56vh}
+.st span{font-size:1.67vh;font-weight:700;letter-spacing:.21vh;color:var(--sub)}
+.st b{font-size:3.89vh;font-weight:700;line-height:1}.st b small{font-size:1.94vh;font-weight:600;color:var(--sub)}
+.tile{border-radius:3.06vh;border:none;background:var(--inner);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.39vh;padding:1.11vh;min-height:0}
+.tile i{width:7.78vh;height:7.78vh;border-radius:2.5vh;display:flex;align-items:center;justify-content:center;color:#fff}
+.tile i svg{width:4.17vh;height:4.17vh}
+.tile span{font-size:2.08vh;font-weight:600;text-align:center;line-height:1.2}
+.rd{border-radius:2.78vh;border:none;background:var(--inner);color:var(--text);display:flex;align-items:center;gap:1.94vh;padding:0 2.5vh;text-align:left}
+.rd i{width:7.22vh;height:7.22vh;flex-shrink:0;border-radius:2.22vh;background:#3A8DDE;color:#fff;display:flex;align-items:center;justify-content:center}
+.rd i svg{width:3.89vh;height:3.89vh}
+.mb{border-radius:50%;border:none;display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+<div class="g">
+<section class="c" aria-label="Saat ve tarih" style="background:linear-gradient(150deg,var(--card2),var(--card));justify-content:space-between">
+<div style="display:flex;justify-content:space-between;align-items:flex-start"><span class="lab">DS 4</span><span style="display:flex;align-items:center;gap:1.11vh;font-size:2.5vh;font-weight:600;color:var(--sub)"><svg style="width:3.33vh;height:3.33vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .5-8 6 6 0 0 0-11.5 1.5A3.5 3.5 0 0 0 7 18z"/></svg><span id="temp">—</span></span></div>
+<span style="font-size:14.44vh;font-weight:600;line-height:.9;letter-spacing:-.42vh" id="clock">--:--</span>
+<div style="display:flex;flex-direction:column;gap:.56vh"><span style="font-size:3.61vh;font-weight:700" id="day">—</span><span style="font-size:2.78vh;font-weight:500;color:var(--sub)" id="wd"></span></div>
+</section>
+<section class="c" aria-label="Müzik" id="musicCard" style="background:linear-gradient(135deg,#5B3A6E 0%,#2A2140 45%,var(--card) 100%);flex-direction:row;gap:3.06vh;align-items:center;color:#fff">
+<div style="width:min(31.94vh,15vw);height:min(31.94vh,15vw);flex-shrink:0;border-radius:3.06vh;background:linear-gradient(140deg,#8E5BAA,#3B2A5A);box-shadow:0 2.2vh 5.6vh rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55)" id="art"><svg style="width:8.89vh;height:8.89vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div>
+<div style="flex:1;min-width:0;align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;padding:.83vh 0">
+<div style="display:flex;gap:1.11vh"><button class="key" data-go="spotify" style="padding:.83vh 1.67vh;border-radius:99px;border:none;background:rgba(255,255,255,.16);color:#fff;font-size:1.81vh;font-weight:700">Spotify</button><button class="key" data-go="ytmusic" style="padding:.83vh 1.67vh;border-radius:99px;border:none;background:rgba(255,255,255,.06);color:rgba(255,255,255,.75);font-size:1.81vh;font-weight:600">YouTube Music</button></div>
+<div style="display:flex;flex-direction:column;gap:.83vh;min-width:0"><span style="font-size:4.44vh;font-weight:700;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="title">Çalan bir şey yok</span><span style="font-size:2.78vh;font-weight:500;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="artist"></span></div>
+<div style="display:flex;align-items:center;gap:1.94vh">
+<button class="key mb" id="prev" aria-label="Önceki" style="width:8.89vh;height:8.89vh;background:rgba(255,255,255,.1);color:#fff"><svg style="width:3.61vh;height:3.61vh" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+<button class="key mb" id="play" aria-label="Çal / duraklat" style="width:11.67vh;height:11.67vh;background:#fff;color:#1A1426"><svg id="playIcon" style="width:4.72vh;height:4.72vh" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg></button>
+<button class="key mb" id="next" aria-label="Sonraki" style="width:8.89vh;height:8.89vh;background:rgba(255,255,255,.1);color:#fff"><svg style="width:3.61vh;height:3.61vh" viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+</div>
+</div>
+</section>
+<section class="c" aria-label="Uygulamalar" style="grid-row:span 2;padding:2.5vh;gap:1.67vh">
+<span class="lab" style="padding:.56vh .83vh 0">UYGULAMALAR</span>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,minmax(0,1fr));gap:1.67vh" id="apps"></div>
+</section>
+<section class="c" aria-label="Anlık sürüş" style="gap:1.94vh">
+<div style="display:flex;justify-content:space-between;align-items:center"><span class="lab">SÜRÜŞ</span><span style="display:flex;align-items:center;gap:.83vh;font-size:1.81vh;font-weight:700" id="gps"><span style="width:1.11vh;height:1.11vh;border-radius:50%;background:currentColor"></span><span id="gpsT">GPS</span></span></div>
+<div style="display:flex;align-items:flex-end;gap:1.39vh"><span style="font-size:12.78vh;font-weight:700;line-height:.85;letter-spacing:-.42vh" id="speed">—</span><span style="font-size:2.78vh;font-weight:700;color:var(--sub);padding-bottom:.83vh">km/s</span></div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1.39vh">
+<div class="st"><span>ANLIK</span><b id="inst">— <small>L/100</small></b></div>
+<div class="st"><span>ORTALAMA</span><b id="avg">— <small>L/100</small></b></div>
+<div class="st"><span>MENZİL</span><b id="range">— <small>km</small></b></div>
+<div class="st"><span>BU YOL</span><b id="trip">— <small>km</small></b></div>
+</div>
+</section>
+<section class="c" aria-label="Yol" style="gap:1.94vh">
+<span class="lab">YOL</span>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:1.67vh">
+<button class="key rd" data-go="navhome"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></i><span style="font-size:3.06vh;font-weight:700">Ev</span></button>
+<button class="key rd" data-go="navwork"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></i><span style="font-size:3.06vh;font-weight:700">İş</span></button>
+</div>
+<button class="key" id="drive" style="height:10.56vh;border-radius:2.78vh;border:none;background:var(--a);color:#14110D;display:flex;align-items:center;justify-content:center;gap:1.67vh;font-size:2.78vh;font-weight:800;letter-spacing:.14vh"><svg style="width:4.17vh;height:4.17vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></svg>SÜRÜŞ MODUNA GEÇ</button>
+</section>
+</div>
+<script src="common.js"></script>
+<script>
+var I = {
+  ytm: '<circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/>',
+  sp: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+  yt: '<rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z"/>',
+  map: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  ph: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/>',
+  aa: '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M10 18h4"/><path d="M9.5 9.5l2.5-2.5 2.5 2.5M12 7v6"/>',
+  rad: '<rect x="2" y="8" width="20" height="13" rx="2"/><path d="M6 8l12-5"/><circle cx="8" cy="14.5" r="2.5"/><path d="M14 13h4M14 16h4"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'
+};
+[['YouTube Music','ytm','#E5484D','ytmusic'],['Spotify','sp','#2FBF71','spotify'],['YouTube','yt','#E5484D','youtube'],['Google Haritalar','map','#3A8DDE','gmaps'],
+ ['Telefon','ph','#C9A27A','phone'],['Android Auto','aa','#7C8BA1','aa'],['Radyo','rad','#C98A3A','radio'],['Tüm uygulamalar','grid','#5A606B','apps']].forEach(function (a) {
+  var b = document.createElement('button'); b.className = 'key tile';
+  b.innerHTML = '<i style="background:' + a[2] + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + I[a[1]] + '</svg></i><span>' + a[0] + '</span>';
+  b.onclick = function () { call('open', a[3]); };
+  $('apps').appendChild(b);
+});
+document.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { call('open', b.getAttribute('data-go')); }; });
+$('play').onclick = function () { call('media', 'play'); };
+$('prev').onclick = function () { call('media', 'prev'); };
+$('next').onclick = function () { call('media', 'next'); };
+$('drive').onclick = function () { location.href = 'drive.html'; };
+car.on(function (s) {
+  document.body.classList.toggle('day', !s.night);
+  $('clock').textContent = s.time || '--:--';
+  var d = (s.date || '').split(' ');
+  $('day').textContent = d.slice(0, 2).join(' '); $('wd').textContent = d.slice(2).join(' ');
+  $('temp').textContent = s.temp !== undefined ? s.temp + '°C' : '—';
+  $('speed').textContent = s.gps === 'ok' ? s.speed : '—';
+  $('gps').style.color = s.gps === 'ok' ? '#2FBF71' : '#E8B04A';
+  $('gpsT').textContent = s.gps === 'ok' ? 'GPS' : s.gps === 'perm' ? 'KONUM İZNİ YOK' : 'GPS ARANIYOR';
+  $('avg').innerHTML = num(s.l100, 1) + ' <small>L/100</small>';
+  $('range').innerHTML = (s.range ? Math.round(s.range) : '—') + ' <small>km</small>';
+  $('trip').innerHTML = num(s.tripKm, 1) + ' <small>km</small>';
+  $('title').textContent = s.title || 'Çalan bir şey yok';
+  $('artist').textContent = s.artist || '';
+  $('playIcon').innerHTML = s.playing ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
+});
+</script>
+</body>
+</html>

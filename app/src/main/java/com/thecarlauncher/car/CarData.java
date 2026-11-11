@@ -170,6 +170,14 @@ public final class CarData {
     }
 
     /** Estimated range left, assuming the last fill-up was a full tank. */
+    /** Estimated litres left since the last full fill-up, or -1. */
+    public double fuelLeft() {
+        double avg = averageConsumption();
+        List<Refuel> l = refuels();
+        if (avg <= 0 || l.isEmpty() || !l.get(l.size() - 1).full) return -1;
+        return Math.max(0, tank() - kmSinceRefuel() * avg / 100.0);
+    }
+
     public double range() {
         double avg = averageConsumption();
         List<Refuel> l = refuels();

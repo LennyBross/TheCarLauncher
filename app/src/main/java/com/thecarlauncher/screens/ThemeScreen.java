@@ -38,9 +38,12 @@ import java.util.Locale;
  */
 public class ThemeScreen extends Screen {
     public static final String P_THEME = "home_theme", P_PREV = "home_theme_prev";
-    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4;
+    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7;
     public static final String[][] NAMES = {
-            {"Klasična", "Classic"}, {"Moderna", "Modern"}, {"Retro", "Retro"}, {"Pilot", "Pilot"}, {"Panel", "Panel"}};
+            {"Klasična", "Classic"}, {"Moderna", "Modern"}, {"Retro", "Retro"}, {"Pilot", "Pilot"}, {"Panel", "Panel"},
+            {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}};
+    public static final String PKG_MAPS = "com.google.android.apps.maps", PKG_SPOTIFY = "com.spotify.music",
+            PKG_YTMUSIC = "com.google.android.apps.youtube.music", PKG_YOUTUBE = "com.google.android.youtube";
     private static final Locale TR = new Locale("tr", "TR");
     /** The welcome animation plays once per app start, and only on the Pilot page. */
     private static boolean sIntroShown;
@@ -78,7 +81,7 @@ public class ThemeScreen extends Screen {
     public static Screen create(LauncherActivity act) {
         int t = current(act);
         if (t == MODERN) return new ModernScreen(act);
-        if (t >= RETRO && t <= PANEL) return new ThemeScreen(act, t);
+        if (t >= RETRO && t <= DS4PLUS) return new ThemeScreen(act, t);
         return new MenuScreen(act);
     }
 
@@ -86,7 +89,22 @@ public class ThemeScreen extends Screen {
     public String title() { return "MENU"; }
 
     private String page() {
-        return theme == RETRO ? "retro.html" : theme == PILOT ? "pilot.html" : "panel.html";
+        switch (theme) {
+            case RETRO: return "retro.html";
+            case PILOT: return "pilot.html";
+            case KOKPIT: return "kokpit.html";
+            case DRIVE: return "drive.html";
+            case DS4PLUS: return "ds4plus.html";
+            default: return "panel.html";
+        }
+    }
+
+    /** Loads this theme's driving-mode page (edge panel button). */
+    public void openDrive() {
+        if (web == null) return;
+        String pg = theme == DS4PLUS ? "ds4plus-drive.html" : "drive.html";
+        ready = false;
+        web.loadUrl("file:///android_asset/themes/" + pg);
     }
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
@@ -156,6 +174,9 @@ public class ThemeScreen extends Screen {
             o.put("per100", per100);
             o.put("perKm", per100 / 100.0);
         }
+        double left = CarData.get(act).fuelLeft();
+        if (left >= 0) o.put("fuelLeft", left);
+        o.put("tank", CarData.get(act).tank());
         double range = CarData.get(act).range();
         if (range > 0) o.put("range", range);
         o.put("tripKm", com.thecarlauncher.nav.TripComputer.get(act).movingKm());
@@ -167,6 +188,9 @@ public class ThemeScreen extends Screen {
         }
         o.put("playing", m.isPlaying());
 
+        float temp = Prefs.of(act).getFloat("weather_temp", Float.NaN);
+        if (!Float.isNaN(temp)) o.put("temp", Math.round(temp));
+        o.put("hasMaps", installed(PKG_MAPS));
         Guidance g = Guidance.get(act);
         if (g.route() != null && g.route().distance > 0) {
             o.put("navActive", true);
@@ -174,6 +198,14 @@ public class ThemeScreen extends Screen {
             o.put("navMin", Math.round(g.remainingSeconds() / 60.0));
             o.put("navProgress", 1.0 - g.remaining() / g.route().distance);
             o.put("navDest", g.destination() == null ? "" : g.destination());
+            o.put("navArrive", new SimpleDateFormat("HH:mm", TR).format(new Date(System.currentTimeMillis() + (long) (g.remainingSeconds() * 1000))));
+            com.thecarlauncher.nav.OsmApi.Step st = g.nextStep();
+            if (st != null) {
+                o.put("nextDist", g.toNext());
+                o.put("nextName", st.name == null ? "" : st.name);
+                o.put("nextMod", st.modifier == null ? "" : st.modifier);
+                o.put("nextType", st.type == null ? "" : st.type);
+            }
         }
         return o;
     }
@@ -220,6 +252,11 @@ public class ThemeScreen extends Screen {
                         case "settings": act.show(LauncherActivity.SETTINGS, true); break;
                         case "sound": act.show(LauncherActivity.SOUND, true); break;
                         case "spotify": openSpotify(); break;
+                        case "ytmusic": openPkg(PKG_YTMUSIC); break;
+                        case "youtube": openPkg(PKG_YOUTUBE); break;
+                        case "gmaps": openPkg(PKG_MAPS); break;
+                        case "navhome": navTo(Prefs.HOME_ADDR); break;
+                        case "navwork": navTo(Prefs.WORK_ADDR); break;
                         case "home": set(act, Prefs.integer(act, P_PREV, CLASSIC)); act.restartUi(); break;
                         default: break;
                     }
@@ -284,6 +321,51 @@ public class ThemeScreen extends Screen {
                 }
             });
         }
+    }
+
+    private boolean installed(String pkg) {
+        try {
+            act.getPackageManager().getPackageInfo(pkg, 0);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Opens an installed app; if missing, its Play Store page. */
+    private void openPkg(String pkg) {
+        Intent i = act.getPackageManager().getLaunchIntentForPackage(pkg);
+        try {
+            if (i == null) {
+                i = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=" + pkg));
+            }
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            act.startActivity(i);
+        } catch (Exception e) {
+            com.thecarlauncher.util.Ui.toast(act, "Uygulama yüklü değil");
+        }
+    }
+
+    /** Saved Home / Work: in Google Maps when installed, else in the built-in navigation. */
+    private void navTo(String key) {
+        String saved = Prefs.str(act, key, null);
+        if (saved == null || saved.trim().isEmpty()) {
+            act.show(LauncherActivity.NAV, true);
+            return;
+        }
+        String[] f = saved.split("\\|");
+        String target = f.length >= 3 ? f[1] + "," + f[2] : saved;
+        if (installed(PKG_MAPS)) {
+            try {
+                Intent i = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("google.navigation:q=" + android.net.Uri.encode(target)));
+                i.setPackage(PKG_MAPS);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                act.startActivity(i);
+                return;
+            } catch (Exception ignored) {
+            }
+        }
+        com.thecarlauncher.nav.NavHelper.navigateTo(act, target);
     }
 
     private void openSpotify() {

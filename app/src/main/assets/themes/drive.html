@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Sürüş modu</title>
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--a:#C9A27A;--bg:#0B0D11;--card:#161920;--inner:#20242C;--text:#F4F2EE;--sub:#9EA3AD;--route:#4C9BFF;--glass:rgba(22,25,32,.94)}
+body.day{--bg:#E9ECF0;--card:#FFFFFF;--inner:#EEF0F3;--text:#15171B;--sub:#565B64;--a:#8A6438;--glass:rgba(255,255,255,.95)}
+body{background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif}
+.r{width:100vw;height:100vh;display:flex;gap:1.94vh;padding:1.94vh}
+.rail{width:11.67vh;flex-shrink:0;border-radius:4.17vh;background:var(--card);padding:2.22vh 0;display:flex;flex-direction:column;align-items:center;gap:1.94vh}
+.rb{width:8.33vh;height:8.33vh;border-radius:50%;border:none;background:var(--inner);color:var(--text);display:flex;align-items:center;justify-content:center}
+.rb svg{width:3.89vh;height:3.89vh}
+.map{flex:1;min-width:0;position:relative;border-radius:4.17vh;overflow:hidden;background:#0F141B}
+.glass{position:absolute;background:var(--glass);border-radius:3.33vh;box-shadow:0 1.4vh 4.2vh rgba(0,0,0,.4)}
+.aside{width:min(52.78vh,30vw);flex-shrink:0;display:flex;flex-direction:column;gap:1.94vh}
+.c{border-radius:3.89vh;background:var(--card);padding:2.78vh 3.06vh;display:flex;flex-direction:column}
+.lab{font-size:1.94vh;font-weight:700;letter-spacing:.28vh;color:var(--sub)}
+.mk{height:8.33vh;border-radius:2.5vh;border:none;display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+<div class="r">
+<nav class="rail" aria-label="Uygulamalar">
+<span style="font-size:3.06vh;font-weight:700;margin-bottom:.83vh" id="clock">--:--</span>
+<button class="key rb" data-go="nav" aria-label="Harita" style="background:var(--route);color:#fff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg></button>
+<button class="key rb" data-go="spotify" aria-label="Müzik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button>
+<button class="key rb" data-go="phone" aria-label="Telefon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></button>
+<button class="key rb" data-go="apps" aria-label="Uygulamalar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+<div style="flex:1"></div>
+<button class="key rb" id="home" aria-label="Kokpit'e dön" style="background:var(--a);color:#14110D"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></button>
+</nav>
+<main class="map" aria-label="Harita" id="map">
+<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true"><g id="city"></g>
+<path id="routeLine" d="M330 560 L330 300 L550 300 L550 120" stroke="#4C9BFF" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<g transform="translate(550 120)" id="destPin"><circle r="14" fill="#E5484D"/><circle r="5" fill="#fff"/></g>
+<g transform="translate(330 470)"><circle r="30" fill="#4C9BFF" fill-opacity=".18"/><path d="M0 -20 L15 16 L0 8 L-15 16Z" fill="#fff" stroke="#4C9BFF" stroke-width="3" stroke-linejoin="round"/></g></svg>
+<div class="glass" id="turn" style="left:2.5vh;top:2.5vh;width:min(47.22vh,38vw);padding:2.5vh 2.78vh;display:flex;align-items:center;gap:2.5vh">
+<svg id="turnIcon" style="width:8.89vh;height:8.89vh;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V5"/><path d="M6 11l6-6 6 6"/></svg>
+<div style="display:flex;flex-direction:column;gap:.28vh;min-width:0"><span style="font-size:5vh;font-weight:800;line-height:1" id="turnDist">Rota yok</span><span style="font-size:2.5vh;font-weight:600;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="turnName">Haritaya dokun ve hedef seç</span></div>
+</div>
+<button class="key glass" id="gmaps" style="right:2.5vh;top:2.5vh;position:absolute;height:7.22vh;padding:0 2.22vh;border:none;color:var(--text);font-size:2.08vh;font-weight:700;display:flex;align-items:center;gap:1.11vh"><svg style="width:2.78vh;height:2.78vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Google Haritalar</button>
+<div class="glass" style="left:2.5vh;bottom:2.5vh;padding:1.94vh 2.78vh;display:flex;align-items:center;gap:2.5vh"><span style="font-size:4.17vh;font-weight:800;color:#2FBF71" id="eta">— dk</span><span style="font-size:2.36vh;font-weight:600;color:var(--sub)" id="etaInfo"></span></div>
+<div class="glass" style="right:2.5vh;bottom:2.5vh;width:14.44vh;height:14.44vh;border-radius:50%;border:.42vh solid var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:5.28vh;font-weight:800;line-height:1" id="speed">—</span><span style="font-size:1.67vh;font-weight:700;color:var(--sub)">km/s</span></div>
+</main>
+<aside class="aside">
+<section class="c" aria-label="Anlık yakıt" style="flex:1;gap:1.67vh;min-height:0">
+<div style="display:flex;justify-content:space-between;align-items:center"><span class="lab">ANLIK YAKIT</span><span style="font-size:1.81vh;font-weight:700;color:var(--sub)" id="instNote">CANBUS bekleniyor</span></div>
+<div style="display:flex;align-items:flex-end;gap:1.39vh"><span style="font-size:10.56vh;font-weight:800;line-height:.85;letter-spacing:-.28vh;color:#2FBF71" id="inst">—</span><span style="font-size:2.5vh;font-weight:700;color:var(--sub);padding-bottom:.56vh">L/100 km</span></div>
+<div aria-hidden="true" style="flex:1;min-height:5.56vh;display:flex;align-items:flex-end;gap:.56vh" id="spark"></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.11vh">
+<div style="display:flex;flex-direction:column;gap:.28vh"><span class="lab" style="font-size:1.53vh;letter-spacing:.21vh">ORTALAMA</span><span style="font-size:3.06vh;font-weight:700" id="avg">—</span></div>
+<div style="display:flex;flex-direction:column;gap:.28vh"><span class="lab" style="font-size:1.53vh;letter-spacing:.21vh">TL/KM</span><span style="font-size:3.06vh;font-weight:700" id="perkm">—</span></div>
+<div style="display:flex;flex-direction:column;gap:.28vh"><span class="lab" style="font-size:1.53vh;letter-spacing:.21vh">MENZİL</span><span style="font-size:3.06vh;font-weight:700" id="range">—</span></div>
+</div>
+</section>
+<section class="c" aria-label="Müzik" style="background:linear-gradient(135deg,#5B3A6E 0%,#2A2140 55%,var(--card) 100%);gap:1.94vh;color:#fff">
+<div style="display:flex;align-items:center;gap:1.94vh">
+<div style="width:11.67vh;height:11.67vh;flex-shrink:0;border-radius:2.22vh;background:linear-gradient(140deg,#8E5BAA,#3B2A5A);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55)"><svg style="width:4.72vh;height:4.72vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:.56vh"><span style="font-size:3.06vh;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="title">Çalan bir şey yok</span><span style="font-size:2.22vh;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="artist"></span></div>
+</div>
+<div style="display:flex;align-items:center;gap:1.39vh">
+<button class="key mk" id="prev" aria-label="Önceki" style="flex:1;background:rgba(255,255,255,.1);color:#fff"><svg style="width:3.33vh;height:3.33vh" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+<button class="key mk" id="play" aria-label="Çal / duraklat" style="flex:1.4;background:#fff;color:#1A1426"><svg id="playIcon" style="width:3.89vh;height:3.89vh" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg></button>
+<button class="key mk" id="next" aria-label="Sonraki" style="flex:1;background:rgba(255,255,255,.1);color:#fff"><svg style="width:3.33vh;height:3.33vh" viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+</div>
+</section>
+</aside>
+</div>
+<script src="common.js"></script>
+<script>
+(function () {
+  var h = '<rect width="800" height="600" fill="#0F141B"/>';
+  for (var x = 0; x < 800; x += 110) h += '<path d="M' + x + ' 0V600" stroke="#232B37" stroke-width="10"/>';
+  for (var y = 0; y < 600; y += 90) h += '<path d="M0 ' + y + 'H800" stroke="#232B37" stroke-width="10"/>';
+  h += '<path d="M-20 520 C 200 470, 260 380, 330 300 S 520 140, 820 120" stroke="#2C3542" stroke-width="22" fill="none"/>';
+  var seed = 4; function rnd(n) { seed = (seed * 9301 + 49297) % 233280; return Math.floor(seed / 233280 * n); }
+  for (var gx = 0; gx < 800; gx += 110) for (var gy = 0; gy < 600; gy += 90) h += '<rect x="' + (gx + 14) + '" y="' + (gy + 12) + '" width="' + (76 + rnd(14)) + '" height="' + (56 + rnd(12)) + '" rx="6" fill="#141A23"/>';
+  $('city').innerHTML = h;
+  var sp = $('spark'); for (var i = 0; i < 20; i++) { var b = document.createElement('span'); b.style.cssText = 'flex:1;height:8%;border-radius:.42vh;background:#2A2E36'; sp.appendChild(b); }
+})();
+var TURN = {
+  left: '<path d="M16 20V11H6"/><path d="M10 7L6 11l4 4"/>', right: '<path d="M8 20V11h10"/><path d="M14 7l4 4-4 4"/>',
+  'slight left': '<path d="M15 20v-6l-6-6"/><path d="M9 13V8h5"/>', 'slight right': '<path d="M9 20v-6l6-6"/><path d="M15 13V8h-5"/>',
+  uturn: '<path d="M8 20V9a4 4 0 0 1 8 0v4"/><path d="M12 10l4 4 4-4"/>', straight: '<path d="M12 20V5"/><path d="M6 11l6-6 6 6"/>',
+  arrive: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>'
+};
+document.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { call('open', b.getAttribute('data-go')); }; });
+$('home').onclick = function () { location.href = 'kokpit.html'; };
+$('gmaps').onclick = function () { call('open', 'gmaps'); };
+$('map').addEventListener('click', function (e) { if (e.target.closest('button')) return; call('open', 'nav'); });
+$('play').onclick = function () { call('media', 'play'); };
+$('prev').onclick = function () { call('media', 'prev'); };
+$('next').onclick = function () { call('media', 'next'); };
+function dist(m) { return m >= 1000 ? num(m / 1000, 1) + ' km' : (Math.round(m / 10) * 10) + ' m'; }
+car.on(function (s) {
+  document.body.classList.toggle('day', !s.night);
+  $('clock').textContent = s.time || '--:--';
+  $('speed').textContent = s.gps === 'ok' ? s.speed : '—';
+  $('avg').textContent = num(s.l100, 1);
+  $('perkm').textContent = num(s.perKm, 2);
+  $('range').textContent = s.range ? Math.round(s.range) : '—';
+  $('title').textContent = s.title || 'Çalan bir şey yok';
+  $('artist').textContent = s.artist || '';
+  $('playIcon').innerHTML = s.playing ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M7 4v16l13-8z"/>';
+  $('gmaps').style.display = s.hasMaps ? 'flex' : 'none';
+  if (s.navActive) {
+    var mod = s.nextType === 'arrive' ? 'arrive' : (s.nextMod || 'straight');
+    $('turnIcon').innerHTML = TURN[mod] || TURN.straight;
+    $('turnDist').textContent = s.nextDist >= 0 ? dist(s.nextDist) : '—';
+    $('turnName').textContent = s.nextName || (s.navDest || '');
+    $('eta').textContent = s.navMin + ' dk';
+    $('etaInfo').textContent = num(s.navKm, s.navKm < 10 ? 1 : 0) + ' km · Varış ' + (s.navArrive || '');
+  } else {
+    $('turnIcon').innerHTML = TURN.straight; $('turnDist').textContent = 'Rota yok';
+    $('turnName').textContent = 'Haritaya dokun ve hedef seç'; $('eta').textContent = '— dk'; $('etaInfo').textContent = '';
+  }
+});
+</script>
+</body>
+</html>
