@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
  * to confirm the update, as a system app (Magisk module) it installs silently.
  */
 public final class Updater {
-    public static final String REPO = "LazarC11/TheCarLauncher";
+    public static final String REPO = "LennyBross/TheCarLauncher";
     public static final String P_AUTO = "update_auto_check", P_BETA = "update_test_builds", P_LAST = "update_last_check";
     private static final String ACTION_DONE = "com.thecarlauncher.UPDATE_INSTALLED";
 
