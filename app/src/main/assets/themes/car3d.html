@@ -56,6 +56,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
 <div style="display:flex;gap:1.67vh">
 <button class="key chip" style="flex:1;height:7.78vh" id="edit">Düzenle</button>
 <button class="key chip" style="flex:1;height:7.78vh" id="logs">Bakım & yakıt</button>
+<button class="key chip" style="flex:1;height:7.78vh;background:#3E2A26;color:#FF8A6B" id="engine">Motor sesi</button>
 </div>
 </div>
 </div>
@@ -120,6 +121,7 @@ $('save').onclick = function () {
   if (!isNaN(km) && km >= 0 && (live.odo === undefined || Math.round(live.odo) !== Math.round(km))) call('setOdometer', km);
   $('sheet').style.display = 'none'; paintInfo();
 };
+$('engine').onclick = function () { location.href = 'engine.html'; };
 $('logs').onclick = function () { call('open', 'vehicleNative'); };
 $('back').onclick = function () { call('open', 'themehome'); };
 

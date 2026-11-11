@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Motor sesi</title>
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--a:#5CC8B0;--hot:#FF5A3C;--bg:#0B0E13;--fg:#F3F5F7;--card:#161B23;--muted:#A3ADBA;--chip:#1E252F}
+body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
+.sg{font-family:'Space Grotesk',sans-serif;font-weight:700}
+.r{width:100vw;height:100vh;padding:2.78vh;display:flex;gap:2.22vh}
+.card{border-radius:3.33vh;background:var(--card)}
+.chip{border:none;border-radius:1.67vh;background:var(--chip);color:var(--fg);height:6.67vh;padding:0 2.22vh;font-size:2.22vh;font-weight:600;white-space:nowrap}
+.chip.on{background:var(--a);color:#0B0E13}
+.eng{border:none;border-radius:2.22vh;background:var(--chip);color:var(--fg);text-align:left;padding:1.67vh 2.22vh;display:flex;flex-direction:column;gap:.42vh;min-height:0}
+.eng b{font-family:'Space Grotesk',sans-serif;font-size:2.64vh}
+.eng span{font-size:1.81vh;color:var(--muted)}
+.eng.on{background:var(--a);color:#0B0E13}.eng.on span{color:#0B0E13;opacity:.75}
+#gas{border:none;border-radius:50%;width:min(25vh,20vw);height:min(25vh,20vw);background:radial-gradient(circle at 50% 35%,#FF7A55,#C2321B);color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:4.44vh;box-shadow:0 1.67vh 4.44vh rgba(255,90,60,.35);touch-action:none;user-select:none}
+#gas.down{transform:scale(.94);box-shadow:0 .56vh 1.67vh rgba(255,90,60,.5)}
+input[type=range]{width:100%;accent-color:var(--a);height:4.44vh}
+</style>
+</head>
+<body>
+<div class="r">
+<div class="card" style="flex:1;min-width:0;display:flex;flex-direction:column;padding:2.78vh;gap:1.67vh;position:relative">
+<div style="display:flex;align-items:center;gap:1.67vh">
+<button class="key chip" id="back">‹ Geri</button>
+<span class="sg" style="font-size:3.33vh">Motor sesi</span>
+<div style="flex:1"></div>
+<button class="key chip" id="power" style="height:6.67vh;min-width:20vh">Kapalı</button>
+</div>
+<div style="flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center">
+<svg id="tach" viewBox="0 0 400 300" style="width:100%;height:100%" aria-hidden="true">
+<path d="M70 250 A150 150 0 1 1 330 250" fill="none" stroke="#232A35" stroke-width="22" stroke-linecap="round"/>
+<path id="redZone" fill="none" stroke="#5A2219" stroke-width="22"/>
+<path id="arc" fill="none" stroke="#5CC8B0" stroke-width="22" stroke-linecap="round"/>
+<g id="ticks"></g>
+<text id="rpm" x="200" y="178" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="64" fill="#F3F5F7">0</text>
+<text x="200" y="204" text-anchor="middle" font-family="Inter" font-size="15" fill="#A3ADBA">d/d</text>
+<text id="gear" x="200" y="262" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="40" fill="#5CC8B0">N</text>
+</svg>
+</div>
+<div style="display:flex;align-items:center;gap:2.78vh">
+<div style="display:flex;flex-direction:column"><span class="sg" style="font-size:5vh" id="kmh">0</span><span style="font-size:1.94vh;color:var(--muted)">km/h · GPS</span></div>
+<div style="flex:1;font-size:1.94vh;color:var(--muted);line-height:1.4">Ses aracın hızından hesaplanan devri ve vitesi izler. Dururken <b style="color:var(--fg)">GAZ</b>'a basılı tut. Telefon görüşmesinde kendiliğinden susar.</div>
+<button class="key" id="gas">GAZ</button>
+</div>
+</div>
+<div style="width:min(76vh,44vw);flex-shrink:0;display:flex;flex-direction:column;gap:2.22vh;min-height:0">
+<div class="card" style="flex:1;min-height:0;padding:2.22vh;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:minmax(0,1fr);gap:1.39vh" id="list"></div>
+<div class="card" style="padding:2.22vh 2.78vh;display:flex;flex-direction:column;gap:1.67vh">
+<div style="display:flex;align-items:center;gap:1.39vh"><span style="font-size:2.08vh;color:var(--muted);width:12vh">Egzoz</span>
+<div style="display:flex;gap:1.11vh;flex:1" id="ex"></div></div>
+<div style="display:flex;align-items:center;gap:1.39vh"><span style="font-size:2.08vh;color:var(--muted);width:12vh">Ses</span>
+<input type="range" min="0" max="100" step="5" id="vol"><span class="sg" style="font-size:2.5vh;width:7vh;text-align:right" id="volT"></span></div>
+</div>
+</div>
+</div>
+<script src="common.js"></script>
+<script>
+var cfg = { on: false, id: 'v8us', ex: 1, vol: 70 };
+try { var c0 = JSON.parse(call('engineConfig') || '{}'); for (var k in c0) cfg[k] = c0[k]; } catch (e) {}
+var PROFILES = [];
+try { PROFILES = JSON.parse(call('engineProfiles') || '[]'); } catch (e) {}
+if (!PROFILES.length) PROFILES = [{ id: 'v8us', name: 'Amerikan V8', sub: 'Çapraz krank', red: 6600 }];
+
+function paint() {
+  var l = $('list').children;
+  for (var i = 0; i < l.length; i++) l[i].classList.toggle('on', l[i].getAttribute('data-id') === cfg.id);
+  var e = $('ex').children;
+  for (var j = 0; j < e.length; j++) e[j].classList.toggle('on', j === cfg.ex);
+  $('power').textContent = cfg.on ? 'Açık' : 'Kapalı';
+  $('power').classList.toggle('on', cfg.on);
+  $('vol').value = cfg.vol; $('volT').textContent = cfg.vol;
+  drawScale();
+}
+PROFILES.forEach(function (p) {
+  var b = document.createElement('button'); b.className = 'key eng'; b.setAttribute('data-id', p.id);
+  b.innerHTML = '<b>' + p.name + '</b><span>' + p.sub + '</span>';
+  b.onclick = function () { cfg.id = p.id; call('engineSet', 'id', p.id); if (!cfg.on) { cfg.on = true; call('engineSet', 'on', '1'); } paint(); };
+  $('list').appendChild(b);
+});
+['Stok', 'Spor', 'Yarış'].forEach(function (n, i) {
+  var b = document.createElement('button'); b.className = 'key chip'; b.style.flex = '1'; b.textContent = n;
+  b.onclick = function () { cfg.ex = i; call('engineSet', 'ex', String(i)); paint(); };
+  $('ex').appendChild(b);
+});
+$('vol').oninput = function () { cfg.vol = parseInt(this.value, 10); $('volT').textContent = cfg.vol; call('engineSet', 'vol', String(cfg.vol)); };
+$('power').onclick = function () { cfg.on = !cfg.on; call('engineSet', 'on', cfg.on ? '1' : '0'); paint(); };
+$('back').onclick = function () { if (history.length > 1) history.back(); else call('open', 'themehome'); };
+var gas = $('gas');
+function rev(on) { gas.classList.toggle('down', on); call('engineRev', on); }
+gas.addEventListener('pointerdown', function (e) { try { gas.setPointerCapture(e.pointerId); } catch (x) {} rev(true); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { gas.addEventListener(ev, function () { rev(false); }); });
+
+// Tachometer: 240° sweep
+function pt(f, r) { var a = (150 + 240 * f) * Math.PI / 180; return [200 + Math.cos(a) * r, 175 + Math.sin(a) * r]; }
+function arcPath(f0, f1, r) {
+  var a = pt(f0, r), b = pt(f1, r), large = (f1 - f0) * 240 > 180 ? 1 : 0;
+  return 'M' + a[0].toFixed(1) + ' ' + a[1].toFixed(1) + ' A' + r + ' ' + r + ' 0 ' + large + ' 1 ' + b[0].toFixed(1) + ' ' + b[1].toFixed(1);
+}
+var red = 6600, max = 7000;
+function drawScale() {
+  var p = PROFILES.filter(function (x) { return x.id === cfg.id; })[0] || PROFILES[0];
+  red = p.red; max = Math.ceil((red + 600) / 1000) * 1000;
+  $('redZone').setAttribute('d', arcPath(red / max, 1, 150));
+  var g = '';
+  for (var k = 0; k <= max / 1000; k++) {
+    var a = pt(k * 1000 / max, 118), b = pt(k * 1000 / max, 132), t = pt(k * 1000 / max, 102);
+    g += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" stroke="' + (k * 1000 >= red ? '#FF5A3C' : '#5D6878') + '" stroke-width="3"/>';
+    g += '<text x="' + t[0] + '" y="' + (t[1] + 5) + '" text-anchor="middle" font-family="Inter" font-size="13" fill="#A3ADBA">' + k + '</text>';
+  }
+  $('ticks').innerHTML = g;
+}
+var shown = 0;
+function tick() {
+  var v = (call('engineLive') || '0,0,0,6600,0').split(',');
+  var r = +v[0], gear = +v[1], kmh = +v[2], running = v[4] === '1';
+  shown += (r - shown) * .5;
+  var f = Math.max(0.001, Math.min(1, shown / max));
+  $('arc').setAttribute('d', arcPath(0, f, 150));
+  $('arc').setAttribute('stroke', shown >= red * .97 ? '#FF5A3C' : '#5CC8B0');
+  $('rpm').textContent = running || r > 50 ? Math.round(shown / 10) * 10 : 0;
+  $('gear').textContent = gear > 0 ? gear : 'N';
+  $('kmh').textContent = kmh;
+  setTimeout(tick, 80);
+}
+paint(); tick();
+</script>
+</body>
+</html>

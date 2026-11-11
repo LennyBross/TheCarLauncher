@@ -137,6 +137,17 @@ public final class EdgePanel {
         ctl.addView(prev); ctl.addView(tPlay, margins(app, 16)); ctl.addView(next);
         p.addView(ctl, gap(app, 10));
 
+        final TextView eng = button(app, "", 0xFF262D38, FG, 48);
+        paintEngine(app, eng);
+        eng.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                com.thecarlauncher.engine.EngineSound e = com.thecarlauncher.engine.EngineSound.get(app);
+                e.setOn(!e.on());
+                paintEngine(app, eng);
+            }
+        });
+        p.addView(eng, gap(app, 12, 48));
+
         View fill = new View(app);
         p.addView(fill, new LinearLayout.LayoutParams(-1, 0, 1));
 
@@ -166,6 +177,13 @@ public final class EdgePanel {
             H.removeCallbacks(TICK);
             H.postDelayed(TICK, 1000);
         }
+    }
+
+    private static void paintEngine(Context app, TextView t) {
+        boolean on = com.thecarlauncher.engine.EngineSound.get(app).on();
+        t.setText(on ? "Motor sesi: açık" : "Motor sesi: kapalı");
+        t.setBackground(round(on ? 0xFF3E2A26 : 0xFF262D38, dp(app, 14)));
+        t.setTextColor(on ? 0xFFFF8A6B : FG);
     }
 
     private static void closePanel(Context app) {

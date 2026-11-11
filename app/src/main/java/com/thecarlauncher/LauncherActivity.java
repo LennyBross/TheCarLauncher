@@ -171,6 +171,7 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         show(screenFromIntent(getIntent(), start), false);
 
         MediaHub.get(this).connectExternal();
+        com.thecarlauncher.engine.EngineSound.get(this).resume();
         if (MusicLibrary.hasPermission(this)) MusicService.start(this);
         AppRepository.get(this);
         TripComputer.get(this);
@@ -368,7 +369,8 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         main.removeCallbacks(clock);
         LocationTracker t = LocationTracker.get(this);
         t.removeListener(this);
-        t.stop();
+        // The engine sound follows the speed over other apps too, so GPS stays on for it.
+        if (!com.thecarlauncher.engine.EngineSound.get(this).on()) t.stop();
         MediaHub.get(this).removeListener(this);
         PhoneStatus.get(this).removeListener(this);
         StreetName.get(this).removeListener(this);

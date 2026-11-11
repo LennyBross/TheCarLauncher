@@ -271,6 +271,7 @@ public class ThemeScreen extends Screen {
                         case "vehicle": load("car3d.html"); break;
                         case "vehicleNative": act.show(LauncherActivity.VEHICLE, true); break;
                         case "themehome": load(page()); break;
+                        case "engine": load("engine.html"); break;
                         case "settings": act.show(LauncherActivity.SETTINGS, true); break;
                         case "sound": act.show(LauncherActivity.SOUND, true); break;
                         case "spotify": openSpotify(); break;
@@ -285,6 +286,41 @@ public class ThemeScreen extends Screen {
                 }
             });
         }
+
+        // ---- Engine sound ----
+        @JavascriptInterface
+        public String engineProfiles() { return com.thecarlauncher.engine.EngineSound.profilesJson(); }
+
+        @JavascriptInterface
+        public String engineConfig() {
+            com.thecarlauncher.engine.EngineSound e = com.thecarlauncher.engine.EngineSound.get(act);
+            try {
+                return new JSONObject().put("on", e.on()).put("id", e.id()).put("ex", e.exhaust()).put("vol", e.volume()).toString();
+            } catch (Exception x) {
+                return "{}";
+            }
+        }
+
+        @JavascriptInterface
+        public void engineSet(String key, String value) {
+            com.thecarlauncher.engine.EngineSound e = com.thecarlauncher.engine.EngineSound.get(act);
+            try {
+                switch (key) {
+                    case "on": e.setOn("1".equals(value)); break;
+                    case "id": e.setProfile(value); break;
+                    case "ex": e.setExhaust(Integer.parseInt(value)); break;
+                    case "vol": e.setVolume(Integer.parseInt(value)); break;
+                    default: break;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        @JavascriptInterface
+        public void engineRev(boolean on) { com.thecarlauncher.engine.EngineSound.get(act).rev(on); }
+
+        @JavascriptInterface
+        public String engineLive() { return com.thecarlauncher.engine.EngineSound.get(act).live(); }
 
         @JavascriptInterface
         public void setOdometer(final double km) {
