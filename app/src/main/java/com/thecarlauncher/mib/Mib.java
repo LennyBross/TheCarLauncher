@@ -23,7 +23,7 @@ import com.thecarlauncher.util.Prefs;
  * so 800×480, 1024×600 and 1280×720 units all keep the same proportions.
  */
 public final class Mib {
-    public static final int DEFAULT_AMBIENT = 0xFF2D8CEB;
+    public static final int DEFAULT_AMBIENT = 0xFFC9A27A;
 
     /**
      * The "ambient lighting" colour used wherever the factory UI is blue.
@@ -33,7 +33,7 @@ public final class Mib {
 
     /** 30 ambient-lighting colours: {Serbian name, English name, ARGB}. */
     public static final Object[][] AMBIENT = {
-            {"Plava (MIB)", "Blue (MIB)", 0xFF2D8CEB}, {"Ledeno plava", "Ice blue", 0xFF5EC8FF},
+            {"DS bronza", "DS bronze", 0xFFC9A27A}, {"Ledeno plava", "Ice blue", 0xFF5EC8FF},
             {"Svetlo plava", "Light blue", 0xFF7FB2FF}, {"Kraljevsko plava", "Royal blue", 0xFF2F5BFF},
             {"Tamno plava", "Deep blue", 0xFF2442E0}, {"Indigo", "Indigo", 0xFF5B4BFF},
             {"Ljubičasta", "Violet", 0xFF8A5CFF}, {"Lavanda", "Lavender", 0xFFB39DFF},
@@ -62,6 +62,9 @@ public final class Mib {
         int b = Math.min(255, Math.round((color & 0xFF) * f));
         return (alpha << 24) | (r << 16) | (g << 8) | b;
     }
+    /** Larger type for reading while driving (Montserrat runs wide, so not more than this). */
+    public static final float TEXT_SCALE = 1.15f;
+
     public static final int WHITE = 0xFFF3F3F5;
     public static final int GREY = 0xFFB9BBC3;
     public static final int DIM = 0xFF7E808A;
@@ -115,7 +118,7 @@ public final class Mib {
     }
 
     public static void size(TextView t, float v) {
-        t.setTextSize(TypedValue.COMPLEX_UNIT_PX, v * t.getResources().getDisplayMetrics().density * scale(t.getContext()));
+        t.setTextSize(TypedValue.COMPLEX_UNIT_PX, v * TEXT_SCALE * t.getResources().getDisplayMetrics().density * scale(t.getContext()));
     }
 
     // ---- Type -------------------------------------------------------------------------------

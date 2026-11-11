@@ -206,6 +206,16 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
                 show(MENU, true);
             }
         });
+        TextView model = Mib.text(this, "DS 4", 20, Mib.semibold(this), Mib.WHITE);
+        model.setLetterSpacing(0.18f);
+        left.addView(model, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        View sep = new View(this);
+        sep.setBackgroundColor(0xFF44464E);
+        LinearLayout.LayoutParams sepl = new LinearLayout.LayoutParams(Mib.px(this, 1), Mib.px(this, 22));
+        sepl.leftMargin = Mib.px(this, 14);
+        sepl.rightMargin = Mib.px(this, 14);
+        left.addView(sep, sepl);
         ImageView compass = Mib.icon(this, R.drawable.ui_sb_compass, SB_GREY);
         left.addView(compass, new LinearLayout.LayoutParams(Mib.px(this, 24), Mib.px(this, 24)));
         streetView = Mib.text(this, "", 20, Mib.regular(this), SB_GREY);
@@ -555,6 +565,7 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
     /** Brightness (window part) and the colour profile over the whole launcher. */
     public void applyDisplay() {
         com.thecarlauncher.util.DisplayControl.applyWindow(this);
+        com.thecarlauncher.util.NightDim.apply(this);
         if (rootView != null) com.thecarlauncher.util.DisplayControl.applyColors(rootView);
     }
 

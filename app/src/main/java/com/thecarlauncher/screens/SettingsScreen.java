@@ -294,6 +294,25 @@ public class SettingsScreen extends Screen {
                 }
             });
         }
+        // Extra dimming: a dark layer over every app (navigation too), below the unit's lowest level.
+        final boolean dimOn = com.thecarlauncher.util.NightDim.on(act);
+        checkRowWithAction(s("Dodatno zatamnjenje", "Extra dimming"), dimOn, new Runnable() {
+            public void run() {
+                if (!com.thecarlauncher.util.NightDim.canDraw(act)) {
+                    com.thecarlauncher.util.NightDim.request(act);
+                    return;
+                }
+                com.thecarlauncher.util.NightDim.setOn(act, !com.thecarlauncher.util.NightDim.on(act));
+                refreshKeep();
+            }
+        });
+        if (dimOn) {
+            stepper(s("Jačina zatamnjenja", "Dimming strength"), com.thecarlauncher.util.NightDim.level(act) + " %", new Runnable() {
+                public void run() { com.thecarlauncher.util.NightDim.setLevel(act, com.thecarlauncher.util.NightDim.level(act) - 10); refreshKeep(); }
+            }, new Runnable() {
+                public void run() { com.thecarlauncher.util.NightDim.setLevel(act, com.thecarlauncher.util.NightDim.level(act) + 10); refreshKeep(); }
+            });
+        }
         int pi = DisplayControl.profile(act);
         action(s("Profil boja", "Colour profile"), pi < 0 ? s("Sopstveni", "Custom")
                 : s((String) DisplayControl.PROFILES[pi][0], (String) DisplayControl.PROFILES[pi][1]), new Runnable() {
