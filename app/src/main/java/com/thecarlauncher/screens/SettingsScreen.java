@@ -289,12 +289,21 @@ public class SettingsScreen extends Screen {
                 });
             }
         });
-        // Home page style: the factory MENU tiles or the modern page with cards.
-        final boolean modern = com.thecarlauncher.screens.ModernScreen.enabled(act);
-        checkRowWithAction(s("Moderan početni ekran", "Modern home screen"), modern, new Runnable() {
+        // Home page theme: Classic tiles, Modern cards, Retro, Pilot (kids) or Panel.
+        final String[][] tn = ThemeScreen.NAMES;
+        final String[] themeNames = new String[tn.length];
+        for (int i = 0; i < tn.length; i++) themeNames[i] = s(tn[i][0], tn[i][1]);
+        final int curTheme = ThemeScreen.current(act);
+        final boolean modern = curTheme == ThemeScreen.MODERN;
+        action(s("Tema početnog ekrana", "Home screen theme"), themeNames[curTheme], new Runnable() {
             public void run() {
-                Prefs.put(act, com.thecarlauncher.screens.ModernScreen.P_MODERN, !modern);
-                act.restartUi();
+                Dialogs.choose(act, s("Tema početnog ekrana", "Home screen theme"), themeNames, curTheme, new Dialogs.Chosen() {
+                    public void onChosen(int i) {
+                        if (i == ThemeScreen.PILOT && curTheme != ThemeScreen.PILOT) Prefs.put(act, ThemeScreen.P_PREV, curTheme);
+                        ThemeScreen.set(act, i);
+                        act.restartUi();
+                    }
+                });
             }
         });
         if (modern) {

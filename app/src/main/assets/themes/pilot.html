@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Pilot</title>
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--cy:#22E1FF;--mg:#FF2E88;--lm:#B6FF3B;--panel:#0E1520;--line:#1C2A3A;--sub:#8FA3B8}
+body{background:radial-gradient(ellipse at 30% 0%,#10233A 0%,#070B11 60%);color:#EAF6FF;font-family:'Chakra Petch',sans-serif;font-weight:700}
+.root{width:100vw;height:100vh;display:flex;flex-direction:column;padding:2.22vh 2.78vh 2.5vh;gap:1.94vh}
+.cut{clip-path:polygon(2.5vh 0,100% 0,100% calc(100% - 2.5vh),calc(100% - 2.5vh) 100%,0 100%,0 2.5vh)}
+.cs{clip-path:polygon(1.4vh 0,100% 0,100% calc(100% - 1.4vh),calc(100% - 1.4vh) 100%,0 100%,0 1.4vh)}
+.box{border:1px solid var(--line);background:var(--panel)}
+header{height:9.17vh;flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.lvl{width:8.06vh;height:8.06vh;border:2px solid var(--cy);display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:0 0 2vh rgba(34,225,255,.35);font-size:1.8vh;color:var(--sub);line-height:1}
+.lvl b{font-size:3.33vh;color:var(--cy)}
+.name{font-size:4.17vh;font-style:italic;letter-spacing:.14vh;line-height:1}
+.xpbar{height:1.11vh;background:var(--line)}.xpbar div{height:100%;background:linear-gradient(90deg,var(--cy),var(--lm));box-shadow:0 0 1.4vh var(--cy);transition:width .26s cubic-bezier(.3,1.4,.5,1)}
+.chip{height:6.94vh;padding:0 2.2vh;display:flex;align-items:center;gap:1.39vh;font-size:2.08vh;letter-spacing:.21vh}
+.dot{width:1.39vh;height:1.39vh;border-radius:50%}
+main{flex:1;min-height:0;display:flex;gap:1.94vh}
+.map{flex:1.5;min-width:0;padding:2.22vh 2.78vh;display:flex;flex-direction:column;gap:1.11vh}
+.lab{font-size:1.81vh;letter-spacing:.42vh;color:var(--sub)}
+.stat{border-left:3px solid var(--cy);padding-left:1.67vh;display:flex;flex-direction:column}
+.stat b{font-size:5.56vh;font-style:italic;line-height:1.05}
+.right{flex:1;min-width:0;display:flex;flex-direction:column;gap:1.94vh}
+.btn{border:1px solid var(--line);background:transparent;color:#EAF6FF;font-size:2.22vh;letter-spacing:.21vh;text-align:left;padding:0 1.67vh}
+.mission{flex:1;min-height:0;padding:1.94vh 2.5vh;display:flex;flex-direction:column;gap:1.39vh}
+.tg{flex:1;height:5.56vh;font-size:1.81vh;letter-spacing:.21vh}
+.gbar{height:1.67vh;background:var(--line)}.gbar div{height:100%;transition:width .26s cubic-bezier(.3,1.4,.5,1)}
+.count{flex:1;border:none;background:linear-gradient(90deg,var(--cy),#12A6D6);color:#070B11;display:flex;align-items:center;justify-content:center;gap:1.94vh;transition:transform .16s cubic-bezier(.3,1.8,.5,1)}
+/* Welcome animation */
+#intro{position:fixed;inset:0;background:#0B0B0C;display:none;align-items:center;padding-left:10vh;z-index:10;transition:opacity .6s}
+#intro h1{margin:0;font-family:'Montserrat',sans-serif;font-weight:800;font-size:11.6vh;line-height:1.02;letter-spacing:-.01em;color:#F5ECDC;font-style:normal}
+#intro .line{display:block}
+#intro .w{display:inline-block;overflow:hidden;vertical-align:bottom;padding:0 .02em .1em;margin-bottom:-.1em}
+#intro .w>span{display:inline-block;animation:rise 5.6s cubic-bezier(.2,.85,.2,1) both;animation-delay:var(--d)}
+@keyframes rise{0%{transform:translateY(110%);opacity:0;filter:blur(6px)}12%{transform:translateY(0);opacity:1;filter:blur(0)}88%{transform:translateY(0);opacity:1}100%{transform:translateY(-110%);opacity:0}}
+</style>
+</head>
+<body>
+<div id="intro" aria-label="Merhaba DÜNYA, Arabaya hoş geldin. Yolculuk boyunca arkana yaslan ve tadını çıkar."><h1 id="introText"></h1></div>
+<div class="root">
+<header>
+<div style="display:flex;align-items:center;gap:2.22vh">
+<div class="lvl box cs" style="border-color:var(--cy)"><span>LVL</span><b id="lvl">1</b></div>
+<div style="display:flex;flex-direction:column;gap:.83vh;width:41.67vh">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><button id="name" class="name" style="background:none;border:none;padding:0">PİLOT</button><span style="font-size:1.94vh;color:var(--lm)" id="xp">0 XP</span></div>
+<div class="xpbar cs" aria-hidden="true"><div id="xpbar" style="width:0"></div></div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:1.94vh">
+<div class="chip box cs" id="beltChip"><span class="dot" id="beltDot"></span><span id="beltText">KEMER KONTROLÜ</span></div>
+<span style="font-size:4.17vh" id="clock">--:--</span>
+<button class="key chip box cs" id="exit" style="color:#EAF6FF"><svg style="width:2.5vh;height:2.5vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>ÇIKIŞ</button>
+</div>
+</header>
+<main>
+<section class="map box cut" id="map" aria-label="Mini harita">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span class="lab" id="dest">ROTA</span><span style="font-size:6.11vh;font-style:italic;color:var(--cy);text-shadow:0 0 2vh rgba(34,225,255,.6);line-height:1" id="pct">—</span></div>
+<div style="flex:1;min-height:0">
+<svg viewBox="0 0 640 280" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%" aria-hidden="true">
+<defs><filter id="neon" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<g id="grid"></g>
+<polyline id="trk" points="40,230 170,230 230,160 310,190 390,100 490,125 560,55 600,40" fill="none" stroke="#1C2A3A" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="40,230 170,230 230,160 310,190 390,100 490,125 560,55 600,40" fill="none" stroke="#8FA3B8" stroke-opacity=".45" stroke-width="3" stroke-dasharray="8 10" stroke-linejoin="round"/>
+<polyline id="done" points="40,230 170,230 230,160 310,190 390,100 490,125 560,55 600,40" fill="none" stroke="#22E1FF" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" filter="url(#neon)"/>
+<g transform="translate(600,40)" filter="url(#neon)"><path d="M0 -14 L12 0 L0 14 L-12 0Z" fill="none" stroke="#FF2E88" stroke-width="3"/><circle r="3" fill="#FF2E88"/></g>
+<g id="me" filter="url(#neon)"><circle r="16" fill="none" stroke="#22E1FF" stroke-width="2" stroke-opacity=".5"/><path d="M0 -10 L8 8 L0 4 L-8 8Z" fill="#22E1FF"/></g>
+<text x="40" y="262" font-family="Chakra Petch" font-size="16" font-weight="700" fill="#8FA3B8" letter-spacing="2">START</text>
+<text x="540" y="76" font-family="Chakra Petch" font-size="16" font-weight="700" fill="#FF2E88" letter-spacing="2">HEDEF</text>
+</svg>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.67vh">
+<div class="stat"><span class="lab" style="letter-spacing:.28vh">KALAN SÜRE</span><b id="min">— DK</b></div>
+<div class="stat" style="border-color:var(--mg)"><span class="lab" style="letter-spacing:.28vh">KALAN YOL</span><b id="km">— KM</b></div>
+</div>
+</section>
+<section class="right">
+<div style="display:flex;gap:1.94vh;height:23.33vh;flex-shrink:0">
+<article class="box cut" style="flex:1.15;padding:1.39vh 1.67vh;display:grid" aria-label="Hız">
+<svg viewBox="0 0 220 130" style="grid-area:1/1;width:100%;height:100%" aria-hidden="true"><defs><filter id="n2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g id="arc"></g></svg>
+<div style="grid-area:1/1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end"><span style="font-size:9.72vh;font-style:italic;line-height:.9;text-shadow:0 0 2.2vh rgba(34,225,255,.5)" id="speed">—</span><span class="lab" style="font-size:1.94vh" id="unit">KM/S</span></div>
+</article>
+<article class="box cut" style="flex:1;padding:1.67vh 1.94vh;display:flex;flex-direction:column;gap:1.11vh" aria-label="Soundtrack">
+<span class="lab">SOUNDTRACK</span>
+<button class="key btn cs" id="music" style="flex:1;border-color:var(--mg);background:rgba(255,46,136,.12)">▶ ŞARKILARIM</button>
+<button class="key btn cs" id="pod" style="flex:1">▶ PODCAST</button>
+</article>
+</div>
+<article class="mission box cut" aria-label="Görev">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><span class="lab" style="color:var(--lm)">GÖREV</span><span class="lab" style="letter-spacing:.21vh">ÖDÜL +50 XP</span></div>
+<span style="font-size:3.33vh;font-style:italic;line-height:1.1" id="goal"></span>
+<div style="display:flex;gap:1.11vh" id="targets"></div>
+<div class="gbar cs" aria-hidden="true"><div id="gbar"></div></div>
+<div style="flex:1;min-height:0;display:flex;gap:1.39vh">
+<button class="key count cut" id="count" aria-label="Bir tane buldum"><span style="font-size:6.11vh;font-style:italic;line-height:1" id="n">0/5</span><span style="font-size:2.36vh;letter-spacing:.21vh">+1 BULDUM</span></button>
+<button class="key btn cut" id="belt" style="width:16.67vh;text-align:center;font-size:1.81vh;line-height:1.3"></button>
+</div>
+</article>
+</section>
+</main>
+</div>
+<script src="common.js"></script>
+<script>
+// Welcome animation, once per app start (the app adds #intro)
+(function () {
+  if (location.hash !== '#intro') return;
+  var lines = ['Merhaba DÜNYA,', 'Arabaya hoş geldin.', 'Yolculuk boyunca', 'arkana yaslan ve', 'tadını çıkar.'];
+  var d = 0.3, h = '';
+  lines.forEach(function (l) {
+    h += '<span class="line">' + l.split(' ').map(function (w) { var x = '<span class="w"><span style="--d:' + d.toFixed(2) + 's">' + w + '</span></span>'; d += 0.12; return x; }).join(' ') + '</span>';
+    d += 0.1;
+  });
+  $('introText').innerHTML = h;
+  var el = $('intro'); el.style.display = 'flex';
+  var done = function () { el.style.opacity = 0; setTimeout(function () { el.style.display = 'none'; }, 600); };
+  var t = setTimeout(done, 7600);
+  el.onclick = function () { clearTimeout(t); done(); };
+})();
+// Grid and track
+(function () {
+  var g = '';
+  for (var x = 0; x <= 640; x += 40) g += '<path d="M' + x + ' 0V280" stroke="#1C2A3A" stroke-width="1"/>';
+  for (var y = 0; y <= 280; y += 40) g += '<path d="M0 ' + y + 'H640" stroke="#1C2A3A" stroke-width="1"/>';
+  $('grid').innerHTML = g;
+})();
+var trk = $('trk'), L = trk.getTotalLength();
+function progress(p) {
+  p = Math.max(0, Math.min(1, p || 0));
+  $('done').setAttribute('stroke-dasharray', (L * p).toFixed(1) + ' ' + L.toFixed(1));
+  var pt = trk.getPointAtLength(L * p);
+  $('me').setAttribute('transform', 'translate(' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1) + ')');
+}
+progress(0);
+$('map').onclick = function () { call('open', 'nav'); };
+// Speed arc
+function arc(speed) {
+  var h = '', on = Math.round(Math.min(1, (speed || 0) / 200) * 24);
+  for (var i = 0; i < 24; i++) {
+    var a0 = 200 + i * (140 / 24), a1 = a0 + 140 / 24 - 1.6, r1 = 88, r2 = 104;
+    var p = function (r, a) { return [110 + r * Math.cos(a * Math.PI / 180), 110 + r * Math.sin(a * Math.PI / 180)]; };
+    var A = p(r2, a0), B = p(r2, a1), C = p(r1, a1), D = p(r1, a0);
+    var col = i < on ? (i < 18 ? '#22E1FF' : '#FF2E88') : '#1C2A3A';
+    h += '<path d="M' + A + ' A' + r2 + ' ' + r2 + ' 0 0 1 ' + B + ' L' + C + ' A' + r1 + ' ' + r1 + ' 0 0 0 ' + D + 'Z" fill="' + col + '"' + (i < on ? ' filter="url(#n2)"' : '') + '/>';
+  }
+  $('arc').innerHTML = h.replace(/,/g, ' ');
+}
+arc(0);
+// Name, XP, level
+function name() { return store('pilot.name') || 'PİLOT'; }
+$('name').textContent = upperTR(name());
+$('name').onclick = function () { var v = prompt('Pilotun adı', name()); if (v) { store('pilot.name', v); $('name').textContent = upperTR(v); } };
+var xp = parseInt(store('pilot.xp') || '0', 10);
+function showXp() { $('xp').textContent = xp + ' XP'; $('lvl').textContent = Math.floor(xp / 500) + 1; $('xpbar').style.width = ((xp % 500) / 5) + '%'; store('pilot.xp', xp); }
+showXp();
+// Mission
+var T = [['KIRMIZI', '#FF2E88', 'kırmızı araba'], ['SARI', '#FFD23F', 'sarı araba'], ['KAMYON', '#22E1FF', 'kamyon']];
+var target = 0, counts = JSON.parse(store('pilot.counts') || '[0,0,0]');
+function mission() {
+  var n = Math.min(5, counts[target]);
+  $('goal').textContent = n >= 5 ? 'GÖREV TAMAM! +50 XP' : '5 ' + T[target][2] + ' bul';
+  $('n').textContent = n + '/5';
+  $('gbar').style.width = (n / 5 * 100) + '%';
+  $('gbar').style.background = n >= 5 ? '#B6FF3B' : T[target][1];
+  $('gbar').style.boxShadow = '0 0 1.4vh ' + (n >= 5 ? '#B6FF3B' : T[target][1]);
+  var tg = $('targets').children;
+  for (var i = 0; i < tg.length; i++) { tg[i].style.borderColor = i === target ? T[i][1] : '#1C2A3A'; tg[i].style.background = i === target ? 'rgba(255,255,255,.06)' : 'transparent'; }
+  store('pilot.counts', JSON.stringify(counts));
+}
+T.forEach(function (t, i) {
+  var b = document.createElement('button'); b.className = 'key btn tg cs'; b.style.textAlign = 'center'; b.textContent = t[0];
+  b.onclick = function () { target = i; mission(); };
+  $('targets').appendChild(b);
+});
+$('count').onclick = function () {
+  if (counts[target] >= 5) { counts[target] = 0; mission(); return; }
+  counts[target]++; xp += counts[target] === 5 ? 60 : 10; showXp(); mission();
+  var c = $('count'); c.style.transform = 'scale(1.03)'; setTimeout(function () { c.style.transform = ''; }, 150);
+};
+mission();
+// Seat belt check (per drive)
+var belted = false;
+function belt() {
+  var col = belted ? '#B6FF3B' : '#FFB020';
+  $('beltChip').style.color = col; $('beltDot').style.background = col; $('beltDot').style.boxShadow = '0 0 1.1vh ' + col;
+  $('beltText').textContent = belted ? 'SİSTEM HAZIR' : 'KEMER KONTROLÜ';
+  $('belt').style.borderColor = col; $('belt').style.color = col;
+  $('belt').innerHTML = 'KEMER<br>' + (belted ? 'TAKILI ✓' : 'ONAYLA');
+}
+$('belt').onclick = function () { belted = !belted; belt(); };
+belt();
+$('music').onclick = function () { call('open', 'spotify'); };
+$('pod').onclick = function () { call('open', 'media'); };
+$('exit').onclick = function () { call('open', 'home'); };
+car.on(function (s) {
+  $('clock').textContent = s.time || '--:--';
+  $('speed').textContent = s.gps === 'ok' ? s.speed : '—';
+  $('unit').textContent = s.gps === 'search' ? 'GPS ARANIYOR' : s.gps === 'perm' ? 'KONUM İZNİ YOK' : 'KM/S';
+  arc(s.gps === 'ok' ? s.speed : 0);
+  if (s.navActive) {
+    progress(s.navProgress); $('pct').textContent = '%' + Math.round(s.navProgress * 100);
+    $('min').textContent = s.navMin + ' DK'; $('km').textContent = num(s.navKm, s.navKm < 10 ? 1 : 0) + ' KM';
+    $('dest').textContent = 'ROTA · ' + upperTR(s.navDest || 'HEDEF');
+  } else {
+    progress(0); $('pct').textContent = '—'; $('min').textContent = '— DK'; $('km').textContent = '— KM';
+    $('dest').textContent = 'ROTA YOK · HARİTAYA DOKUN';
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Retro</title>
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--a:hsl(36 100% 62%);--ag:hsl(36 100% 62% / .09);--a2:hsl(216 70% 56%);--a2g:hsl(216 70% 56% / .12);
+--bg:#0D0A08;--text:#F3E7D3;--sub:#B9A88F;--capTop:#2E2721;--capBot:#18130F;--capEdge:#070504;--capText:#F3E7D3}
+body.day{--bg:#EFE4D0;--text:#2B2119;--sub:#6B5A45;--capTop:#FFFBF3;--capBot:#E2D3BA;--capEdge:#B9A47F;--capText:#2B2119}
+body{background:var(--bg);color:var(--text);font-family:'Archivo',sans-serif;font-stretch:125%;transition:background-color .3s,color .3s}
+.root{width:100vw;height:100vh;display:flex;flex-direction:column}
+.stripe{height:1.11vh;flex-shrink:0;display:flex;flex-direction:column}.stripe span{flex:1}
+.wrap{flex:1;min-height:0;padding:1.94vh 2.5vh 2.22vh;display:flex;flex-direction:column;gap:1.94vh}
+header{height:11.67vh;flex-shrink:0;display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center}
+.brand{display:flex;align-items:baseline;gap:2.2vh}.brand b{font-size:4.17vh;font-weight:800;letter-spacing:.56vh}
+.mono{font-family:'Share Tech Mono',monospace}
+.plate{font-size:2.5vh;letter-spacing:.28vh;color:var(--sub)}
+.date{justify-self:center;font-size:2.08vh;font-weight:700;letter-spacing:.35vh;color:var(--sub)}
+.hr{justify-self:end;display:flex;align-items:center;gap:2.5vh}
+.vfd{height:7.78vh;padding:0 2.2vh;border-radius:1.67vh;background:#120E0B;border:1px solid #2A211A;display:grid;align-items:center}
+.vfd span{grid-area:1/1;font-size:6.39vh}
+.ghost{color:var(--ag)}.lit{color:var(--a);text-shadow:0 0 1.4vh var(--a),0 0 3.3vh var(--a)}
+.sw{display:flex;align-items:center;gap:1.4vh}
+.swl{display:flex;flex-direction:column;justify-content:space-between;height:10.56vh;font-size:1.39vh;font-weight:800;letter-spacing:.2vh;color:var(--sub);text-align:right}
+.switch{width:7.22vh;height:11.11vh;padding:0;border-radius:1.39vh;border:1px solid #0A0806;background:linear-gradient(180deg,#4A4038,#2A231D);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 .28vh .56vh rgba(0,0,0,.35);position:relative}
+.screw{position:absolute;left:50%;width:.7vh;height:.7vh;margin-left:-.35vh;border-radius:50%;background:#1A1511}
+.slot{position:absolute;left:1.8vh;top:2.22vh;width:3.33vh;height:6.39vh;border-radius:1.11vh;background:#120E0B;box-shadow:inset 0 .28vh .7vh rgba(0,0,0,.8)}
+.lever{position:absolute;left:2.22vh;top:2.64vh;width:2.5vh;height:3.06vh;border-radius:.83vh;background:linear-gradient(180deg,#F4EDE2,#BFB3A2);border-bottom:.42vh solid #8D8172;transition:transform 220ms cubic-bezier(.3,1.7,.5,1)}
+body.day .lever{transform:translateY(2.78vh)}
+.lamp{width:1.39vh;height:1.39vh;border-radius:50%;background:var(--a);box-shadow:0 0 1.1vh var(--a);transition:all .2s}
+body.day .lamp{background:#4A3F33;box-shadow:none}
+main{flex:1;min-height:0;display:flex;gap:1.94vh}
+.panel{flex:1.75;min-width:0;border-radius:3.06vh;background:#120E0B;border:1px solid #2A211A;padding:2.5vh 3.9vh 2.5vh 2.2vh;display:flex;gap:3.06vh}
+.ctl{width:14.44vh;flex-shrink:0;display:flex;flex-direction:column;gap:1.94vh}
+.ctl>div{display:flex;flex-direction:column;gap:1.11vh}
+.ctlh{display:flex;align-items:center;gap:.83vh;color:#B9A88F;font-size:1.53vh;font-weight:800;letter-spacing:.2vh}
+.wheel{width:4.17vh;border-radius:1.25vh;border:1px solid #000;touch-action:none;cursor:ns-resize;
+background:linear-gradient(90deg,rgba(0,0,0,.75),rgba(255,255,255,.12) 45%,rgba(0,0,0,.75)),repeating-linear-gradient(180deg,#6B6158 0,#6B6158 .28vh,#231D18 .28vh,#231D18 .83vh);
+box-shadow:inset 0 1.1vh 1.4vh rgba(0,0,0,.7),inset 0 -1.1vh 1.4vh rgba(0,0,0,.7)}
+.meter{flex:1;display:flex;flex-direction:column-reverse;gap:.42vh;padding:.28vh 0}.meter span{flex:1;border-radius:.28vh;background:#2A211A}
+.meter span.on{background:var(--a);box-shadow:0 0 .7vh var(--a)}
+.dial{flex:1;position:relative;border-radius:.83vh;border:2px solid #8C7A63;background:linear-gradient(180deg,#F6E7C1,#E8CF96);box-shadow:inset 0 0 1.4vh rgba(120,80,20,.45);overflow:hidden}
+.dial .in{position:absolute;left:0;right:0;top:1.11vh;bottom:1.11vh}
+.mark{position:absolute;left:.83vh;right:.56vh;margin-top:-.83vh;height:1.67vh;display:flex;align-items:center;gap:.56vh;font-family:'Share Tech Mono';font-size:1.39vh;color:#3A2A18}
+.mark i{width:.83vh;height:.83vh;border-radius:50%}
+.tick{position:absolute;right:0;height:1px;background:#5A4430}
+.needle{position:absolute;left:-.28vh;right:-.28vh;height:2px;margin-top:-1px;background:#D2261B;box-shadow:0 0 .56vh rgba(210,38,27,.8)}
+.small{display:flex;gap:.83vh}.small button{flex:1;height:3.61vh;border-radius:.97vh;border:none;border-bottom:.42vh solid #070504;background:linear-gradient(180deg,#3A322B,#1F1914);color:#B9A88F;display:flex;align-items:center;justify-content:center}
+.gauges{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+.scale{display:flex;justify-content:space-between;font-size:2.36vh;color:#B9A88F}
+.bars{height:8.06vh;display:flex;align-items:flex-end;justify-content:space-between;margin-top:1.39vh}
+.bars span{width:1.8vh;background:#2A211A;transform:skewX(-14deg);border-radius:.28vh}
+.rpm{display:flex;justify-content:space-between;align-items:baseline;font-size:1.67vh;font-weight:700;letter-spacing:.28vh;color:#B9A88F;margin-top:1.39vh}
+.speedrow{display:flex;align-items:flex-end;justify-content:space-between}
+.big{display:grid}.big span{grid-area:1/1;font-size:27.78vh;line-height:.82;white-space:pre}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:2.5vh;padding-bottom:1.11vh}
+.unit{font-size:3.33vh;font-weight:800;letter-spacing:.42vh;color:#F3E7D3}
+.inst{display:flex;flex-direction:column;align-items:flex-end;gap:.83vh}
+.cap{font-size:1.67vh;font-weight:700;letter-spacing:.28vh;color:#B9A88F}
+.short{flex:1;min-width:0;display:flex;flex-direction:column;gap:1.94vh}
+.aa{flex:1;border-radius:2.5vh;border:none;border-bottom:.69vh solid hsl(var(--h) 85% 29%);background:linear-gradient(180deg,hsl(var(--h) 100% 71%),hsl(var(--h) 100% 56%));color:#1A120B;display:flex;align-items:center;gap:2.2vh;padding:0 3.06vh;text-align:left}
+.capkey{border-radius:2.5vh;border:none;border-bottom:.69vh solid var(--capEdge);background:linear-gradient(180deg,var(--capTop),var(--capBot));color:var(--capText);transition:background .3s,color .3s}
+nav{height:10.56vh;flex-shrink:0;display:grid;grid-template-columns:repeat(7,1fr);gap:1.39vh;align-items:start}
+nav button{height:9.72vh;border-radius:1.94vh;border:none;border-bottom:.83vh solid var(--capEdge);background:linear-gradient(180deg,var(--capTop),var(--capBot));color:var(--capText);font-size:2.08vh;font-weight:800;letter-spacing:.2vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.97vh;
+transition:transform 170ms cubic-bezier(.3,1.8,.5,1),border-bottom-width 170ms cubic-bezier(.3,1.8,.5,1),box-shadow 170ms,background .3s}
+nav button i{width:3.61vh;height:.56vh;border-radius:.28vh;background:#3A3029}
+body.day nav button i{background:#CDBB9E}
+nav button.on{transform:translateY(.56vh);border-bottom-width:.28vh;box-shadow:inset 0 .4vh .8vh rgba(0,0,0,.35)}
+nav button.on i{background:var(--a);box-shadow:0 0 .83vh var(--a)}
+</style>
+</head>
+<body>
+<div class="root">
+<div class="stripe" aria-hidden="true"><span style="background:#FFB000"></span><span style="background:#FF6A13"></span><span style="background:#E0311A"></span></div>
+<div class="wrap">
+<header>
+<div class="brand"><b>DS 4</b><span class="mono plate" id="plate">10 KE 424</span></div>
+<span class="date" id="date"></span>
+<div class="hr">
+<div class="vfd mono"><span class="ghost">88:88</span><span class="lit" id="clock">--:--</span></div>
+<div class="sw"><div class="swl"><span>GECE</span><span>GÜNDÜZ</span></div>
+<button class="switch" id="switch" aria-label="Gece / gündüz şalteri"><span class="screw" style="top:.7vh"></span><span class="screw" style="bottom:.7vh"></span><span class="slot"></span><span class="lever"></span></button>
+<span class="lamp" aria-hidden="true"></span></div>
+</div>
+</header>
+<main>
+<section class="panel" aria-label="Göstergeler">
+<div class="ctl" role="group" aria-label="Işık ve renk">
+<div style="flex:1">
+<div class="ctlh"><svg style="width:3.06vh;height:3.06vh" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>IŞIK</div>
+<div style="flex:1;display:flex;gap:1.11vh"><div class="wheel" id="bw" role="slider" aria-label="Ekran parlaklığı"></div><div class="meter" id="meter" aria-hidden="true"></div></div>
+<div class="small"><button id="bdn" aria-label="Işığı kıs"><svg style="width:1.8vh;height:1.8vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button><button id="bup" aria-label="Işığı aç"><svg style="width:1.8vh;height:1.8vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 15l6-6 6 6"/></svg></button></div>
+</div>
+<div style="flex:1.25">
+<div class="ctlh"><span style="width:1.94vh;height:1.94vh;border-radius:50%;background:var(--a);box-shadow:0 0 .83vh var(--a)"></span>RENK</div>
+<div style="flex:1;display:flex;gap:1.11vh"><div class="wheel" id="hw" role="slider" aria-label="Gösterge rengi"></div><div class="dial" aria-hidden="true"><div class="in" id="dial"><span class="needle" id="needle"></span></div></div></div>
+<div class="small"><button id="hup" aria-label="Rengi yukarı çevir"><svg style="width:1.8vh;height:1.8vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 15l6-6 6 6"/></svg></button><button id="hdn" aria-label="Rengi aşağı çevir"><svg style="width:1.8vh;height:1.8vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button></div>
+</div>
+</div>
+<div class="gauges">
+<div>
+<div class="scale mono"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span style="color:#E0311A">6</span><span style="color:#E0311A">7</span></div>
+<div class="bars" id="bars" role="img" aria-label="Motor devri"></div>
+<div class="rpm"><span>DEVİR ×1000</span><span class="mono" style="font-size:3.06vh;letter-spacing:0;color:var(--a)" id="rpm">—</span></div>
+</div>
+<div class="speedrow">
+<div class="big mono"><span class="ghost">888</span><span class="lit" id="speed">  —</span></div>
+<div class="side">
+<span class="unit" id="unit">KM/S</span>
+<div class="inst"><span class="cap">ANLIK</span>
+<div class="big mono" style="display:grid"><span style="font-size:5.56vh;color:var(--a2g)">88,8</span><span style="font-size:5.56vh;color:var(--a2);text-shadow:0 0 1.1vh var(--a2)" id="inst">  —</span></div>
+<span class="mono cap" style="letter-spacing:0;font-size:2.08vh">L/100 KM</span></div>
+</div>
+</div>
+</div>
+</section>
+<section class="short" aria-label="Kısayollar">
+<button class="key aa" id="aa"><svg style="width:5.28vh;height:5.28vh;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M10 18h4"/><path d="M9.5 9.5l2.5-2.5 2.5 2.5M12 7v6"/></svg><span style="display:flex;flex-direction:column;gap:.56vh"><span style="font-size:2.78vh;font-weight:800;letter-spacing:.21vh">ANDROID AUTO</span><span class="mono" style="font-size:1.94vh;opacity:.75">ZLINK</span></span></button>
+<div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:1.94vh">
+<button class="key capkey" id="phone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.39vh"><svg style="width:4.17vh;height:4.17vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg><span style="font-size:2.22vh;font-weight:800;letter-spacing:.21vh">TELEFON</span></button>
+<button class="key capkey" id="fuel" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.83vh"><span style="font-size:1.81vh;font-weight:700;letter-spacing:.28vh;opacity:.75">YAKIT</span><span class="mono" style="font-size:4.17vh;line-height:1" id="per100">—</span><span class="mono" style="font-size:2.08vh;opacity:.75">TL / 100 KM</span></button>
+</div>
+</section>
+</main>
+<nav aria-label="Menü" id="keys"></nav>
+</div>
+</div>
+<script src="common.js"></script>
+<script>
+var hue = parseInt(store('retro.hue') || '36', 10);
+function applyHue() {
+  var r = document.documentElement.style, h2 = (hue + 180) % 360;
+  r.setProperty('--h', hue);
+  r.setProperty('--a', 'hsl(' + hue + ' 100% 62%)'); r.setProperty('--ag', 'hsl(' + hue + ' 100% 62% / .09)');
+  r.setProperty('--a2', 'hsl(' + h2 + ' 70% 56%)'); r.setProperty('--a2g', 'hsl(' + h2 + ' 70% 56% / .12)');
+  $('needle').style.top = (hue / 360 * 100).toFixed(1) + '%';
+  $('hw').style.backgroundPosition = '0 0, 0 ' + (hue * 0.15).toFixed(2) + 'vh';
+  store('retro.hue', hue);
+}
+function setHue(v) { hue = ((Math.round(v) % 360) + 360) % 360; applyHue(); }
+// Colour dial marks
+(function () {
+  var d = $('dial'), h = '';
+  for (var i = 0; i <= 24; i++) h += '<span class="tick" style="top:' + (i / 24 * 100).toFixed(2) + '%;width:' + (i % 2 ? '.56vh' : '.97vh') + '"></span>';
+  [[0,'KIR'],[30,'TUR'],[60,'SAR'],[120,'YEŞ'],[180,'TRK'],[240,'MAV'],[300,'MOR']].forEach(function (m) {
+    h += '<span class="mark" style="top:' + (m[0] / 360 * 100).toFixed(1) + '%"><i style="background:hsl(' + m[0] + ' 90% 50%)"></i>' + m[1] + '</span>';
+  });
+  d.insertAdjacentHTML('afterbegin', h);
+})();
+thumbwheel($('hw'), function (d) { setHue(hue + d); }, 1.6);
+$('hup').onclick = function () { setHue(hue - 15); };
+$('hdn').onclick = function () { setHue(hue + 15); };
+// Brightness wheel drives the launcher's extra dimming
+var bright = call('brightness'); if (bright === undefined) bright = 100;
+var meter = $('meter'); for (var i = 0; i < 10; i++) meter.appendChild(document.createElement('span'));
+var bTimer = null;
+function setBright(v, send) {
+  bright = Math.max(10, Math.min(100, Math.round(v)));
+  var segs = meter.children; for (var i = 0; i < 10; i++) segs[i].className = bright >= (i + 1) * 10 - 5 ? 'on' : '';
+  $('bw').style.backgroundPosition = '0 0, 0 ' + (bright * 0.2).toFixed(2) + 'vh';
+  if (send) { clearTimeout(bTimer); bTimer = setTimeout(function () { call('setBrightness', bright); }, 120); }
+}
+setBright(bright, false);
+thumbwheel($('bw'), function (d) { setBright(bright - d, true); }, 0.6);
+$('bup').onclick = function () { setBright(bright + 10, true); };
+$('bdn').onclick = function () { setBright(bright - 10, true); };
+// Rev bars (no engine-speed source yet: all off)
+var bars = $('bars');
+for (var b = 0; b < 28; b++) { var s = document.createElement('span'); s.style.height = (8.06 * (0.45 + 0.55 * b / 27)).toFixed(2) + 'vh'; bars.appendChild(s); }
+// Night switch
+var night = true;
+$('switch').onclick = function () { night = !night; document.body.classList.toggle('day', !night); call('setNight', night); };
+// Shortcuts
+$('aa').onclick = function () { call('open', 'aa'); };
+$('phone').onclick = function () { call('open', 'phone'); };
+$('fuel').onclick = function () { call('open', 'vehicle'); };
+// Latching menu keys
+var KEYS = [['RADYO','radio'],['MÜZİK','spotify'],['HARİTA','nav'],['ARAÇ','vehicle'],['UYGULAMA','apps'],['KARART','dim'],['AYAR','settings']];
+var latched = parseInt(store('retro.key') || '-1', 10);
+KEYS.forEach(function (k, i) {
+  var bt = document.createElement('button'); bt.innerHTML = '<i></i><span>' + k[0] + '</span>';
+  if (i === latched) bt.className = 'on';
+  bt.onclick = function () {
+    var all = $('keys').children; for (var j = 0; j < all.length; j++) all[j].className = '';
+    bt.className = 'on'; store('retro.key', i);
+    setTimeout(function () { if (k[1] === 'dim') call('toggleDim'); else call('open', k[1]); }, 160);
+  };
+  $('keys').appendChild(bt);
+});
+applyHue();
+car.on(function (s) {
+  $('clock').textContent = s.time || '--:--';
+  $('date').textContent = upperTR(s.date);
+  night = !!s.night; document.body.classList.toggle('day', !night);
+  var sp = s.gps === 'ok' ? String(s.speed) : '—';
+  $('speed').textContent = ('   ' + sp).slice(-3);
+  $('unit').textContent = s.gps === 'search' ? 'GPS…' : s.gps === 'perm' ? 'İZİN YOK' : 'KM/S';
+  $('per100').textContent = s.per100 ? Math.round(s.per100) : '—';
+});
+</script>
+</body>
+</html>
