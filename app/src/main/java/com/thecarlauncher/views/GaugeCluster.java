@@ -12,16 +12,16 @@ import com.thecarlauncher.util.DayNight;
  * dash until a source for them is connected.
  */
 public class GaugeCluster extends ViewGroup implements LocationTracker.Listener {
-    private static final float TACH = 0.71f, OVERLAP = 0.075f;
+    private static final float TACH = 0.64f, OVERLAP = 0.1f;
     private final GaugeView tach, speedo;
 
     public GaugeCluster(Context c, DayNight.Pal pal) {
         super(c);
-        tach = new GaugeView(c, 7, 1, 0.5f, 6, false, pal);
-        speedo = new GaugeView(c, 220, 20, 10, 0, true, pal);
+        tach = new GaugeView(c, 7, 1, 0.5f, 1, 6, false, pal);
+        speedo = new GaugeView(c, 220, 20, 10, 40, 0, true, pal);
         addView(tach);
         addView(speedo);
-        tach.set(Float.NaN, "—", "D/DK ×1000", null, null);
+        tach.set(Float.NaN, "—", "×1000 D/DK", null, null);
         update(LocationTracker.get(c));
     }
 
@@ -37,24 +37,26 @@ public class GaugeCluster extends ViewGroup implements LocationTracker.Listener 
 
     @Override
     protected void onMeasure(int wSpec, int hSpec) {
-        int h = MeasureSpec.getSize(hSpec);
-        int w = MeasureSpec.getSize(wSpec);
-        // Fit the height to the width if the width is the tighter limit.
-        if (MeasureSpec.getMode(wSpec) != MeasureSpec.UNSPECIFIED && widthFor(h) > w) {
-            h = Math.round(w / (1 + TACH - OVERLAP));
+        int W = MeasureSpec.getSize(wSpec), H = MeasureSpec.getSize(hSpec);
+        int h = H;
+        if (MeasureSpec.getMode(wSpec) != MeasureSpec.UNSPECIFIED && widthFor(h) > W) {
+            h = Math.round(W / (1 + TACH - OVERLAP));
         }
         int t = Math.round(h * TACH);
         tach.measure(MeasureSpec.makeMeasureSpec(t, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(t, MeasureSpec.EXACTLY));
         speedo.measure(MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY));
-        setMeasuredDimension(widthFor(h), h);
+        int w = MeasureSpec.getMode(wSpec) == MeasureSpec.EXACTLY ? W : widthFor(h);
+        setMeasuredDimension(w, MeasureSpec.getMode(hSpec) == MeasureSpec.EXACTLY ? H : h);
     }
 
+    /** Centred in the space given, rev counter low on the left, speedometer on the right. */
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         int h = speedo.getMeasuredHeight(), ts = tach.getMeasuredHeight();
-        int top = (b - t) - h;
-        tach.layout(0, top + h - ts, ts, top + h);
-        int sx = ts - Math.round(h * OVERLAP);
+        int w = widthFor(h);
+        int left = ((r - l) - w) / 2, top = ((b - t) - h) / 2;
+        tach.layout(left, top + h - ts - h / 14, left + ts, top + h - h / 14);
+        int sx = left + ts - Math.round(h * OVERLAP);
         speedo.layout(sx, top, sx + h, top + h);
     }
 
@@ -80,11 +82,24 @@ public class GaugeCluster extends ViewGroup implements LocationTracker.Listener 
 
     private void update(LocationTracker t) {
         String unit = LocationTracker.unit(getContext()).toUpperCase(java.util.Locale.ROOT).replace("KM/H", "KM/S");
-        if (t.hasFix()) {
+        if (!t.hasPermission()) {
+            speedo.set(Float.NaN, "—", "KONUM İZNİ YOK", "ANLIK  — L/100", null);
+        } else if (t.hasFix()) {
             float v = t.speed(getContext());
-            speedo.set(v, String.valueOf(Math.round(v)), unit, "— L/100", "ANLIK");
+            speedo.set(v, String.valueOf(Math.round(v)), unit, "ANLIK  — L/100", null);
         } else {
-            speedo.set(Float.NaN, "—", unit, "— L/100", "ANLIK");
+            speedo.set(Float.NaN, "—", "GPS ARANIYOR", "ANLIK  — L/100", null);
+        }
+    }
+
+    /** Location permission granted later: start listening without waiting for a restart. */
+    @Override
+    public void onWindowFocusChanged(boolean focus) {
+        super.onWindowFocusChanged(focus);
+        if (focus) {
+            LocationTracker t = LocationTracker.get(getContext());
+            t.start();
+            update(t);
         }
     }
 }

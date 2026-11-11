@@ -42,29 +42,29 @@ public class MenuScreen extends Screen implements AppRepository.Listener {
     protected View create(ViewGroup parent) {
         FrameLayout root = new FrameLayout(act);
         pager = new MibPager(act);
-        Grid main = new Grid();
-        main.add(tile(Mib.t(act, "Radio", "Radio"), R.drawable.ui_tile_radio, new Runnable() {
+        TileGrid main = new TileGrid();
+        main.add(small(Mib.t(act, "Radio", "Radio"), R.drawable.ui_tile_radio, new Runnable() {
             public void run() { act.openRadio(); }
         }));
-        main.add(tile(Mib.t(act, "Mediji", "Media"), R.drawable.ui_tile_media, new Runnable() {
+        main.add(small(Mib.t(act, "Mediji", "Media"), R.drawable.ui_tile_media, new Runnable() {
             public void run() { act.show(LauncherActivity.MEDIA, true); }
         }));
-        main.add(tile(Mib.t(act, "Aplikacije", "Apps"), R.drawable.ui_tile_apps, new Runnable() {
+        main.add(small(Mib.t(act, "Aplikacije", "Apps"), R.drawable.ui_tile_apps, new Runnable() {
             public void run() { act.show(LauncherActivity.APPS, true); }
         }));
-        main.add(tile("App-Connect", R.drawable.ui_tile_appconnect, new Runnable() {
+        main.add(small("Android Auto", R.drawable.ui_tile_appconnect, new Runnable() {
             public void run() { act.openProjection(); }
         }));
-        main.add(tile(Mib.t(act, "Telefon", "Phone"), R.drawable.ui_tile_phone, new Runnable() {
+        main.add(small(Mib.t(act, "Telefon", "Phone"), R.drawable.ui_tile_phone, new Runnable() {
             public void run() { act.openPhone(); }
         }));
-        main.add(tile(Mib.t(act, "Vozilo", "Vehicle"), R.drawable.ui_tile_car, new Runnable() {
+        main.add(small(Mib.t(act, "Vozilo", "Vehicle"), R.drawable.ui_tile_car, new Runnable() {
             public void run() { act.show(LauncherActivity.VEHICLE, true); }
         }));
-        main.add(tile(Mib.t(act, "Navigacija", "Navigation"), R.drawable.ui_tile_nav, new Runnable() {
+        main.add(small(Mib.t(act, "Navigacija", "Navigation"), R.drawable.ui_tile_nav, new Runnable() {
             public void run() { act.show(LauncherActivity.NAV, true); }
         }));
-        main.add(tile(Mib.t(act, "Podešavanja", "Setup"), R.drawable.ui_tile_settings, new Runnable() {
+        main.add(small(Mib.t(act, "Podešavanja", "Setup"), R.drawable.ui_tile_settings, new Runnable() {
             public void run() { act.show(LauncherActivity.SETTINGS, true); }
         }));
         pager.addView(main);
@@ -91,10 +91,11 @@ public class MenuScreen extends Screen implements AppRepository.Listener {
         LinearLayout outer = new LinearLayout(act);
         outer.setGravity(Gravity.CENTER_VERTICAL);
         cluster = new com.thecarlauncher.views.GaugeCluster(act, com.thecarlauncher.util.DayNight.pal(act));
-        LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, Mib.px(act, 270));
-        cl.leftMargin = Mib.px(act, 14);
+        LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 59f);
+        cl.leftMargin = Mib.px(act, 6);
+        cl.topMargin = cl.bottomMargin = Mib.px(act, 10);
         outer.addView(cluster, cl);
-        outer.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        outer.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 41f));
         return outer;
     }
 
@@ -107,6 +108,75 @@ public class MenuScreen extends Screen implements AppRepository.Listener {
             }
         });
         return t;
+    }
+
+    /** Compact tile beside the gauges: icon over a full-width label, accent line underneath. */
+    private View small(String label, int icon, final Runnable r) {
+        LinearLayout t = new LinearLayout(act);
+        t.setOrientation(LinearLayout.VERTICAL);
+        t.setGravity(Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setColor(0xCC15171C);
+        bg.setCornerRadius(Mib.px(act, 14));
+        android.graphics.drawable.GradientDrawable line = new android.graphics.drawable.GradientDrawable();
+        line.setColor(Mib.BLUE);
+        line.setCornerRadius(Mib.px(act, 2));
+        android.graphics.drawable.LayerDrawable ld = new android.graphics.drawable.LayerDrawable(
+                new android.graphics.drawable.Drawable[]{bg, line});
+        int inset = Mib.px(act, 16);
+        ld.setLayerInset(1, inset, 0, inset, 0);
+        ld.setLayerGravity(1, Gravity.BOTTOM | Gravity.FILL_HORIZONTAL);
+        ld.setLayerHeight(1, Math.max(2, Mib.px(act, 3)));
+        t.setBackground(new android.graphics.drawable.RippleDrawable(
+                android.content.res.ColorStateList.valueOf(0x44FFFFFF), ld, null));
+        android.widget.ImageView iv = new android.widget.ImageView(act);
+        iv.setImageResource(icon);
+        iv.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+        t.addView(iv, new LinearLayout.LayoutParams(Mib.px(act, 46), Mib.px(act, 40)));
+        android.widget.TextView tv = Mib.text(act, label, 17, Mib.semibold(act), Mib.WHITE);
+        tv.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        tl.topMargin = Mib.px(act, 6);
+        tl.leftMargin = tl.rightMargin = Mib.px(act, 4);
+        t.addView(tv, tl);
+        t.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { r.run(); }
+        });
+        return t;
+    }
+
+    /** 2 columns × 4 rows filling the space beside the gauges. */
+    private class TileGrid extends ViewGroup {
+        TileGrid() { super(act); }
+
+        void add(View v) { addView(v); }
+
+        private int gap() { return Mib.px(act, 10); }
+
+        @Override
+        protected void onMeasure(int w, int h) {
+            int W = MeasureSpec.getSize(w), H = MeasureSpec.getSize(h);
+            int pad = Mib.px(act, 12), bottom = Mib.px(act, 34);
+            int cw = (W - 2 * pad - gap()) / 2, ch = (H - pad - bottom - 3 * gap()) / 4;
+            for (int i = 0; i < getChildCount(); i++) {
+                getChildAt(i).measure(MeasureSpec.makeMeasureSpec(cw, MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(ch, MeasureSpec.EXACTLY));
+            }
+            setMeasuredDimension(W, H);
+        }
+
+        @Override
+        protected void onLayout(boolean changed, int l, int t, int r, int b) {
+            if (getChildCount() == 0) return;
+            int pad = Mib.px(act, 12);
+            int cw = getChildAt(0).getMeasuredWidth(), ch = getChildAt(0).getMeasuredHeight();
+            for (int i = 0; i < getChildCount() && i < 8; i++) {
+                int x = pad + (i % 2) * (cw + gap()), y = pad + (i / 2) * (ch + gap());
+                getChildAt(i).layout(x, y, x + cw, y + ch);
+            }
+        }
     }
 
     private void buildFavourites() {

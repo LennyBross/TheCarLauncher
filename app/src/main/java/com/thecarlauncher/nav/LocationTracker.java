@@ -150,10 +150,25 @@ public final class LocationTracker implements LocationListener {
             lastGpsElapsed = now;
             fix = true;
         }
-        if (l.hasSpeed()) {
+        // Speed from the fix, and as a cross-check from the distance between two GPS fixes:
+        // some head-unit GPS modules report no speed, or always 0.
+        float derived = -1;
+        if (gps && prev != null && LocationManager.GPS_PROVIDER.equals(prev.getProvider())) {
+            long dtMs = l.getTime() - prev.getTime();
+            if (dtMs <= 0) dtMs = now - lastGpsFixElapsed;
+            if (dtMs >= 500 && dtMs <= 10000) {
+                float acc = Math.max(l.hasAccuracy() ? l.getAccuracy() : 10f, 5f);
+                float d = prev.distanceTo(l);
+                // Ignore drift smaller than the fix accuracy while standing still.
+                derived = d > acc * 0.6f ? d / (dtMs / 1000f) : 0f;
+                if (derived > 90f) derived = -1; // implausible jump
+            }
+        }
+        if (gps) lastGpsFixElapsed = now;
+        if (l.hasSpeed() && (l.getSpeed() > 0.3f || derived < 1.5f)) {
             speedMps = l.getSpeed();
-        } else if (prev != null && gps && l.getTime() > prev.getTime()) {
-            speedMps = prev.distanceTo(l) / ((l.getTime() - prev.getTime()) / 1000f);
+        } else if (derived >= 0) {
+            speedMps = derived;
         } else if (!gps) {
             speedMps = 0;
         }
@@ -176,6 +191,8 @@ public final class LocationTracker implements LocationListener {
     public Location location() { return last; }
     public boolean hasFix() { return fix; }
     public float bearing() { return (bearing + 360f) % 360f; }
+
+    private long lastGpsFixElapsed;
 
     public float speedMps() { return speedMps; }
     public int satsUsed() { return satsUsed; }

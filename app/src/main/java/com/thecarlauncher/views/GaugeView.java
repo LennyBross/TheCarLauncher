@@ -4,6 +4,7 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
+import android.graphics.RadialGradient;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Shader;
@@ -18,7 +19,7 @@ import com.thecarlauncher.util.DayNight;
  * Everything is drawn in a 300×300 box scaled to the view.
  */
 public class GaugeView extends View {
-    private final float max, step, minor, redFrom;
+    private final float max, step, minor, redFrom, labelStep;
     private final boolean band;
     private float value, shown;
     private boolean hasValue;
@@ -30,8 +31,10 @@ public class GaugeView extends View {
     private final RectF oval = new RectF();
     private static Typeface sBold, sSemi;
 
-    public GaugeView(Context c, float max, float step, float minor, float redFrom, boolean band, DayNight.Pal pal) {
+    public GaugeView(Context c, float max, float step, float minor, float labelStep, float redFrom, boolean band,
+                     DayNight.Pal pal) {
         super(c);
+        this.labelStep = labelStep;
         this.max = max;
         this.step = step;
         this.minor = minor;
@@ -92,97 +95,102 @@ public class GaugeView extends View {
         c.save();
         c.translate((getWidth() - 300 * s) / 2f, (getHeight() - 300 * s) / 2f);
         c.scale(s, s);
-        float cx = 150, cy = 150, r = 126;
+        float cx = 150, cy = 150, r = 124;
+        boolean night = pal.night;
+        int glow = (pal.scale & 0x00FFFFFF) | 0x66000000;
 
-        // Bezel and face
-        p.setShader(null);
+        // Face: a soft radial shade, like a backlit dial.
         p.setStyle(Paint.Style.FILL);
-        p.setColor(pal.face);
+        p.setShader(new RadialGradient(cx, cy - 20, 150,
+                night ? new int[]{0xFF15181E, pal.face} : new int[]{0xFFFFFFFF, 0xFFEEF0F3}, null, Shader.TileMode.CLAMP));
         c.drawCircle(cx, cy, 145, p);
+        // Satin chrome bezel: dark in the middle so it never reads as a plain white ring.
         p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(8);
-        p.setShader(new LinearGradient(0, 0, 300, 300,
-                new int[]{0xFFF4F5F7, 0xFF8C9199, 0xFF5E636B, 0xFFD9DCE1}, new float[]{0, 0.45f, 0.55f, 1}, Shader.TileMode.CLAMP));
-        c.drawCircle(cx, cy, 145, p);
+        p.setStrokeWidth(6);
+        p.setShader(new LinearGradient(40, 0, 260, 300,
+                new int[]{0xFFC9CDD3, 0xFF5A5F67, 0xFF2B2E34, 0xFF6B7078, 0xFFB4B9C0},
+                new float[]{0, 0.3f, 0.5f, 0.72f, 1}, Shader.TileMode.CLAMP));
+        c.drawCircle(cx, cy, 146, p);
         p.setShader(null);
-        p.setStrokeWidth(1.5f);
+        p.setStrokeWidth(1.2f);
         p.setColor(pal.ring);
-        c.drawCircle(cx, cy, 136, p);
+        c.drawCircle(cx, cy, 141, p);
 
-        // Red zone and value arc
-        oval.set(cx - r - 3, cy - r - 3, cx + r + 3, cy + r + 3);
+        // Faint track and red zone just outside the ticks
+        oval.set(cx - r - 6, cy - r - 6, cx + r + 6, cy + r + 6);
         p.setStrokeCap(Paint.Cap.ROUND);
-        p.setStrokeWidth(5);
+        p.setStrokeWidth(3);
+        p.setColor(pal.track);
+        c.drawArc(oval, 135, 270, false, p);
         if (redFrom > 0) {
-            p.setColor(0xD9E8563A);
+            p.setColor(0xFFE8563A);
+            p.setStrokeWidth(4);
             c.drawArc(oval, 135 + 270 * redFrom / max, 270 * (1 - redFrom / max), false, p);
         }
-        if (hasValue && shown > 0) {
-            p.setColor(pal.accent);
-            float sweep = 270 * shown / max;
-            c.drawArc(oval, 135, sweep, false, p);
-            float a = 135 + sweep;
-            p.setStyle(Paint.Style.FILL);
-            c.drawCircle(cx + (r + 3) * cos(a), cy + (r + 3) * sin(a), 6, p);
-            p.setStyle(Paint.Style.STROKE);
-            p.setStrokeWidth(2);
-            p.setColor(pal.face);
-            c.drawCircle(cx + (r + 3) * cos(a), cy + (r + 3) * sin(a), 6, p);
-        }
 
-        // Scale
+        // Scale: ticks every minor step, longer ones on the major step, numbers on labelStep.
         p.setTextAlign(Paint.Align.CENTER);
+        if (night) p.setShadowLayer(5, 0, 0, glow);
         int n = Math.round(max / minor);
         for (int i = 0; i <= n; i++) {
             float v = i * minor, a = 135 + 270 * v / max;
             boolean major = Math.abs(v / step - Math.round(v / step)) < 1e-3;
+            boolean label = Math.abs(v / labelStep - Math.round(v / labelStep)) < 1e-3;
             int col = redFrom > 0 && v >= redFrom ? 0xFFE8563A : pal.scale;
             p.setStyle(Paint.Style.STROKE);
             p.setColor(col);
-            p.setStrokeWidth(major ? 2.6f : 1.4f);
-            float r2 = r - (major ? 14 : 7);
+            p.setStrokeWidth(label ? 3.2f : major ? 2.2f : 1.3f);
+            float r2 = r - (label ? 15 : major ? 10 : 6);
             c.drawLine(cx + r * cos(a), cy + r * sin(a), cx + r2 * cos(a), cy + r2 * sin(a), p);
-            if (major) {
+            if (label) {
                 p.setStyle(Paint.Style.FILL);
                 p.setTypeface(sSemi);
-                p.setTextSize(19);
-                c.drawText(String.valueOf(Math.round(v)), cx + (r - 30) * cos(a), cy + (r - 30) * sin(a) + 6, p);
+                p.setTextSize(23);
+                c.drawText(String.valueOf(Math.round(v)), cx + (r - 34) * cos(a), cy + (r - 34) * sin(a) + 8, p);
             }
         }
+        p.clearShadowLayer();
 
         // Digital middle
         p.setStyle(Paint.Style.FILL);
-        float y = 150;
+        float y;
         if (band) {
             p.setColor(pal.band);
-            c.drawRoundRect(new RectF(78, 128, 222, 186), 10, 10, p);
+            c.drawRoundRect(new RectF(86, 116, 214, 184), 12, 12, p);
             y = 172;
         } else {
-            y = 168;
+            y = 166;
         }
+        if (night) p.setShadowLayer(6, 0, 0, glow);
         p.setColor(pal.digit);
         p.setTypeface(sBold);
-        p.setTextSize(band ? 58 : 50);
+        p.setTextSize(band ? 62 : 52);
         c.drawText(big, cx, y, p);
+        p.clearShadowLayer();
         p.setTypeface(sSemi);
-        p.setTextSize(13);
+        p.setTextSize(14);
         p.setColor(pal.scale2);
-        p.setLetterSpacing(0.08f);
-        c.drawText(unit, cx, y + 18, p);
+        p.setLetterSpacing(0.1f);
+        c.drawText(unit, cx, band ? 202 : y + 22, p);
         p.setLetterSpacing(0);
         if (line2 != null) {
             p.setTypeface(sBold);
-            p.setTextSize(21);
+            p.setTextSize(19);
             p.setColor(pal.digit);
-            c.drawText(line2, cx, y + 50, p);
+            c.drawText(line2, cx, band ? 232 : y + 52, p);
         }
-        if (line3 != null) {
-            p.setTypeface(sSemi);
-            p.setTextSize(12);
-            p.setColor(pal.scale2);
-            p.setLetterSpacing(0.12f);
-            c.drawText(line3, cx, y + 66, p);
-            p.setLetterSpacing(0);
+
+        // Needle: only its outer part shows, the hub sits behind the display as in the car.
+        if (hasValue) {
+            float a = 135 + 270 * shown / max;
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeCap(Paint.Cap.ROUND);
+            p.setShadowLayer(6, 0, 0, (pal.accent & 0x00FFFFFF) | 0x99000000);
+            p.setColor(pal.accent);
+            p.setStrokeWidth(6);
+            float r1 = r * 0.6f, r2 = r + 4;
+            c.drawLine(cx + r1 * cos(a), cy + r1 * sin(a), cx + r2 * cos(a), cy + r2 * sin(a), p);
+            p.clearShadowLayer();
         }
         c.restore();
     }
