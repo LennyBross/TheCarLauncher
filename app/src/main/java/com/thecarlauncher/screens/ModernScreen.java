@@ -56,6 +56,7 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
         @Override
         public void run() {
             updateClock();
+            if (FuelPrice.shouldRetry(act)) FuelPrice.refresh(act, true, fuelChanged);
             // Automatic day / night: rebuild with the other look at sunrise and sunset.
             if (DayNight.mode(act) == DayNight.AUTO && DayNight.isNight(act) != pal.night) {
                 act.restartUi();
@@ -174,7 +175,7 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
         pl.leftMargin = px(10);
         right.addView(price, pl);
         h.addView(right, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.RIGHT | Gravity.TOP));
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.RIGHT | Gravity.BOTTOM));
         return h;
     }
 
@@ -294,7 +295,9 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
         fuelPerKm.setText(perKm > 0 ? num(perKm, 2) : "—");
         pricePill.setText(price > 0 ? s("Dizel ", "Diesel ") + num(price, 2) + " TL" : s("Dizel: unesi cenu", "Diesel: set price"));
         String src;
-        if (l100 <= 0) src = s("Dodirni: unesi prosek sa instrument table", "Tap: enter the average from the cluster");
+        String err = FuelPrice.lastError();
+        if (price <= 0 && err != null && !"manual".equals(FuelPrice.source(act))) src = "Fiyat alınamadı: " + err;
+        else if (l100 <= 0) src = s("Dodirni: unesi prosek sa instrument table", "Tap: enter the average from the cluster");
         else if (price <= 0) src = s("Dodirni: unesi cenu goriva", "Tap: enter the fuel price");
         else {
             String ps = FuelPrice.source(act);
@@ -327,7 +330,13 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
                     });
                 } else if (i == 1) {
                     FuelPrice.setManual(act, -1);
-                    FuelPrice.refresh(act, true, fuelChanged);
+                    FuelPrice.refresh(act, true, new FuelPrice.Listener() {
+                        public void onPrice() {
+                            updateFuel();
+                            String e = FuelPrice.lastError();
+                            Ui.toast(act, e == null ? "Motorin fiyatı alındı" : "Fiyat alınamadı: " + e);
+                        }
+                    });
                     Ui.toast(act, s("Preuzimam cenu…", "Fetching the price…"));
                     updateFuel();
                 } else if (i == 2) {
@@ -434,6 +443,14 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
     }
 
     private void updateMedia() {
+        try {
+            updateMediaInner();
+        } catch (Throwable ignored) {
+            // A media source sending odd data must never close the launcher.
+        }
+    }
+
+    private void updateMediaInner() {
         MediaHub m = MediaHub.get(act);
         String t = m.hasTrackInfo() ? m.title() : null;
         songTitle.setText(Ui.isEmpty(t) ? s("Ništa ne svira", "Nothing playing") : t);

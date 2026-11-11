@@ -29,6 +29,16 @@ public final class FuelPrice {
     public interface Listener { void onPrice(); }
 
     private static volatile boolean sLoading;
+    private static volatile long sLastTry;
+    /** Why the last online try failed (null after a success), shown on the fuel card. */
+    private static volatile String sError;
+
+    public static String lastError() { return sError; }
+
+    /** True when there is no online price yet and the last try is a minute old. */
+    public static boolean shouldRetry(Context c) {
+        return d(c, P_ONLINE) <= 0 && System.currentTimeMillis() - sLastTry > 60000;
+    }
 
     private FuelPrice() {}
 
@@ -75,6 +85,7 @@ public final class FuelPrice {
         if (sLoading) return;
         if (!force && System.currentTimeMillis() - onlineAt(c) < REFRESH_MS) return;
         sLoading = true;
+        sLastTry = System.currentTimeMillis();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -83,8 +94,18 @@ public final class FuelPrice {
                     if (p > 0) {
                         Prefs.put(c, P_ONLINE, String.valueOf(p));
                         Prefs.put(c, P_ONLINE_AT, System.currentTimeMillis());
+                        sError = null;
+                    } else if (sError == null) {
+                        sError = "fiyat listesinde motorin yok (il " + province(c) + ")";
                     }
-                } catch (Throwable ignored) {
+                } catch (java.net.UnknownHostException e) {
+                    sError = "internet yok";
+                } catch (java.net.SocketTimeoutException e) {
+                    sError = "zaman aşımı";
+                } catch (javax.net.ssl.SSLException e) {
+                    sError = "güvenli bağlantı kurulamadı (saat/tarih doğru mu?)";
+                } catch (Throwable e) {
+                    sError = e.getClass().getSimpleName();
                 } finally {
                     sLoading = false;
                 }
@@ -99,6 +120,7 @@ public final class FuelPrice {
 
     /** Diesel price of the province's first district: the standard grade over the premium one. */
     static double fetch(String province) throws Exception {
+        sError = null;
         HttpURLConnection h = (HttpURLConnection) new URL(String.format(Locale.US, URL, province)).openConnection();
         h.setConnectTimeout(8000);
         h.setReadTimeout(8000);
@@ -107,8 +129,13 @@ public final class FuelPrice {
         h.setRequestProperty("Channel", "Web");
         h.setRequestProperty("Accept", "application/json");
         h.setRequestProperty("Accept-Language", "tr-TR");
+        h.setRequestProperty("Referer", "https://www.opet.com.tr/");
         try {
-            if (h.getResponseCode() != 200) return -1;
+            int code = h.getResponseCode();
+            if (code != 200) {
+                sError = "Opet HTTP " + code;
+                return -1;
+            }
             InputStream in = h.getInputStream();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             byte[] buf = new byte[8192];
