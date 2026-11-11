@@ -153,7 +153,8 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         rootView = root;
         applyDisplay();
 
-        screens[MENU] = new MenuScreen(this);
+        screens[MENU] = com.thecarlauncher.screens.ModernScreen.enabled(this)
+                ? new com.thecarlauncher.screens.ModernScreen(this) : new MenuScreen(this);
         screens[NAV] = new NavScreen(this);
         screens[MEDIA] = new MediaScreen(this);
         screens[APPS] = new AppsScreen(this);

@@ -276,6 +276,31 @@ public class SettingsScreen extends Screen {
 
     private void buildDisplay() {
         final android.app.Activity a = act;
+        // Home page style: the factory MENU tiles or the modern page with cards.
+        final boolean modern = com.thecarlauncher.screens.ModernScreen.enabled(act);
+        checkRowWithAction(s("Moderan početni ekran", "Modern home screen"), modern, new Runnable() {
+            public void run() {
+                Prefs.put(act, com.thecarlauncher.screens.ModernScreen.P_MODERN, !modern);
+                act.restartUi();
+            }
+        });
+        if (modern) {
+            final Object[][] w = com.thecarlauncher.screens.ModernScreen.WALLPAPERS;
+            int cur = Math.max(0, Math.min(w.length - 1, Prefs.integer(act, com.thecarlauncher.screens.ModernScreen.P_WALLPAPER, 0)));
+            action(s("Pozadina", "Wallpaper"), s((String) w[cur][0], (String) w[cur][1]), new Runnable() {
+                public void run() {
+                    String[] names = new String[w.length];
+                    for (int i = 0; i < w.length; i++) names[i] = s((String) w[i][0], (String) w[i][1]);
+                    Dialogs.choose(act, s("Pozadina", "Wallpaper"), names,
+                            Prefs.integer(act, com.thecarlauncher.screens.ModernScreen.P_WALLPAPER, 0), new Dialogs.Chosen() {
+                        public void onChosen(int i) {
+                            Prefs.put(act, com.thecarlauncher.screens.ModernScreen.P_WALLPAPER, i);
+                            act.restartUi();
+                        }
+                    });
+                }
+            });
+        }
         stepper(s("Osvetljenost", "Brightness"), DisplayControl.brightness(act) + " %", new Runnable() {
             public void run() { DisplayControl.setBrightness(a, DisplayControl.brightness(a) - 10); refreshKeep(); }
         }, new Runnable() {

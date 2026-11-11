@@ -42,7 +42,7 @@ public final class CarData {
         }
     }
 
-    public static final double DEFAULT_TANK = 44; // Corsa C fuel tank, litres
+    public static final double DEFAULT_TANK = 60; // DS 4 fuel tank, litres
     private static final String P_ODO = "car_odo_km", P_ODO_LIFE = "car_odo_life_km", P_FUEL = "car_fuel_log",
             P_TANK = "car_tank", P_OIL_KM = "car_oil_km", P_OIL_DATE = "car_oil_date",
             P_REG_DATE = "car_reg_date", P_TYRES = "car_tyre_reminder", P_WINTER = "car_winter_tyres";
