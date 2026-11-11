@@ -19,7 +19,9 @@ import com.thecarlauncher.car.FuelPrice;
 import com.thecarlauncher.media.MediaHub;
 import com.thecarlauncher.mib.Mib;
 import com.thecarlauncher.nav.NavHelper;
+import com.thecarlauncher.util.DayNight;
 import com.thecarlauncher.util.NightDim;
+import com.thecarlauncher.views.GaugeCluster;
 import com.thecarlauncher.util.Prefs;
 import com.thecarlauncher.util.Ui;
 
@@ -40,8 +42,8 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
             {"Sumrak", "Dusk", 0xFF6E4A63, 0xFF2B2340},
     };
 
-    private static final int CARD = 0xFF1B1C22, INNER = 0xFF26272F, TEXT = 0xFFF7F7F5, SUB = 0xFFB5B6BF,
-            HEAD = 0xFFC9CAD2, DOCK = 0xFF121318;
+    private final DayNight.Pal pal;
+    private final int CARD, INNER, TEXT, SUB, HEAD, DOCK;
     private static final Locale TR = new Locale("tr", "TR");
 
     private final Handler main = new Handler(Looper.getMainLooper());
@@ -54,12 +56,24 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
         @Override
         public void run() {
             updateClock();
+            // Automatic day / night: rebuild with the other look at sunrise and sunset.
+            if (DayNight.mode(act) == DayNight.AUTO && DayNight.isNight(act) != pal.night) {
+                act.restartUi();
+                return;
+            }
             main.postDelayed(this, 15000);
         }
     };
 
     public ModernScreen(LauncherActivity act) {
         super(act);
+        pal = DayNight.pal(act);
+        CARD = pal.card;
+        INNER = pal.inner;
+        TEXT = pal.text;
+        SUB = pal.sub;
+        HEAD = pal.head;
+        DOCK = pal.dock;
     }
 
     public static boolean enabled(android.content.Context c) { return Prefs.bool(c, P_MODERN, false); }
@@ -77,8 +91,9 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
     protected View create(ViewGroup parent) {
         FrameLayout root = new FrameLayout(act);
         int w = Math.max(0, Math.min(WALLPAPERS.length - 1, Prefs.integer(act, P_WALLPAPER, 0)));
-        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{(Integer) WALLPAPERS[w][2], (Integer) WALLPAPERS[w][3], 0xFF0B0C10});
+        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, pal.night
+                ? new int[]{(Integer) WALLPAPERS[w][2], (Integer) WALLPAPERS[w][3], pal.bg}
+                : new int[]{pal.skyTop, pal.skyBottom, pal.bg});
         root.setBackground(bg);
 
         LinearLayout col = new LinearLayout(act);
@@ -94,13 +109,22 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
 
     private View header() {
         FrameLayout h = new FrameLayout(act);
-        h.setPadding(px(30), px(24), px(30), 0);
+        h.setPadding(px(16), px(10), px(26), px(8));
 
+        LinearLayout cluster = new LinearLayout(act);
+        cluster.setGravity(Gravity.TOP);
+        cluster.addView(new GaugeCluster(act, pal), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
         LinearLayout left = new LinearLayout(act);
         left.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams leftLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        leftLp.leftMargin = px(22);
+        leftLp.topMargin = px(14);
+        cluster.addView(left, leftLp);
         clock = Mib.text(act, "", 60, Mib.regular(act), TEXT);
         date = Mib.text(act, "", 22, Mib.semibold(act), TEXT);
-        TextView model = Mib.text(act, "DS 4", 15, Mib.semibold(act), 0xFFE4E2EA);
+        TextView model = Mib.text(act, "DS 4", 15, Mib.semibold(act), SUB);
         model.setLetterSpacing(0.2f);
         left.addView(clock);
         LinearLayout.LayoutParams dl = wrap();
@@ -109,11 +133,23 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
         LinearLayout.LayoutParams ml = wrap();
         ml.topMargin = px(10);
         left.addView(model, ml);
-        h.addView(left, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP));
+        h.addView(cluster, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT, Gravity.LEFT | Gravity.TOP));
 
         LinearLayout right = new LinearLayout(act);
         right.setGravity(Gravity.CENTER_VERTICAL);
+        TextView modeLabel = Mib.text(act, modeText(), 18, Mib.semibold(act), TEXT);
+        View mode = pill(modeLabel);
+        mode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DayNight.setMode(act, (DayNight.mode(act) + 1) % 3);
+                act.restartUi();
+            }
+        });
+        LinearLayout.LayoutParams mpl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, px(50));
+        mpl.rightMargin = px(10);
+        right.addView(mode, mpl);
         dimLabel = Mib.text(act, "", 18, Mib.semibold(act), TEXT);
         View dim = pill(dimLabel);
         dim.setOnClickListener(new View.OnClickListener() {
@@ -145,13 +181,19 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
     private View pill(TextView label) {
         FrameLayout p = new FrameLayout(act);
         GradientDrawable d = new GradientDrawable();
-        d.setColor(0xB80C0C12);
+        d.setColor(pal.pill);
         d.setCornerRadius(px(25));
         p.setBackground(d);
         p.setPadding(px(18), 0, px(18), 0);
         p.addView(label, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
         return p;
+    }
+
+    private String modeText() {
+        int m = DayNight.mode(act);
+        String n = pal.night ? s("Noć", "Night") : s("Dan", "Day");
+        return m == DayNight.AUTO ? s("Auto · ", "Auto · ") + n : n;
     }
 
     private View cards() {
@@ -360,7 +402,7 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
             public void run() { MediaHub.get(act).previous(); }
         }), new LinearLayout.LayoutParams(0, px(52), 1f));
         playIcon = new ImageView(act);
-        View play = roundKey(playIcon, Mib.BLUE, 0xFF0B0C10, new Runnable() {
+        View play = roundKey(playIcon, pal.accent, pal.onAccent, new Runnable() {
             public void run() { MediaHub.get(act).playPause(); main.postDelayed(new Runnable() { public void run() { updateMedia(); } }, 400); }
         });
         LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(0, px(52), 1.3f);
@@ -464,7 +506,7 @@ public class ModernScreen extends Screen implements MediaHub.Listener {
         b.setGravity(Gravity.CENTER_VERTICAL);
         b.setBackground(round(INNER, 16));
         b.setPadding(px(14), 0, px(10), 0);
-        b.addView(Mib.icon(act, icon, Mib.BLUE), new LinearLayout.LayoutParams(px(26), px(26)));
+        b.addView(Mib.icon(act, icon, pal.accent), new LinearLayout.LayoutParams(px(26), px(26)));
         LinearLayout t = new LinearLayout(act);
         t.setOrientation(LinearLayout.VERTICAL);
         t.addView(Mib.text(act, label, 19, Mib.semibold(act), TEXT));

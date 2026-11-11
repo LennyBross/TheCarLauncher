@@ -276,6 +276,19 @@ public class SettingsScreen extends Screen {
 
     private void buildDisplay() {
         final android.app.Activity a = act;
+        final String[] looks = {s("Automatski (izlazak / zalazak sunca)", "Automatic (sunrise / sunset)"),
+                s("Uvek noć", "Always night"), s("Uvek dan", "Always day")};
+        action(s("Dan / noć", "Day / night"), looks[com.thecarlauncher.util.DayNight.mode(act)], new Runnable() {
+            public void run() {
+                Dialogs.choose(act, s("Dan / noć", "Day / night"), looks, com.thecarlauncher.util.DayNight.mode(act),
+                        new Dialogs.Chosen() {
+                    public void onChosen(int i) {
+                        com.thecarlauncher.util.DayNight.setMode(act, i);
+                        act.restartUi();
+                    }
+                });
+            }
+        });
         // Home page style: the factory MENU tiles or the modern page with cards.
         final boolean modern = com.thecarlauncher.screens.ModernScreen.enabled(act);
         checkRowWithAction(s("Moderan početni ekran", "Modern home screen"), modern, new Runnable() {

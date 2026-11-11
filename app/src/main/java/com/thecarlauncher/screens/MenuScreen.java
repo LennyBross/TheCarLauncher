@@ -22,6 +22,14 @@ public class MenuScreen extends Screen implements AppRepository.Listener {
     private MibPager pager;
     private LinearLayout dots;
     private Grid favPage;
+    private com.thecarlauncher.views.GaugeCluster cluster;
+    private final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable lookCheck = new Runnable() {
+        public void run() {
+            if (cluster != null) cluster.setPal(com.thecarlauncher.util.DayNight.pal(act));
+            main.postDelayed(this, 60000);
+        }
+    };
 
     public MenuScreen(LauncherActivity act) {
         super(act);
@@ -78,7 +86,16 @@ public class MenuScreen extends Screen implements AppRepository.Listener {
         });
         buildDots();
         buildFavourites();
-        return root;
+
+        // Speedometer and rev counter on the left, the tiles beside them.
+        LinearLayout outer = new LinearLayout(act);
+        outer.setGravity(Gravity.CENTER_VERTICAL);
+        cluster = new com.thecarlauncher.views.GaugeCluster(act, com.thecarlauncher.util.DayNight.pal(act));
+        LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, Mib.px(act, 270));
+        cl.leftMargin = Mib.px(act, 14);
+        outer.addView(cluster, cl);
+        outer.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        return outer;
     }
 
     private MibTile tile(String label, int icon, final Runnable r) {
@@ -142,12 +159,15 @@ public class MenuScreen extends Screen implements AppRepository.Listener {
 
     @Override
     public void onShow() {
+        main.removeCallbacks(lookCheck);
+        main.post(lookCheck);
         AppRepository.get(act).addListener(this);
         buildFavourites();
     }
 
     @Override
     public void onHide() {
+        main.removeCallbacks(lookCheck);
         AppRepository.get(act).removeListener(this);
     }
 
@@ -178,7 +198,7 @@ public class MenuScreen extends Screen implements AppRepository.Listener {
         @Override
         protected void onMeasure(int w, int h) {
             int W = MeasureSpec.getSize(w), H = MeasureSpec.getSize(h);
-            int padX = (int) (W * 0.085f), gapX = (int) (W * 0.045f);
+            int padX = (int) (W * 0.035f), gapX = (int) (W * 0.03f);
             int tileW = (W - 2 * padX - 3 * gapX) / 4;
             int cap = Mib.px(act, 50), lineH = Math.max(2, Mib.px(act, 3));
             int usable = H - Mib.px(act, 50) - Mib.px(act, 40); // top margin + dots
@@ -194,7 +214,7 @@ public class MenuScreen extends Screen implements AppRepository.Listener {
         @Override
         protected void onLayout(boolean changed, int l, int t, int r, int b) {
             int W = r - l, H = b - t;
-            int padX = (int) (W * 0.085f), gapX = (int) (W * 0.045f);
+            int padX = (int) (W * 0.035f), gapX = (int) (W * 0.03f);
             if (getChildCount() == 0) return;
             int tileW = getChildAt(0).getMeasuredWidth(), cellH = getChildAt(0).getMeasuredHeight();
             int gapY = Mib.px(act, 18);
