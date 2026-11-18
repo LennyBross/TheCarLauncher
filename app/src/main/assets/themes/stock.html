@@ -10,7 +10,7 @@
 :root{--fg:#EEEAE2;--mut:#A8A39A;--gold:#E8D5B0;--line:rgba(255,255,255,.13)}
 html,body{background:#000}
 body{font-family:'Montserrat',sans-serif;color:var(--fg)}
-#app{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;overflow:hidden;
+#app{--dx:0px;position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;overflow:hidden;
   background:radial-gradient(70% 60% at 50% 42%,#1b1c1f 0%,#0b0b0d 55%,#040405 100%)}
 #app::after{content:'';position:absolute;inset:6px;border-radius:26px;pointer-events:none;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),inset 0 0 40px rgba(0,0,0,.8)}
@@ -29,10 +29,10 @@ button{background:none;border:none;padding:0;color:inherit}
 #rail #pw.on{color:#ff4a3f;filter:drop-shadow(0 0 6px rgba(255,60,40,.9))}
 
 /* header */
-#hdr{left:100px;top:0;width:1180px;height:100px}
+#hdr{left:100px;top:0;width:calc(1180px + 2 * var(--dx));height:100px}
 #temp{left:36px;top:46px;font-size:34px;font-weight:600;letter-spacing:-.5px}
 #tempL{left:126px;top:58px;font-size:18px;color:#D8D3CA}
-#logo{left:619px;top:3px;height:50px;width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
+#logo{left:calc(519px + var(--dx));top:3px;height:50px;width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6))}
 #stat{right:36px;top:44px;display:flex;align-items:center;gap:22px}
 #clock{font-size:38px;font-weight:600;letter-spacing:-.5px}
 #net{font-size:17px;color:#D8D3CA;display:flex;align-items:center;gap:7px}
@@ -41,8 +41,8 @@ button{background:none;border:none;padding:0;color:inherit}
 .pan{top:142px;width:450px;height:316px;border-radius:44px;
   background:linear-gradient(180deg,rgba(28,29,32,.92),rgba(10,10,12,.92));
   box-shadow:inset 0 0 0 1px var(--line),inset 0 1px 0 rgba(255,255,255,.18),0 18px 40px rgba(0,0,0,.6)}
-#pl{left:116px}
-#pr{left:806px}
+#pl{left:116px;width:calc(450px + var(--dx))}
+#pr{left:calc(806px + var(--dx));width:calc(450px + var(--dx))}
 .ph{position:absolute;top:22px;font-size:25px;font-style:italic;font-weight:600;color:#F2EEE6;letter-spacing:.3px}
 .ph::after{content:'';position:absolute;left:-40px;right:-230px;top:44px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22) 30%,rgba(255,255,255,.05))}
 #pl .ph{left:58px}
@@ -67,7 +67,7 @@ button{background:none;border:none;padding:0;color:inherit}
 #ecoB b{font-size:17px;font-style:italic;color:#E8D5B0}
 #eqB{right:124px;top:24px;height:30px;padding:0 14px;border-radius:15px;font-size:14px;letter-spacing:1px;color:#D8D3CA;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
 #radioB{right:30px;top:24px;height:30px;padding:0 14px;border-radius:15px;font-size:14px;letter-spacing:1px;color:#D8D3CA;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
-#bar{left:100px;top:212px;width:320px;height:3px;border-radius:2px;background:rgba(255,255,255,.28)}
+#bar{left:100px;top:212px;width:calc(320px + var(--dx));height:3px;border-radius:2px;background:rgba(255,255,255,.28)}
 #barf{position:absolute;left:0;top:0;height:3px;border-radius:2px;width:0;background:#F4EBDB;box-shadow:0 0 8px rgba(255,240,215,.9)}
 #t1,#t2{top:224px;font-size:18px;color:#DCD7CE}
 #t1{left:100px}#t2{right:30px}
@@ -78,18 +78,18 @@ button{background:none;border:none;padding:0;color:inherit}
 #ctl button:active{background:rgba(232,213,176,.12)}
 
 /* dial */
-#dial{left:387px;top:55px;width:506px;height:506px}
+#dial{left:calc(387px + var(--dx));top:55px;width:506px;height:506px}
 #needle{transform-origin:230px 230px;transition:transform .9s cubic-bezier(.3,.9,.3,1)}
-#car{left:387px;top:165px;width:506px;height:297px;touch-action:none}
+#car{left:calc(387px + var(--dx));top:165px;width:506px;height:297px;touch-action:none}
 #car canvas,#car img{position:absolute;left:0;top:0;width:100%;height:100%}
 #car img{display:none;object-fit:contain}
-#dots{left:610px;top:527px;width:60px;height:14px;display:flex;justify-content:space-between}
+#dots{left:calc(610px + var(--dx));top:527px;width:60px;height:14px;display:flex;justify-content:space-between}
 #dots button{width:12px;height:12px;border-radius:50%;background:#77736c;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4)}
 #dots button.on{background:#F3EEE4;box-shadow:0 0 6px rgba(255,245,225,.8)}
 #dots::before{content:'';position:absolute;left:-20px;right:-20px;top:-18px;bottom:-14px}
 
 /* bottom buttons */
-#btns{left:118px;top:566px;width:1140px;height:118px;display:flex;gap:10px}
+#btns{left:118px;top:566px;width:calc(1140px + 2 * var(--dx));height:118px;display:flex;gap:10px}
 .bt{flex:1;min-width:0;position:relative;height:118px;transform:skewX(-14deg);border-radius:14px;
   background:linear-gradient(180deg,rgba(36,37,41,.95),rgba(12,12,14,.95));
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.22),0 10px 24px rgba(0,0,0,.55)}
@@ -99,7 +99,7 @@ button{background:none;border:none;padding:0;color:inherit}
 .bt.hi,.bt:active{box-shadow:inset 0 0 0 1px rgba(240,222,186,.55),inset 0 2px 0 rgba(255,236,200,.85),0 -2px 18px rgba(240,215,170,.25),0 10px 24px rgba(0,0,0,.55);
   background:linear-gradient(180deg,rgba(54,52,48,.95),rgba(14,14,16,.95))}
 .bt.hi::before,.bt:active::before{content:'';position:absolute;left:12%;right:12%;top:-1px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,#fff3dc,transparent);filter:blur(.5px)}
-#load{left:540px;top:304px;width:200px;text-align:center;font-size:14px;color:#77736c;letter-spacing:2px}
+#load{left:calc(540px + var(--dx));top:304px;width:200px;text-align:center;font-size:14px;color:#77736c;letter-spacing:2px}
 
 /* ---- lighting: Gündüz (light), Gece (default), Karanlık yol (dimmed for unlit roads) ---- */
 #app{transition:filter .4s,background .4s}
@@ -133,12 +133,12 @@ button{background:none;border:none;padding:0;color:inherit}
 <div id="app">
 
 <!-- header frame -->
-<svg class="ab" style="left:0;top:0" width="1280" height="140" viewBox="0 0 1280 140">
+<svg class="ab" style="left:var(--dx);top:0;overflow:visible" width="1280" height="140" viewBox="0 0 1280 140">
  <defs>
   <linearGradient id="hl" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".25" stop-color="#fff" stop-opacity=".28"/><stop offset=".5" stop-color="#fff" stop-opacity=".12"/><stop offset=".75" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
   <linearGradient id="hf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#131316"/><stop offset="1" stop-color="#0a0a0c" stop-opacity="0"/></linearGradient>
  </defs>
- <path d="M110 96 H420 C470 96 470 52 530 52 H750 C810 52 810 96 860 96 H1250" fill="none" stroke="url(#hl)" stroke-width="1.4"/>
+ <path d="M-500 96 H420 C470 96 470 52 530 52 H750 C810 52 810 96 860 96 H1800" fill="none" stroke="url(#hl)" stroke-width="1.4"/>
  <path d="M420 96 C470 96 470 52 530 52 H750 C810 52 810 96 860 96 Z" fill="url(#hf)" opacity=".6"/>
 </svg>
 
@@ -226,9 +226,16 @@ button{background:none;border:none;padding:0;color:inherit}
 <script src="common.js"></script>
 <script>
 // Fit the 1280×720 design to any panel (1024×600, 800×480, 1280×720…).
+// Fill any panel edge to edge: scale to the height, then widen the layout (side panels grow,
+// the dial stays centred) so there are no empty bands when the Android bar takes some height.
 function fitApp() {
-  var w = innerWidth, h = innerHeight, k = Math.min(w / 1280, h / 720), a = $('app');
-  a.style.transform = 'translate(' + ((w - 1280 * k) / 2) + 'px,' + ((h - 720 * k) / 2) + 'px) scale(' + k + ')';
+  var w = innerWidth, h = innerHeight, k = h / 720, a = $('app');
+  var dx = Math.max(-60, Math.min(420, (w / k - 1280) / 2));
+  if (w / k < 1280 + 2 * dx) k = w / (1280 + 2 * dx);
+  a.style.width = (1280 + 2 * dx) + 'px';
+  a.style.setProperty('--dx', dx + 'px');
+  a.style.transform = 'translate(' + ((w - (1280 + 2 * dx) * k) / 2) + 'px,' + ((h - 720 * k) / 2) + 'px) scale(' + k + ')';
+  if (window.fitLabels) setTimeout(fitLabels, 0);
 }
 addEventListener('resize', fitApp); fitApp();
 
@@ -273,6 +280,7 @@ var IC = {
 var BTN = [['Navigasyon', 'nav', 'nav'], ['Müzik', 'music', 'srcApp'], ['Telefon', 'phone', 'phone'], ['Android Auto', 'aa', 'aa'],
   ['CarPlay', 'cp', 'carplay'], ['Araç', 'car', 'vehicle'], ['Ayarlar', 'set', 'settings']];
 var hasMaps = false;
+window.fitLabels = fitLabels;
 function fitLabels() {
   [].forEach.call(document.querySelectorAll('.bt span'), function (sp) {
     var f = 17; sp.style.fontSize = f + 'px';

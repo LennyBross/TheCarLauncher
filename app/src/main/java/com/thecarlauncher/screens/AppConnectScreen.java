@@ -29,7 +29,9 @@ public class AppConnectScreen extends Screen {
     static final String ZLINK = "com.zjinnova.zlink";
     private static final String BASE = "com.zjinnova.android.zlink.features.";
     private static final String AUTO = BASE + "launcher.AutoActivity", CARPLAY = BASE + "launcher.CarPlayActivity",
-            MIRROR = BASE + "launcher.MirrorActivity", MAIN = BASE + "main.MainActivity";
+            MIRROR = BASE + "launcher.MirrorActivity",
+            // The factory launcher opens ZLink with this screen (com.hcn.auto.launcher PackageInfo.ZLINK_ACTIVITY_NAME).
+            MAIN = "com.zjinnova.zlink.main.view.SplashActivity";
 
     /** Last ZLink status ("CONNECTED", "DISCONNECT", …) and mode ("carplay_wireless", …). */
     private static String status, mode;
@@ -202,12 +204,30 @@ public class AppConnectScreen extends Screen {
         try {
             act.sendBroadcast(new Intent("zjinnova.android.intent.action.START_DAEMON_SERVICE").setPackage(ZLINK));
         } catch (Exception ignored) { }
-        boolean connected = "CONNECTED".equals(status);
-        String cls = connected ? (carplay || (mode != null && mode.startsWith("carplay")) ? CARPLAY : AUTO) : MAIN;
-        if (Ui.start(act, new Intent(Intent.ACTION_MAIN).setComponent(new ComponentName(ZLINK, cls)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))) return true;
+        if (startCls(act, MAIN)) return true;
         Intent li = act.getPackageManager().getLaunchIntentForPackage(ZLINK);
         if (li != null) { act.startActivity(li.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true; }
+        // Last resort: any exported ZLink screen that looks like its start page.
+        try {
+            android.content.pm.PackageInfo pi = act.getPackageManager().getPackageInfo(ZLINK, android.content.pm.PackageManager.GET_ACTIVITIES);
+            if (pi.activities != null) {
+                for (String want : new String[]{"splash", "main", "home", "launch"}) {
+                    for (android.content.pm.ActivityInfo ai : pi.activities) {
+                        if (ai.exported && ai.name.toLowerCase(java.util.Locale.ROOT).contains(want) && startCls(act, ai.name)) return true;
+                    }
+                }
+            }
+        } catch (Exception ignored) { }
         return false;
+    }
+
+    private static boolean startCls(Context c, String cls) {
+        try {
+            c.startActivity(new Intent(Intent.ACTION_MAIN).setComponent(new ComponentName(ZLINK, cls)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /** 0 Android Auto, 1 CarPlay, 2 mirroring. */
@@ -219,7 +239,7 @@ public class AppConnectScreen extends Screen {
             }
             return;
         }
-        if (!start(idx == 0 ? AUTO : idx == 1 ? CARPLAY : MIRROR)) start(MAIN);
+        if (!start(idx == 0 ? AUTO : idx == 1 ? CARPLAY : MIRROR) && !start(MAIN)) openZlink(act, idx == 1);
     }
 
     private int activeMode() {
