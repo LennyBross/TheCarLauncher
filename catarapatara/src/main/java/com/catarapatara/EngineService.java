@@ -232,7 +232,7 @@ public final class EngineService extends Service implements LocationListener, Ob
         obdStatus = "";
         if (Obd.WIFI.equals(mode) || Obd.BT.equals(mode)) {
             obd = new Obd(this);
-            obd.start(mode, p.getString("obdTarget", ""));
+            obd.start(mode, p.getString("obdTarget", ""), p.getString("obdProto", Obd.STD));
         }
     }
 
@@ -443,7 +443,7 @@ public final class EngineService extends Service implements LocationListener, Ob
         if ("id".equals(key) || "ex".equals(key) || "bass".equals(key)) {
             main.post(new Runnable() { public void run() { applyEngine(); } });
         }
-        if ("obd".equals(key) || "obdTarget".equals(key)) applyObd();
+        if ("obd".equals(key) || "obdTarget".equals(key) || "obdProto".equals(key)) applyObd();
         if ("id".equals(key)) foreground();
     }
 }

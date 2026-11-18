@@ -111,7 +111,7 @@ public final class MainActivity extends Activity {
                 return new JSONObject().put("on", s != null && s.playing()).put("id", p.getString("id", EngineService.DEFAULT_ID)).put("ex", p.getInt("ex", 1))
                         .put("vol", p.getInt("vol", 70)).put("bass", p.getInt("bass", 3)).put("pops", p.getBoolean("pops", true))
                         .put("bubble", p.getBoolean("bubble", true)).put("canDraw", Bubble.canDraw(MainActivity.this))
-                        .put("obd", p.getString("obd", "off")).put("obdTarget", p.getString("obdTarget", ""))
+                        .put("obd", p.getString("obd", "off")).put("obdTarget", p.getString("obdTarget", "")).put("obdProto", p.getString("obdProto", "std"))
                         .put("carMax", p.getInt("carMax", 4500)).put("out", p.getString("out", "focus")).put("boot", p.getBoolean("boot", true)).toString();
             } catch (Exception e) {
                 return "{}";
@@ -131,7 +131,7 @@ public final class MainActivity extends Activity {
         public void set(final String key, final String value) {
             SharedPreferences.Editor e = EngineService.prefs(MainActivity.this).edit();
             switch (key) {
-                case "id": case "obd": case "obdTarget": case "out": e.putString(key, value); break;
+                case "id": case "obd": case "obdTarget": case "obdProto": case "out": e.putString(key, value); break;
                 case "ex": case "vol": case "bass": case "carMax": e.putInt(key, Integer.parseInt(value)); break;
                 case "pops": case "bubble": case "boot": e.putBoolean(key, "1".equals(value)); break;
                 default: return;

@@ -38,10 +38,10 @@ import java.util.Locale;
  */
 public class ThemeScreen extends Screen {
     public static final String P_THEME = "home_theme", P_PREV = "home_theme_prev";
-    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7;
+    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7, STOCK = 8;
     public static final String[][] NAMES = {
             {"Klasična", "Classic"}, {"Moderna", "Modern"}, {"Retro", "Retro"}, {"Pilot", "Pilot"}, {"Panel", "Panel"},
-            {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}};
+            {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}, {"Stock", "Stock"}};
     public static final String PKG_MAPS = "com.google.android.apps.maps", PKG_SPOTIFY = "com.spotify.music",
             PKG_YTMUSIC = "com.google.android.apps.youtube.music", PKG_YOUTUBE = "com.google.android.youtube";
     private static final Locale TR = new Locale("tr", "TR");
@@ -81,7 +81,7 @@ public class ThemeScreen extends Screen {
     public static Screen create(LauncherActivity act) {
         int t = current(act);
         if (t == MODERN) return new ModernScreen(act);
-        if (t >= RETRO && t <= DS4PLUS) return new ThemeScreen(act, t);
+        if (t >= RETRO && t <= STOCK) return new ThemeScreen(act, t);
         return new MenuScreen(act);
     }
 
@@ -95,6 +95,7 @@ public class ThemeScreen extends Screen {
             case KOKPIT: return "kokpit.html";
             case DRIVE: return "drive.html";
             case DS4PLUS: return "ds4plus.html";
+            case STOCK: return "stock.html";
             default: return "panel.html";
         }
     }
@@ -143,6 +144,10 @@ public class ThemeScreen extends Screen {
         web.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView v, String url) {
+                // Stock theme: every page (radio, vehicle, engine, driving…) takes the Stock look.
+                if (theme == STOCK) v.evaluateJavascript("(function(){document.documentElement.classList.add('stock');"
+                        + "if(!document.getElementById('stockcss')){var l=document.createElement('link');l.id='stockcss';l.rel='stylesheet';"
+                        + "l.href='stock.css';document.head.appendChild(l);}})()", null);
                 ready = true;
                 push();
             }
@@ -170,6 +175,15 @@ public class ThemeScreen extends Screen {
     private JSONObject state() throws Exception {
         JSONObject o = new JSONObject();
         Date now = new Date();
+        try {
+            android.net.ConnectivityManager cm = (android.net.ConnectivityManager) act.getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
+            android.net.NetworkInfo ni = cm == null ? null : cm.getActiveNetworkInfo();
+            o.put("net", ni == null || !ni.isConnected() ? "" : ni.getType() == android.net.ConnectivityManager.TYPE_WIFI ? "wifi" : "4G");
+        } catch (Throwable t) { o.put("net", ""); }
+        try {
+            android.bluetooth.BluetoothAdapter ba = android.bluetooth.BluetoothAdapter.getDefaultAdapter();
+            o.put("bt", ba != null && ba.isEnabled());
+        } catch (Throwable t) { o.put("bt", false); }
         o.put("time", new SimpleDateFormat(Prefs.use24h(act) ? "HH:mm" : "h:mm", TR).format(now));
         o.put("date", new SimpleDateFormat("d MMMM EEEE", TR).format(now));
         o.put("night", DayNight.isNight(act));
@@ -205,6 +219,10 @@ public class ThemeScreen extends Screen {
             o.put("artist", m.artist() == null ? "" : m.artist());
         }
         o.put("playing", m.isPlaying());
+        o.put("pos", m.position() / 1000);
+        o.put("dur", m.duration() / 1000);
+        android.graphics.Bitmap art = m.art();
+        o.put("artId", art == null ? 0 : System.identityHashCode(art));
         // Whichever source is active (Spotify, YouTube Music, Bluetooth, radio…) drives the one player.
         String src = m.packageName();
         o.put("srcLabel", m.sourceLabel(src));
@@ -299,6 +317,12 @@ public class ThemeScreen extends Screen {
                             break;
                         case "radioFactory": openPkg("com.hcn.autoradio"); break;
                         case "media": act.show(LauncherActivity.MEDIA, true); break;
+                        case "srcApp": {
+                            String sp = MediaHub.get(act).packageName();
+                            if (sp != null && !sp.isEmpty() && act.getPackageManager().getLaunchIntentForPackage(sp) != null) openPkg(sp);
+                            else act.show(LauncherActivity.MEDIA, true);
+                            break;
+                        }
                         case "nav": act.show(LauncherActivity.NAV, true); break;
                         case "phone": act.openPhone(); break;
                         case "aa": act.openProjection(); break;
@@ -436,6 +460,22 @@ public class ThemeScreen extends Screen {
 
         @JavascriptInterface
         public int dayMode() { return DayNight.mode(act); }
+
+        @JavascriptInterface
+        public int theme() { return theme; }
+
+        /** The current cover as a small JPEG data URL ("" when there is none). */
+        @JavascriptInterface
+        public String mediaArt() {
+            try {
+                android.graphics.Bitmap b = MediaHub.get(act).art();
+                if (b == null) return "";
+                android.graphics.Bitmap sc = android.graphics.Bitmap.createScaledBitmap(b, 200, 200 * b.getHeight() / Math.max(1, b.getWidth()), true);
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                sc.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, out);
+                return "data:image/jpeg;base64," + android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP);
+            } catch (Throwable t) { return ""; }
+        }
 
         /** Brightness 10..100 from the page's dimmer wheel; full brightness turns the dark layer off. */
         @JavascriptInterface

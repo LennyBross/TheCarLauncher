@@ -15,6 +15,11 @@ import java.util.UUID;
 /**
  * Reads engine rpm, accelerator pedal and speed from an ELM327 OBD-II adapter (Wi-Fi or
  * Bluetooth) — read-only, standard mode 01 requests only, nothing is ever written to the car.
+ *
+ * PSA mode: the adapter only listens (silent monitor, no ACK, no requests) to the 125 kbit/s
+ * comfort / infotainment CAN behind the head unit and decodes frame 0x0B6 FAST_BSI_DATA
+ * (engine rpm, vehicle speed, fuel counter). Frame layout from PSA-RE
+ * (github.com/prototux/PSA-RE, Apache-2.0): buses/AEE2010.full/LS.INFO-DIV/0B6.yml.
  */
 final class Obd {
     interface Listener {
@@ -25,6 +30,9 @@ final class Obd {
     }
 
     static final String WIFI = "wifi", BT = "bt";
+    /** proto: "std" = OBD-II mode 01 requests, "psa" = passive listen to 0x0B6 on the PSA 125k bus. */
+    static final String STD = "std", PSA = "psa";
+    private volatile String proto = STD;
     private static final UUID SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     private final Listener l;
@@ -35,8 +43,9 @@ final class Obd {
     Obd(Listener l) { this.l = l; }
 
     /** mode: "wifi" (host:port, default 192.168.0.10:35000) or "bt" (paired device name contains target, default OBD/ELM/Vlink). */
-    synchronized void start(final String mode, final String target) {
+    synchronized void start(final String mode, final String target, String proto) {
         stop();
+        this.proto = PSA.equals(proto) ? PSA : STD;
         run = true;
         thread = new Thread(new Runnable() {
             public void run() {
@@ -97,6 +106,7 @@ final class Obd {
             in = s.getInputStream();
             out = s.getOutputStream();
         }
+        if (PSA.equals(proto)) { psaListen(in, out); return; }
         for (String c : new String[]{"ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATAT2", "ATSP0"}) {
             cmd(in, out, c, c.equals("ATZ") ? 2500 : 1500);
         }
@@ -120,6 +130,62 @@ final class Obd {
                 if (s != null) l.onSpeed(s[0]);
             }
             n++;
+        }
+    }
+
+    /** Passive PSA listening: user CAN protocol B = 11-bit, 125 kbit/s (500/4), silent, filtered on 0x0B6. */
+    private void psaListen(InputStream in, OutputStream out) throws Exception {
+        for (String c : new String[]{"ATZ", "ATE0", "ATL0", "ATS0", "ATH1", "ATCAF0", "ATCSM1"}) cmd(in, out, c, c.equals("ATZ") ? 2500 : 1500);
+        String r = cmd(in, out, "ATPBC004", 1500);
+        if (r.contains("?")) throw new Exception("adaptör PSA dinleme modunu desteklemiyor (ATPB)");
+        cmd(in, out, "ATSPB", 1500);
+        cmd(in, out, "ATCRA0B6", 1500);
+        out.write("ATMA\r".getBytes("US-ASCII"));
+        out.flush();
+        l.onStatus("PSA CAN dinleniyor…", false);
+        StringBuilder line = new StringBuilder();
+        long lastFrame = System.currentTimeMillis(), lastT = 0;
+        int lastFuel = -1;
+        float rate = 0;
+        boolean ok = false;
+        while (run) {
+            if (in.available() <= 0) {
+                if (System.currentTimeMillis() - lastFrame > 6000) throw new Exception("PSA CAN: 0x0B6 gelmiyor (kablo / kontak?)");
+                Thread.sleep(5);
+                continue;
+            }
+            int ch = in.read();
+            if (ch < 0) throw new Exception("bağlantı koptu");
+            if (ch == '>') { // monitor stopped (buffer full…): restart it
+                out.write("ATMA\r".getBytes("US-ASCII"));
+                out.flush();
+                line.setLength(0);
+                continue;
+            }
+            if (ch != '\r' && ch != '\n') { line.append((char) ch); continue; }
+            String h = line.toString().replaceAll("[^0-9A-Fa-f]", "").toUpperCase(Locale.ROOT);
+            line.setLength(0);
+            if (!h.startsWith("0B6") || h.length() < 3 + 14) continue;
+            int[] b = new int[(h.length() - 3) / 2];
+            for (int k = 0; k < b.length; k++) b[k] = Integer.parseInt(h.substring(3 + k * 2, 5 + k * 2), 16);
+            long now = System.currentTimeMillis();
+            lastFrame = now;
+            int rawRpm = (b[0] << 8) | b[1];
+            if (rawRpm != 0xFFFF) l.onRpm(rawRpm * 0.125f);
+            int rawSpd = (b[2] << 8) | b[3];
+            if (rawSpd != 0xFFFF) l.onSpeed(rawSpd * 0.01f);
+            // Rolling fuel counter (80 mm3 per bit, wraps at 255) → fuel flow → rough pedal/load.
+            int fuel = b[6];
+            if (lastFuel >= 0 && lastT > 0 && now > lastT) {
+                int d = (fuel - lastFuel + 256) % 256;
+                float lh = d * 80e-6f / ((now - lastT) / 3_600_000f);   // litres per hour
+                rate += (lh - rate) * 0.3f;
+                float rpm = rawRpm * 0.125f, idle = 0.7f, max = Math.max(1.5f, rpm * 0.0045f);
+                l.onPedal(Math.max(0, Math.min(1, (rate - idle) / (max - idle))));
+            }
+            lastFuel = fuel;
+            lastT = now;
+            if (!ok) { ok = true; l.onStatus("PSA CAN bağlı", true); }
         }
     }
 

@@ -50,7 +50,16 @@ public final class Mib {
             {"Toplo bela", "Warm white", 0xFFFFE2B8}, {"Hladno bela", "Cool white", 0xFFD8ECFF},
     };
 
+    /** The Stock theme: champagne DS accent and condensed type on every native screen too. */
+    public static boolean stock(Context c) {
+        return Prefs.integer(c, "home_theme", 0) == 8;
+    }
+
     public static void loadAmbient(Context c) {
+        boolean was = sStock;
+        sStock = stock(c);
+        if (was != sStock) sRegular = sSemibold = sBold = null;
+        if (sStock) { BLUE = 0xFFE2CBA2; return; }
         BLUE = shade(Prefs.integer(c, Prefs.AMBIENT, DEFAULT_AMBIENT),
                 Prefs.integer(c, Prefs.AMBIENT_LEVEL, 100) / 100f, 0xFF);
     }
@@ -77,6 +86,7 @@ public final class Mib {
     public static final int BAR_VALUE = 0xFF4A4B55;
 
     private static Typeface sRegular, sSemibold, sBold;
+    private static boolean sStock;
     private static float sScale = -1;
 
     private Mib() {}
@@ -124,17 +134,17 @@ public final class Mib {
     // ---- Type -------------------------------------------------------------------------------
 
     public static Typeface regular(Context c) {
-        if (sRegular == null) sRegular = load(c, "fonts/regular.ttf", Typeface.NORMAL);
+        if (sRegular == null) sRegular = sStock ? Typeface.create("sans-serif-condensed", Typeface.NORMAL) : load(c, "fonts/regular.ttf", Typeface.NORMAL);
         return sRegular;
     }
 
     public static Typeface semibold(Context c) {
-        if (sSemibold == null) sSemibold = load(c, "fonts/semibold.ttf", Typeface.BOLD);
+        if (sSemibold == null) sSemibold = sStock ? Typeface.create("sans-serif-condensed", Typeface.BOLD) : load(c, "fonts/semibold.ttf", Typeface.BOLD);
         return sSemibold;
     }
 
     public static Typeface bold(Context c) {
-        if (sBold == null) sBold = load(c, "fonts/bold.ttf", Typeface.BOLD);
+        if (sBold == null) sBold = sStock ? Typeface.create("sans-serif-condensed", Typeface.BOLD) : load(c, "fonts/bold.ttf", Typeface.BOLD);
         return sBold;
     }
 

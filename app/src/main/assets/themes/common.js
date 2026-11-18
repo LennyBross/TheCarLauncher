@@ -27,3 +27,13 @@ function thumbwheel(el, onChange, sens) {
   el.addEventListener('pointerup', stop); el.addEventListener('pointercancel', stop);
   el.addEventListener('wheel', function (e) { onChange(e.deltaY > 0 ? 5 : -5); });
 }
+// Stock theme: every page takes the Stock look (dark, champagne accents).
+(function () {
+  try {
+    if (window.Car && Car.theme && Car.theme() === 8 && !document.getElementById('stockcss')) {
+      document.documentElement.classList.add('stock');
+      var l = document.createElement('link'); l.id = 'stockcss'; l.rel = 'stylesheet'; l.href = 'stock.css';
+      (document.head || document.documentElement).appendChild(l);
+    }
+  } catch (e) {}
+})();

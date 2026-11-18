@@ -87,6 +87,7 @@ input[type=text]{flex:1;height:6.11vh;border-radius:1.67vh;border:1px solid #2E3
 </div>
 <div class="pane" id="car" style="display:none">
 <div class="row"><span>OBD2 adaptörü<small>ELM327 · gerçek devir + gaz pedalı</small></span><div class="seg" id="obd"></div></div>
+<div class="row"><span>Veri yolu<small>OBD2 = soket · PSA CAN = ekran arkası konfor CAN'ı (0x0B6, sadece dinler)</small></span><div class="seg" id="obdProto"></div></div>
 <div class="row"><span>Adaptör adresi<small>Wi-Fi: 192.168.0.10:35000 · BT: cihaz adı</small></span><input type="text" id="obdTarget" placeholder="boş = otomatik"></div>
 <div class="row"><span>Aracın devir sınırı<small>DS4 1.6 e-HDi ≈ 4500</small></span><input type="range" min="3500" max="7500" step="100" id="carMax"><b class="sg" id="carMaxT" style="width:8vh;text-align:right"></b></div>
 <div class="row"><span>Yüzen egzoz düğmesi<small>Android Auto açıkken dokun: aç/kapat · basılı tut: uygulama</small></span><div style="flex:1"></div><button class="key chip" id="allow" style="display:none">İzin ver</button><button class="key sw" id="bubble"></button></div>
@@ -139,6 +140,7 @@ range('bass', 'bass', function (v) { return '+' + v; });
 range('carMax', 'carMax', function (v) { return v; });
 function toggle(id) { $(id).onclick = function () { cfg[id] = !cfg[id]; set(id, cfg[id] ? 1 : 0); paint(); }; }
 toggle('pops'); toggle('bubble'); toggle('boot');
+[['std', 'OBD2'], ['psa', 'PSA CAN']].forEach(function (o) { seg('obdProto', o[1], function () { cfg.obdProto = o[0]; set('obdProto', o[0]); paint(); }); });
 $('obdTarget').onchange = function () { cfg.obdTarget = this.value.trim(); set('obdTarget', cfg.obdTarget); };
 $('allow').onclick = function () { if (has) CP.allowOverlay(); };
 $('hide').onclick = function () { if (has) CP.close(); };
@@ -160,6 +162,7 @@ function paint() {
   $('bass').value = cfg.bass; $('bassT').textContent = '+' + cfg.bass;
   $('carMax').value = cfg.carMax; $('carMaxT').textContent = cfg.carMax;
   $('obdTarget').value = cfg.obdTarget || '';
+  var op = $('obdProto').children, pm = ['std', 'psa']; for (var k2 = 0; k2 < op.length; k2++) op[k2].classList.toggle('on', pm[k2] === (cfg.obdProto || 'std'));
   ['pops', 'bubble', 'boot'].forEach(function (k) { $(k).classList.toggle('on', !!cfg[k]); });
   $('allow').style.display = cfg.bubble && !cfg.canDraw ? 'inline-block' : 'none';
   var p = PROFILES.filter(function (x) { return x.id === cfg.id; })[0] || PROFILES[0] || { name: '', red: 6500 };
@@ -207,7 +210,7 @@ function tick() {
   $('bSrc').textContent = (s === 'gps' && !v.gps ? 'GPS aranıyor' : SRC[s] || s);
   $('bSrc').classList.toggle('ok', s !== 'gps' || !!v.gps);
   $('bObd').style.display = v.obd ? 'inline-flex' : 'none'; $('bObd').textContent = v.obd || '';
-  $('bObd').classList.toggle('ok', v.obd === 'OBD bağlı');
+  $('bObd').classList.toggle('ok', v.obd === 'OBD bağlı' || v.obd === 'PSA CAN bağlı');
   setTimeout(tick, 80);
 }
 paint(); tick();
