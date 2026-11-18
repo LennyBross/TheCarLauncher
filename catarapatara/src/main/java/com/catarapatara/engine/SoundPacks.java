@@ -62,11 +62,115 @@ public final class SoundPacks {
 
     /** Imports a pack zip. Returns the pack's name, or null if it is not a valid pack. */
     public static String importZip(Context c, Uri uri) {
+        try (InputStream raw = c.getContentResolver().openInputStream(uri)) {
+            return importStream(c, raw, null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Packs that ship inside the app (assets/packs/*.zip, from the repo's sounds/packs folder):
+     * unpacked once, again whenever the zip changes. Folder name "b-<zip name>" so they never clash
+     * with packs the user imports.
+     */
+    public static void syncAssets(Context c) {
+        try {
+            String[] zips = c.getAssets().list("packs");
+            if (zips == null) return;
+            android.content.SharedPreferences p = c.getSharedPreferences("packs", Context.MODE_PRIVATE);
+            for (String z : zips) {
+                if (!z.toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) continue;
+                String id = "b-" + z.substring(0, z.length() - 4).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
+                long size;
+                try (android.content.res.AssetFileDescriptor fd = c.getAssets().openFd("packs/" + z)) {
+                    size = fd.getLength();
+                } catch (Exception e) {
+                    size = -1; // compressed in the APK: fall back to the app version
+                }
+                String stamp = size + "/" + appVersion(c);
+                if (stamp.equals(p.getString(id, "")) && new File(root(c), id + "/pack.json").isFile()) continue;
+                try (InputStream in = c.getAssets().open("packs/" + z)) {
+                    if (importStream(c, in, id) != null) p.edit().putString(id, stamp).apply();
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** Where shared packs live: the sounds/ folder of the project repository on GitHub. */
+    public static final String GH_DIR = "https://api.github.com/repos/LennyBross/TheCarLauncher/contents/sounds?ref=main";
+    public static volatile String ghStatus = "";
+
+    /**
+     * Downloads new or changed packs from GitHub (sounds/*.zip). Returns how many were added or
+     * updated; packs already up to date (same git sha) are skipped.
+     */
+    public static synchronized int syncGitHub(Context c) {
+        int added = 0;
+        try {
+            ghStatus = "GitHub kontrol ediliyor…";
+            org.json.JSONArray list = new org.json.JSONArray(new String(httpGet(GH_DIR), "UTF-8"));
+            android.content.SharedPreferences p = c.getSharedPreferences("packs", Context.MODE_PRIVATE);
+            int total = 0;
+            for (int i = 0; i < list.length(); i++) {
+                org.json.JSONObject o = list.getJSONObject(i);
+                String name = o.optString("name");
+                if (!"file".equals(o.optString("type")) || !name.toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) continue;
+                total++;
+                String id = "b-" + name.substring(0, name.length() - 4).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
+                String sha = o.optString("sha");
+                if (sha.equals(p.getString("gh:" + id, "")) && new File(root(c), id + "/pack.json").isFile()) continue;
+                ghStatus = "İndiriliyor: " + name;
+                byte[] zip = httpGet(o.optString("download_url"));
+                if (importStream(c, new java.io.ByteArrayInputStream(zip), id) != null) {
+                    p.edit().putString("gh:" + id, sha).apply();
+                    added++;
+                }
+            }
+            ghStatus = "GitHub: " + total + " paket" + (added > 0 ? " · " + added + " yeni" : " · güncel");
+        } catch (Exception e) {
+            ghStatus = "GitHub'a ulaşılamadı";
+        }
+        return added;
+    }
+
+    private static byte[] httpGet(String url) throws Exception {
+        java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+        c.setConnectTimeout(10000);
+        c.setReadTimeout(30000);
+        c.setRequestProperty("User-Agent", "CataraPatara");
+        c.setRequestProperty("Accept", "application/vnd.github+json");
+        c.setInstanceFollowRedirects(true);
+        if (c.getResponseCode() != 200) throw new java.io.IOException("HTTP " + c.getResponseCode());
+        try (InputStream in = c.getInputStream()) {
+            ByteArrayOutputStream o = new ByteArrayOutputStream();
+            byte[] buf = new byte[65536];
+            int n;
+            while ((n = in.read(buf)) > 0) {
+                o.write(buf, 0, n);
+                if (o.size() > 60 * 1024 * 1024) throw new java.io.IOException("too large");
+            }
+            return o.toByteArray();
+        } finally {
+            c.disconnect();
+        }
+    }
+
+    private static long appVersion(Context c) {
+        try {
+            return c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionCode;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /** Imports a pack zip stream into its own folder (forcedId, or one made from its name). */
+    public static synchronized String importStream(Context c, InputStream raw, String forcedId) {
         File tmp = new File(root(c), ".import");
         deleteDir(tmp);
         tmp.mkdirs();
-        try (InputStream raw = c.getContentResolver().openInputStream(uri);
-             ZipInputStream z = new ZipInputStream(new BufferedInputStream(raw))) {
+        try (ZipInputStream z = new ZipInputStream(new BufferedInputStream(raw))) {
             ZipEntry e;
             long total = 0;
             byte[] buf = new byte[65536];
@@ -87,7 +191,7 @@ public final class SoundPacks {
             JSONObject j = new JSONObject(read(new File(tmp, "pack.json")));
             if (!new File(tmp, j.optString("file", "sound.wav")).isFile()) throw new java.io.IOException("no audio");
             String name = j.optString("name", "Ses paketi");
-            String id = name.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+            String id = forcedId != null ? forcedId : name.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
             if (id.isEmpty()) id = "pack" + System.currentTimeMillis();
             File dest = new File(root(c), id);
             deleteDir(dest);

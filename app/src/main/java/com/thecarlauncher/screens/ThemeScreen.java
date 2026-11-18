@@ -299,6 +299,7 @@ public class ThemeScreen extends Screen {
                             if (com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_CP)) openPkg(com.thecarlauncher.util.CanLive.PKG_CP);
                             else load("engine.html");
                             break;
+                        case "cpInstall": com.thecarlauncher.util.Updater.installCompanionNow(act, com.thecarlauncher.util.CanLive.PKG_CP); break;
                         case "cpToggle": com.thecarlauncher.util.CanLive.cpCommand(act, "toggle"); push(); break;
                         case "canbridge": openPkg(com.thecarlauncher.util.CanLive.PKG_BRIDGE); break;
                         case "settings": act.show(LauncherActivity.SETTINGS, true); break;

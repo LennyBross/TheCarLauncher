@@ -520,7 +520,8 @@ public final class Updater {
             public void onChecked(Release r, String error) {
                 boolean instant = Prefs.bool(c, P_INSTANT, true) && stationary(c) && mayInstall(c);
                 for (Companion k : COMPANIONS) {
-                    if (companionNewer(c, k, false)) {
+                    // Missing companions are installed too: CataraPatara and its CAN bridge are part of MYDS.
+                    if (companionNewer(c, k, true)) {
                         if (instant && !busy) {
                             sAutoAt = 0; // look again right after this one, for the next update
                             installCompanion(c, k);
@@ -541,6 +542,22 @@ public final class Updater {
                 }
             }
         });
+    }
+
+    /** Installs (or updates) one companion app now, looking it up on GitHub first if needed. */
+    public static void installCompanionNow(final Context c, final String pkg) {
+        for (final Companion k : COMPANIONS) {
+            if (!k.pkg.equals(pkg)) continue;
+            if (k.url != null) { installCompanion(c, k); return; }
+            LoadingBanner.start("update", k.label + LoadingBanner.t(" — traženje…", " — looking it up…"));
+            check(c, new Checked() {
+                public void onChecked(Release r, String error) {
+                    LoadingBanner.stop("update");
+                    if (k.url != null) installCompanion(c, k);
+                    else LoadingBanner.flash("update-fail", k.label + ": " + (error != null ? error : "?"), 4000);
+                }
+            });
+        }
     }
 
     /** Below walking pace (or no GPS fix): safe to put an installer on screen. */

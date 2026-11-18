@@ -67,7 +67,8 @@ input[type=text]{flex:1;height:6.11vh;border-radius:1.67vh;border:1px solid #2E3
 <div style="display:flex;flex-direction:column;gap:1vh;flex:1;min-width:0">
 <div style="display:flex;align-items:baseline;gap:1vh"><span class="sg" style="font-size:5vh" id="kmh">0</span><span style="font-size:1.94vh;color:var(--muted)">km/h</span>
 <span style="margin-left:2vh;font-size:1.94vh;color:var(--muted)">Gaz <b id="load" style="color:var(--fg)">0</b>%</span></div>
-<div style="display:flex;gap:1vh;flex-wrap:wrap"><span class="badge" id="bSrc">GPS</span><span class="badge" id="bObd" style="display:none"></span></div>
+<div style="display:flex;gap:1vh;flex-wrap:wrap"><span class="badge" id="bSrc">GPS</span><span class="badge" id="bObd" style="display:none"></span><span class="badge" id="bErr" style="display:none;background:rgba(255,90,60,.18);color:#FF8A6B"></span></div>
+<div style="display:flex;align-items:center;gap:1.2vh"><span style="font-size:1.81vh;color:var(--muted);width:11vh">Ses çıkışı</span><div style="flex:1;height:1.4vh;border-radius:.7vh;background:#232A35;overflow:hidden"><div id="lvl" style="height:100%;width:0;background:#5CC8B0;transition:width .08s"></div></div></div>
 </div>
 <button class="key" id="gas">GAZ</button>
 </div>
@@ -75,11 +76,13 @@ input[type=text]{flex:1;height:6.11vh;border-radius:1.67vh;border:1px solid #2E3
 
 <div class="card" style="width:min(80vh,46vw);flex-shrink:0;display:flex;flex-direction:column;min-height:0">
 <div class="tabs"><button class="key chip on" data-tab="engines" style="flex:1">Motorlar</button><button class="key chip" data-tab="sound" style="flex:1">Ses</button><button class="key chip" data-tab="car" style="flex:1">Araç & veri</button></div>
-<div class="pane" id="engines"><div style="display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:11.11vh;gap:1.39vh" id="list"></div></div>
+<div class="pane" id="engines"><div style="font-size:1.81vh;color:var(--muted);margin-bottom:1.11vh" id="ghStat">Paketler GitHub'dan güncelleniyor</div><div style="display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:11.11vh;gap:1.39vh" id="list"></div></div>
 <div class="pane" id="sound" style="display:none">
 <div class="row"><span>Egzoz</span><div class="seg" id="ex"></div></div>
 <div class="row"><span>Ses düzeyi</span><input type="range" min="0" max="100" step="5" id="vol"><b class="sg" id="volT" style="width:6vh;text-align:right"></b></div>
 <div class="row"><span>Bas<small>alt frekans güçlendirme</small></span><input type="range" min="0" max="9" step="1" id="bass"><b class="sg" id="bassT" style="width:6vh;text-align:right"></b></div>
+<div class="row"><span>Ses çıkışı<small>ses gelmezse diğerlerini dene</small></span><div class="seg" id="out"></div></div>
+<div class="row"><span>Ses testi<small>açar ve 2 sn gaz verir</small></span><div style="flex:1"></div><button class="key chip on" id="test">Test et</button></div>
 <div class="row"><span>Patlamalar<small>gazdan ayak çekince (gerçek kayıtlarda)</small></span><div style="flex:1"></div><button class="key sw" id="pops"></button></div>
 </div>
 <div class="pane" id="car" style="display:none">
@@ -100,10 +103,11 @@ var cfg = J(has ? CP.config() : '{}', {}), PROFILES = J(has ? CP.profiles() : '[
 function set(k, v) { if (has) CP.set(k, String(v)); }
 
 PROFILES.forEach(function (p) {
+  var builtin = p.pack && p.id.indexOf('pack:b-') === 0;
   var b = document.createElement('button'); b.className = 'key eng' + (p.pack ? ' pack' : ''); b.setAttribute('data-id', p.id);
-  b.innerHTML = '<b>' + p.name + '</b><span>' + (p.pack ? '● Gerçek kayıt · ' : '') + p.sub + '</span>';
+  b.innerHTML = '<b>' + p.name + '</b><span>' + (p.pack ? '● ' : '') + p.sub + '</span>';
   b.onclick = function () { cfg.id = p.id; set('id', p.id); if (!cfg.on) power(true); paint(); };
-  if (p.pack) {
+  if (p.pack && !builtin) {
     var t = null;
     b.addEventListener('pointerdown', function () { t = setTimeout(function () { t = null; if (confirm(p.name + ' silinsin mi?')) { CP.deletePack(p.id); location.reload(); } }, 900); });
     ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { if (t) clearTimeout(t); }); });
@@ -111,11 +115,13 @@ PROFILES.forEach(function (p) {
   $('list').appendChild(b);
 });
 var add = document.createElement('button'); add.className = 'key eng add';
-add.innerHTML = '<b style="font-size:2.36vh">+ Ses paketi ekle</b><span>USB / Download · .zip</span>';
+add.innerHTML = '<b style="font-size:2.36vh">+ Ses paketi ekle</b><span>kendi kaydın · .zip</span>';
 add.onclick = function () { if (has) CP.importPack(); };
 $('list').appendChild(add);
 
 ['Stok', 'Spor', 'Yarış'].forEach(function (n, i) { seg('ex', n, function () { cfg.ex = i; set('ex', i); paint(); }); });
+[['media', 'Medya'], ['focus', 'Medya + öncelik'], ['nav', 'Navigasyon']].forEach(function (o) { seg('out', o[1], function () { cfg.out = o[0]; set('out', o[0]); paint(); }); });
+$('test').onclick = function () { if (has) CP.test(); cfg.on = true; paint(); };
 [['off', 'Yok'], ['wifi', 'Wi-Fi'], ['bt', 'Bluetooth']].forEach(function (o) { seg('obd', o[1], function () { cfg.obd = o[0]; set('obd', o[0]); paint(); }); });
 function seg(id, text, fn) { var b = document.createElement('button'); b.className = 'key chip'; b.textContent = text; b.onclick = fn; $(id).appendChild(b); }
 
@@ -147,6 +153,7 @@ function paint() {
   var l = $('list').children;
   for (var i = 0; i < l.length; i++) l[i].classList.toggle('on', l[i].getAttribute('data-id') === cfg.id);
   var e = $('ex').children; for (var j = 0; j < e.length; j++) e[j].classList.toggle('on', j === cfg.ex);
+  var oo = $('out').children, omm = ['media', 'focus', 'nav']; for (var q = 0; q < oo.length; q++) oo[q].classList.toggle('on', omm[q] === (cfg.out || 'focus'));
   var o = $('obd').children, om = ['off', 'wifi', 'bt']; for (var k = 0; k < o.length; k++) o[k].classList.toggle('on', om[k] === (cfg.obd || 'off'));
   $('power').textContent = cfg.on ? 'Açık' : 'Kapalı'; $('power').classList.toggle('on', !!cfg.on);
   $('vol').value = cfg.vol; $('volT').textContent = cfg.vol;
@@ -190,6 +197,10 @@ function tick() {
   $('gear').textContent = v.gear > 0 ? v.gear : 'N';
   $('kmh').textContent = v.kmh || 0;
   $('load').textContent = v.load || 0;
+  $('bErr').style.display = v.err ? 'inline-flex' : 'none'; $('bErr').textContent = v.err || '';
+  if (v.gh) $('ghStat').textContent = v.gh;
+  $('lvl').style.width = Math.min(100, (v.level || 0) * 1.6) + '%';
+  if (typeof v.on === 'boolean' && v.on !== !!cfg.on) { cfg.on = v.on; paint(); }
   var s = v.src || 'gps';
   $('bSrc').textContent = (s === 'gps' && !v.gps ? 'GPS aranıyor' : SRC[s] || s);
   $('bSrc').classList.toggle('ok', s !== 'gps' || !!v.gps);

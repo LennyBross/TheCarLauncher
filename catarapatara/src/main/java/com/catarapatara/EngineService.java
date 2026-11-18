@@ -45,7 +45,14 @@ public final class EngineService extends Service implements LocationListener, Ob
     static final String ACTION_DATA = "com.catarapatara.DATA";
     private static final int SR = 32000, BLOCK = 256, NOTE = 7;
 
+    /** First engine on a fresh install: the bundled V8 pack (falls back to the synth V8 if missing). */
+    static final String DEFAULT_ID = "pack:b-jaguar-v8";
+
     private static volatile EngineService sInstance;
+    /** Output peak 0..1 of the last block, so the screen can show that sound is really produced. */
+    private volatile float level;
+    private volatile String audioError = "";
+    private AudioManager.OnAudioFocusChangeListener focus;
 
     static EngineService get() { return sInstance; }
 
@@ -85,7 +92,13 @@ public final class EngineService extends Service implements LocationListener, Ob
     public void onCreate() {
         super.onCreate();
         sInstance = this;
+        SoundPacks.syncAssets(this);
         applyEngine();
+        new Thread(new Runnable() {
+            public void run() {
+                if (SoundPacks.syncGitHub(EngineService.this) > 0) main.post(new Runnable() { public void run() { applyEngine(); } });
+            }
+        }, "packs-sync").start();
     }
 
     @Override
@@ -150,6 +163,7 @@ public final class EngineService extends Service implements LocationListener, Ob
             if (Build.VERSION.SDK_INT >= 26) startForegroundService(b); else startService(b);
         } catch (Exception ignored) {
         }
+        takeFocus(true);
         final int my = ++gen;
         audio = new Thread(new Runnable() { public void run() { loop(my); } }, "engine-audio");
         audio.start();
@@ -157,6 +171,8 @@ public final class EngineService extends Service implements LocationListener, Ob
 
     private void end() {
         running = false;
+        takeFocus(false);
+        level = 0;
         publish(false, System.currentTimeMillis());
         try { ((LocationManager) getSystemService(LOCATION_SERVICE)).removeUpdates(this); } catch (Exception ignored) { }
         try { unregisterReceiver(data); } catch (Exception ignored) { }
@@ -187,7 +203,7 @@ public final class EngineService extends Service implements LocationListener, Ob
 
     void applyEngine() {
         SharedPreferences p = prefs(this);
-        String id = p.getString("id", "v8us");
+        String id = p.getString("id", DEFAULT_ID);
         SoundPacks.Loaded lp = id.startsWith("pack:") ? SoundPacks.load(this, id, SR) : null;
         synchronized (synth) {
             EngineSynth.Profile prof = lp != null ? EngineSynth.forRecording(id, lp.name, lp.sub, lp.idle, lp.redline) : EngineSynth.profile(id);
@@ -222,7 +238,7 @@ public final class EngineService extends Service implements LocationListener, Ob
         try {
             return new JSONObject().put("rpm", Math.round(sim.rpm)).put("gear", sim.gear).put("kmh", Math.round(sim.speed))
                     .put("red", Math.round(synth.profile().redline())).put("load", Math.round(sim.load * 100))
-                    .put("src", sim.source(now)).put("obd", obdStatus).put("gps", now - lastFixAt < 3000).toString();
+                    .put("src", sim.source(now)).put("level", Math.round(level * 100)).put("err", audioError).put("gh", SoundPacks.ghStatus).put("on", running).put("obd", obdStatus).put("gps", now - lastFixAt < 3000).toString();
         } catch (Exception e) {
             return "{}";
         }
@@ -286,6 +302,41 @@ public final class EngineService extends Service implements LocationListener, Ob
         bassA2 = (float) (((A + 1) + (A - 1) * c - sq) / a0);
     }
 
+    /** "media" (mixed under the music), "focus" (media, asks for audio focus) or "nav" (navigation voice channel). */
+    private AudioAttributes attrs() {
+        String out = prefs(this).getString("out", "focus");
+        AudioAttributes.Builder b = new AudioAttributes.Builder();
+        if ("nav".equals(out)) {
+            b.setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION);
+        } else {
+            b.setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC);
+        }
+        return b.build();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void takeFocus(boolean take) {
+        AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+        if (am == null) return;
+        if (take && "focus".equals(prefs(this).getString("out", "focus"))) {
+            if (focus == null) focus = new AudioManager.OnAudioFocusChangeListener() { public void onAudioFocusChange(int f) { } };
+            am.requestAudioFocus(focus, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
+        } else if (focus != null) {
+            am.abandonAudioFocus(focus);
+        }
+    }
+
+    float level() { return level; }
+
+    private void restartAudio() {
+        if (!running) return;
+        takeFocus(false);
+        takeFocus(true);
+        final int my = ++gen;
+        audio = new Thread(new Runnable() { public void run() { loop(my); } }, "engine-audio");
+        audio.start();
+    }
+
     private void loop(int my) {
         Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
         int min = AudioTrack.getMinBufferSize(SR, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
@@ -294,8 +345,7 @@ public final class EngineService extends Service implements LocationListener, Ob
         try {
             if (Build.VERSION.SDK_INT >= 23) {
                 track = new AudioTrack.Builder()
-                        .setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
-                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
+                        .setAudioAttributes(attrs())
                         .setAudioFormat(new AudioFormat.Builder().setSampleRate(SR)
                                 .setChannelMask(AudioFormat.CHANNEL_OUT_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build())
                         .setBufferSizeInBytes(bytes).setTransferMode(AudioTrack.MODE_STREAM).build();
@@ -305,8 +355,10 @@ public final class EngineService extends Service implements LocationListener, Ob
             }
             track.play();
         } catch (Throwable e) {
+            audioError = "Ses çıkışı açılamadı: " + e.getClass().getSimpleName();
             return;
         }
+        audioError = "";
         AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
         SharedPreferences p = prefs(this);
         float[] buf = new float[BLOCK];
@@ -343,6 +395,7 @@ public final class EngineService extends Service implements LocationListener, Ob
                 float want = muted ? 0f : vol;
                 boolean live = running && my == gen;
                 if (!live) fade -= dt / .8f;
+                float pk = 0;
                 for (int i = 0; i < BLOCK; i++) {
                     gain += (want - gain) * .002f;
                     float x = buf[i];
@@ -351,7 +404,9 @@ public final class EngineService extends Service implements LocationListener, Ob
                     bz2 = bassB2 * x - bassA2 * y;
                     float v = (float) Math.tanh(y * .8f) * gain * Math.max(0, fade);
                     pcm[i] = (short) Math.max(-32767, Math.min(32767, Math.round(v * 30000)));
+                    pk = Math.max(pk, Math.abs(v));
                 }
+                level = level * .8f + pk * .2f;
                 track.write(pcm, 0, BLOCK);
                 if (!live && fade <= 0) break;
             }
@@ -374,6 +429,7 @@ public final class EngineService extends Service implements LocationListener, Ob
 
     /** Called when the settings change from the app screen. */
     void settingsChanged(String key) {
+        if ("out".equals(key)) main.post(new Runnable() { public void run() { restartAudio(); } });
         if ("id".equals(key) || "ex".equals(key) || "bass".equals(key)) {
             main.post(new Runnable() { public void run() { applyEngine(); } });
         }

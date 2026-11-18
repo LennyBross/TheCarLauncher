@@ -33,6 +33,10 @@ input[type=range]{width:100%;accent-color:var(--a);height:4.44vh}
 <div style="flex:1"></div>
 <button class="key chip" id="power" style="height:6.67vh;min-width:20vh">Kapalı</button>
 </div>
+<div id="cpBanner" style="display:none;align-items:center;gap:1.67vh;padding:1.67vh 2.22vh;border-radius:2.22vh;background:#2A1A14;border:1px solid #6B3420">
+<span style="flex:1;font-size:2.08vh;line-height:1.35"><b style="color:#FF8A6B">CataraPatara</b> ile gerçek ses paketleri (Jaguar, Mustang, Ferrari, Porsche), Android Auto üstünde çalışma ve CAN verisi. Tek dokunuşla kur.</span>
+<button class="key chip" id="cpGet" style="background:#E8541E;color:#fff">CataraPatara'yı kur</button>
+</div>
 <div style="flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center">
 <svg id="tach" viewBox="0 0 400 300" style="width:100%;height:100%" aria-hidden="true">
 <path d="M70 250 A150 150 0 1 1 330 250" fill="none" stroke="#232A35" stroke-width="22" stroke-linecap="round"/>
@@ -139,6 +143,9 @@ function tick() {
   $('kmh').textContent = kmh;
   setTimeout(tick, 80);
 }
+$('cpGet').onclick = function () { call('open', 'cpInstall'); this.textContent = 'İndiriliyor…'; };
+var jumped = false;
+car.on(function (st) { $('cpBanner').style.display = st.cp ? 'none' : 'flex'; if (st.cp && !jumped && $('cpGet').textContent !== "CataraPatara'yı kur") { jumped = true; call('open', 'engine'); } });
 paint(); tick();
 </script>
 </body>

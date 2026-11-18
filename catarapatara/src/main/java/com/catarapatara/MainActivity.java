@@ -41,6 +41,12 @@ public final class MainActivity extends Activity {
         web.setWebViewClient(new WebViewClient());
         web.setWebChromeClient(new WebChromeClient());
         web.addJavascriptInterface(new Bridge(), "CP");
+        SoundPacks.syncAssets(this);
+        new Thread(new Runnable() {
+            public void run() {
+                if (SoundPacks.syncGitHub(MainActivity.this) > 0) runOnUiThread(new Runnable() { public void run() { web.reload(); } });
+            }
+        }, "packs-sync").start();
         web.loadUrl("file:///android_asset/ui.html");
         setContentView(web);
         askPermissions();
@@ -102,11 +108,11 @@ public final class MainActivity extends Activity {
             SharedPreferences p = EngineService.prefs(MainActivity.this);
             EngineService s = EngineService.get();
             try {
-                return new JSONObject().put("on", s != null && s.playing()).put("id", p.getString("id", "v8us")).put("ex", p.getInt("ex", 1))
+                return new JSONObject().put("on", s != null && s.playing()).put("id", p.getString("id", EngineService.DEFAULT_ID)).put("ex", p.getInt("ex", 1))
                         .put("vol", p.getInt("vol", 70)).put("bass", p.getInt("bass", 3)).put("pops", p.getBoolean("pops", true))
                         .put("bubble", p.getBoolean("bubble", true)).put("canDraw", Bubble.canDraw(MainActivity.this))
                         .put("obd", p.getString("obd", "off")).put("obdTarget", p.getString("obdTarget", ""))
-                        .put("carMax", p.getInt("carMax", 4500)).put("boot", p.getBoolean("boot", true)).toString();
+                        .put("carMax", p.getInt("carMax", 4500)).put("out", p.getString("out", "focus")).put("boot", p.getBoolean("boot", true)).toString();
             } catch (Exception e) {
                 return "{}";
             }
@@ -125,7 +131,7 @@ public final class MainActivity extends Activity {
         public void set(final String key, final String value) {
             SharedPreferences.Editor e = EngineService.prefs(MainActivity.this).edit();
             switch (key) {
-                case "id": case "obd": case "obdTarget": e.putString(key, value); break;
+                case "id": case "obd": case "obdTarget": case "out": e.putString(key, value); break;
                 case "ex": case "vol": case "bass": case "carMax": e.putInt(key, Integer.parseInt(value)); break;
                 case "pops": case "bubble": case "boot": e.putBoolean(key, "1".equals(value)); break;
                 default: return;
@@ -182,6 +188,15 @@ public final class MainActivity extends Activity {
                     Toast.makeText(MainActivity.this, "Ayarlar → Uygulamalar → CataraPatara → Diğer uygulamaların üzerinde göster", Toast.LENGTH_LONG).show();
                 }
             }
+        }
+
+        /** Sound test: switch on and rev for a moment. */
+        @JavascriptInterface
+        public void test() {
+            SharedPreferences p = EngineService.prefs(MainActivity.this);
+            if (!p.getBoolean("on", false)) EngineService.toggle(MainActivity.this);
+            web.postDelayed(new Runnable() { public void run() { EngineService s = EngineService.get(); if (s != null) s.rev(true); } }, 2600);
+            web.postDelayed(new Runnable() { public void run() { EngineService s = EngineService.get(); if (s != null) s.rev(false); } }, 4200);
         }
 
         @JavascriptInterface
