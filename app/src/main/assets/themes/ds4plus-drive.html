@@ -48,7 +48,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
 <button class="key" id="gmaps" style="position:absolute;right:2.78vh;bottom:2.78vh;border:none;border-radius:1.67vh;background:var(--card);color:var(--fg);padding:1.39vh 2.22vh;font-size:2.08vh;font-weight:600">Google Maps'te aç</button>
 </div>
 <div style="width:min(61.11vh,36vw);flex-shrink:0;border-radius:3.33vh;background:var(--card);padding:2.78vh;display:flex;flex-direction:column;gap:2.22vh">
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.11vh;background:#0F141B;border-radius:2.22vh;padding:.83vh" id="src"></div>
+<div style="display:flex;align-items:center;gap:1.39vh;background:#0F141B;border-radius:2.22vh;padding:1.39vh 1.94vh"><span id="srcDot" style="width:1.67vh;height:1.67vh;border-radius:50%;background:#5A6B85;flex-shrink:0"></span><span id="srcName" style="font-size:2.36vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Müzik</span></div>
 <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center"><div id="art" style="width:min(27.78vh,100%);aspect-ratio:1;border-radius:2.78vh;background:#1F9D55;display:flex;align-items:center;justify-content:center"><svg style="width:10vh;height:10vh" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div></div>
 <div style="display:flex;flex-direction:column;gap:.56vh;min-width:0"><span style="font-size:3.33vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="title">Çalan bir şey yok</span><span style="font-size:2.36vh;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="artist"></span></div>
 <div style="display:flex;justify-content:space-between;align-items:center">
@@ -61,20 +61,13 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
 </div>
 <script src="common.js"></script>
 <script>
-var SRC = [['Spotify', 'spotify', '#1F9D55'], ['YT Music', 'ytmusic', '#D93636'], ['YouTube', 'youtube', '#C62828']];
-var cur = parseInt(store('ds4p.src') || '0', 10);
-function paintSrc() {
-  var b = $('src').children;
-  for (var i = 0; i < b.length; i++) { b[i].style.background = i === cur ? '#2A323E' : 'transparent'; b[i].style.color = i === cur ? '#F3F5F7' : '#A3ADBA'; }
-  $('art').style.background = SRC[cur][2];
+var SRC_COL = { spotify: '#1F9D55', ytmusic: '#D93636', youtube: '#C62828', bt: '#2F6FED', radio: '#C98A3A', own: '#5CC8B0', app: '#5A6B85' };
+function paintSrc(s) {
+  var c = SRC_COL[s.srcKind] || '#5A6B85';
+  $('srcDot').style.background = c; $('art').style.background = c;
+  $('srcName').textContent = s.srcLabel || 'Müzik';
 }
-SRC.forEach(function (s, i) {
-  var b = document.createElement('button'); b.className = 'key'; b.textContent = s[0];
-  b.style.cssText = 'height:6.67vh;border:none;border-radius:1.67vh;font-size:2.22vh;font-weight:600';
-  b.onclick = function () { cur = i; store('ds4p.src', i); paintSrc(); call('open', s[1]); };
-  $('src').appendChild(b);
-});
-paintSrc();
+
 var TURN = { left: '<path d="M16 20V11H6"/><path d="M10 7L6 11l4 4"/>', right: '<path d="M8 20V11h10"/><path d="M14 7l4 4-4 4"/>',
   'slight left': '<path d="M15 20v-6l-6-6"/><path d="M9 13V8h5"/>', 'slight right': '<path d="M9 20v-6l6-6"/><path d="M15 13V8h-5"/>',
   uturn: '<path d="M8 20V9a4 4 0 0 1 8 0v4"/><path d="M12 10l4 4 4-4"/>', straight: '<path d="M12 20V5"/><path d="M6 11l6-6 6 6"/>',
@@ -91,6 +84,7 @@ $('prev').onclick = function () { call('media', 'prev'); };
 $('next').onclick = function () { call('media', 'next'); };
 function dist(m) { return m >= 1000 ? num(m / 1000, 1) + ' km' : (Math.round(m / 10) * 10) + ' m'; }
 car.on(function (s) {
+  paintSrc(s);
   $('clock').textContent = s.time || '--:--';
   var pct = s.fuelLeft !== undefined && s.tank ? Math.round(s.fuelLeft / s.tank * 100) : null;
   var low = pct !== null && pct <= 15, col = low ? '#F2994A' : '#5CC8B0';

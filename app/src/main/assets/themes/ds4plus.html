@@ -39,7 +39,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;transit
 </div></div></div></div>
 <div class="c" style="padding:2.78vh 3.33vh;display:flex;flex-direction:column;gap:1.94vh">
 <div style="display:flex;align-items:center;gap:1.94vh;min-width:0"><div style="width:7.78vh;height:7.78vh;flex-shrink:0;border-radius:1.94vh;background:var(--as);display:flex;align-items:center;justify-content:center"><svg style="width:3.89vh;height:3.89vh" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
-<div style="display:flex;flex-direction:column;min-width:0"><span style="font-size:1.81vh;color:var(--muted);text-transform:uppercase;letter-spacing:.14vh">Şu an çalıyor</span><span style="font-size:2.78vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="title">Çalan bir şey yok</span><span style="font-size:2.08vh;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="artist"></span></div></div>
+<div style="display:flex;flex-direction:column;min-width:0"><span style="font-size:1.81vh;color:var(--muted);text-transform:uppercase;letter-spacing:.14vh" id="srcLbl">Şu an çalıyor</span><span style="font-size:2.78vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="title">Çalan bir şey yok</span><span style="font-size:2.08vh;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="artist"></span></div></div>
 <div style="display:flex;justify-content:space-between;align-items:center">
 <button class="key mb" id="prev" aria-label="Önceki" style="width:8.89vh;height:8.89vh;background:transparent;color:var(--fg)"><svg style="width:4.17vh;height:4.17vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
 <button class="key mb" id="play" aria-label="Oynat / duraklat" style="width:11.11vh;height:11.11vh;background:var(--a);color:#0B0E13"><svg id="playIcon" style="width:4.44vh;height:4.44vh" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"/></svg></button>
@@ -113,6 +113,7 @@ car.on(function (s) {
   $('cons').textContent = num(live ? s.inst : s.l100, 1);
   $('consLab').textContent = live ? 'Anlık L/100' : 'L/100 km';
   $('price').textContent = num(s.price, 2);
+  $('srcLbl').textContent = s.srcLabel ? s.srcLabel : 'Şu an çalıyor';
   $('title').textContent = s.title || 'Çalan bir şey yok';
   $('artist').textContent = s.artist || '';
   $('playIcon').innerHTML = s.playing ? '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>' : '<polygon points="7 4 20 12 7 20 7 4"/>';

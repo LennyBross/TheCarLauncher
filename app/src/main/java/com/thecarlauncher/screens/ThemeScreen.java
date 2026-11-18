@@ -205,6 +205,13 @@ public class ThemeScreen extends Screen {
             o.put("artist", m.artist() == null ? "" : m.artist());
         }
         o.put("playing", m.isPlaying());
+        // Whichever source is active (Spotify, YouTube Music, Bluetooth, radio…) drives the one player.
+        String src = m.packageName();
+        o.put("srcLabel", m.sourceLabel(src));
+        o.put("srcKind", src == null ? "" : src.equals(MediaHub.BLUETOOTH) ? "bt" : src.equals(MediaHub.RADIO) ? "radio"
+                : src.equals(PKG_SPOTIFY) ? "spotify" : src.equals(PKG_YTMUSIC) ? "ytmusic" : src.equals(PKG_YOUTUBE) ? "youtube"
+                : src.equals(act.getPackageName()) ? "own" : "app");
+        o.put("mediaAccess", m.hasNotificationAccess());
 
         float temp = Prefs.of(act).getFloat("weather_temp", Float.NaN);
         if (!Float.isNaN(temp)) o.put("temp", Math.round(temp));
@@ -286,7 +293,11 @@ public class ThemeScreen extends Screen {
             ui(new Runnable() {
                 public void run() {
                     switch (what == null ? "" : what) {
-                        case "radio": act.openRadio(); break;
+                        case "radio":
+                            if (com.thecarlauncher.radio.HcnRadio.available()) load("radio.html");
+                            else act.openRadio();
+                            break;
+                        case "radioFactory": openPkg("com.hcn.autoradio"); break;
                         case "media": act.show(LauncherActivity.MEDIA, true); break;
                         case "nav": act.show(LauncherActivity.NAV, true); break;
                         case "phone": act.openPhone(); break;
@@ -359,6 +370,31 @@ public class ThemeScreen extends Screen {
 
         @JavascriptInterface
         public String engineLive() { return com.thecarlauncher.engine.EngineSound.get(act).live(); }
+
+        // ---- Radio (AutoChips / HCN tuner) ----
+        @JavascriptInterface
+        public String radioInfo() {
+            int[] i = com.thecarlauncher.radio.HcnRadio.info();
+            try {
+                JSONObject o = new JSONObject().put("ok", com.thecarlauncher.radio.HcnRadio.available());
+                if (i != null) o.put("khz", i[0]).put("stereo", i[1] == 1).put("band", com.thecarlauncher.radio.HcnRadio.band());
+                return o.toString();
+            } catch (Exception e) {
+                return "{}";
+            }
+        }
+
+        @JavascriptInterface
+        public void radioTune(int khz) { com.thecarlauncher.radio.HcnRadio.play(); com.thecarlauncher.radio.HcnRadio.tune(khz); }
+
+        @JavascriptInterface
+        public void radioSeek(boolean up) { com.thecarlauncher.radio.HcnRadio.play(); com.thecarlauncher.radio.HcnRadio.seek(up); }
+
+        @JavascriptInterface
+        public void radioStep(boolean up) { com.thecarlauncher.radio.HcnRadio.play(); com.thecarlauncher.radio.HcnRadio.step(up); }
+
+        @JavascriptInterface
+        public void radioPlay() { com.thecarlauncher.radio.HcnRadio.play(); }
 
         @JavascriptInterface
         public void setOdometer(final double km) {

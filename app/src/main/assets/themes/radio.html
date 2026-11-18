@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Radyo</title>
+<link rel="stylesheet" href="common.css">
+<style>
+:root{--a:#5CC8B0;--bg:#0B0E13;--fg:#F3F5F7;--card:#161B23;--muted:#A3ADBA;--chip:#1E252F;--hot:#FF6B6B}
+body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
+.sg{font-family:'Space Grotesk',sans-serif;font-weight:700}
+.r{width:100vw;height:100vh;padding:2.78vh;display:flex;gap:2.22vh}
+.card{border-radius:3.33vh;background:var(--card)}
+.chip{border:none;border-radius:1.67vh;background:var(--chip);color:var(--fg);height:6.67vh;padding:0 2.22vh;font-size:2.22vh;font-weight:600}
+.big{border:none;border-radius:50%;background:var(--chip);color:var(--fg);width:12.22vh;height:12.22vh;display:flex;align-items:center;justify-content:center}
+.big svg{width:5vh;height:5vh}
+.fav{border:none;border-radius:2.22vh;background:var(--chip);color:var(--fg);height:10vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4vh}
+.fav b{font-family:'Space Grotesk',sans-serif;font-size:3.61vh}
+.fav span{font-size:1.67vh;color:var(--muted)}
+.fav.on{background:var(--a);color:#0B0E13}.fav.on span{color:#0B0E13}
+#dial{position:relative;height:9vh;overflow:hidden;border-radius:2.22vh;background:#0F141B}
+</style>
+</head>
+<body>
+<div class="r">
+<div class="card" style="flex:1;min-width:0;padding:2.78vh;display:flex;flex-direction:column;gap:2.22vh">
+<div style="display:flex;align-items:center;gap:1.67vh">
+<button class="key chip" id="back">‹ Geri</button>
+<span class="sg" style="font-size:3.33vh">Radyo</span>
+<div style="flex:1"></div>
+<span id="stereo" style="font-size:1.94vh;font-weight:700;color:var(--a);display:none">STEREO</span>
+<span id="band" style="font-size:1.94vh;color:var(--muted)">FM</span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.11vh">
+<div style="display:flex;align-items:baseline;gap:1.67vh"><span class="sg" id="freq" style="font-size:20vh;line-height:1;letter-spacing:-.6vh">--.-</span><span class="sg" style="font-size:4.44vh;color:var(--muted)">MHz</span></div>
+<span id="hint" style="font-size:2.08vh;color:var(--muted)"></span>
+</div>
+<div id="dial"><svg id="scale" width="100%" height="100%" preserveAspectRatio="none"></svg><div style="position:absolute;left:50%;top:0;bottom:0;width:.42vh;margin-left:-.21vh;background:var(--hot);border-radius:.2vh"></div></div>
+<div style="display:flex;align-items:center;justify-content:center;gap:2.78vh">
+<button class="key big" id="seekDn" aria-label="Önceki istasyon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+<button class="key big" id="stepDn" aria-label="0.1 aşağı" style="width:9.44vh;height:9.44vh;font-size:4.44vh;font-weight:700">−</button>
+<button class="key big" id="save" aria-label="Kaydet" style="width:14.44vh;height:14.44vh;background:var(--a);color:#0B0E13"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.7-9.3C.8 8.4 2.9 4.5 6.7 4.5c2 0 3.6 1.1 4.3 2.6.7-1.5 2.3-2.6 4.3-2.6 3.8 0 5.9 3.9 4.4 7.2C19.5 16.4 12 21 12 21z"/></svg></button>
+<button class="key big" id="stepUp" aria-label="0.1 yukarı" style="width:9.44vh;height:9.44vh;font-size:4.44vh;font-weight:700">+</button>
+<button class="key big" id="seekUp" aria-label="Sonraki istasyon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+</div>
+</div>
+<div class="card" style="width:min(64vh,38vw);flex-shrink:0;padding:2.78vh;display:flex;flex-direction:column;gap:1.67vh;min-height:0">
+<div style="display:flex;align-items:center"><span class="sg" style="font-size:2.78vh;flex:1">Kayıtlı istasyonlar</span><span style="font-size:1.67vh;color:var(--muted)">silmek için basılı tut</span></div>
+<div id="favs" style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:10vh;gap:1.39vh;align-content:start"></div>
+<button class="key chip" id="factory" style="height:7.22vh">Fabrika radyo uygulaması</button>
+</div>
+</div>
+<script src="common.js"></script>
+<script>
+var has = typeof Car !== 'undefined';
+function R(name) { var a = [].slice.call(arguments, 1); try { return has && Car[name] ? Car[name].apply(Car, a) : null; } catch (e) { return null; } }
+var favs = [];
+try { favs = JSON.parse(store('radio.favs') || '[]') || []; } catch (e) { favs = []; }
+var cur = 0;
+function mhz(k) { return k > 30000 ? (k / 1000).toFixed(1) : String(k); }
+function paintFavs() {
+  var box = $('favs'); box.innerHTML = '';
+  favs.forEach(function (k, i) {
+    var b = document.createElement('button'); b.className = 'key fav' + (k === cur ? ' on' : '');
+    b.innerHTML = '<b>' + mhz(k) + '</b><span>' + (k > 30000 ? 'FM' : 'AM') + ' · ' + (i + 1) + '</span>';
+    var t = null, held = false;
+    b.addEventListener('pointerdown', function () { held = false; t = setTimeout(function () { held = true; favs.splice(i, 1); save(); paintFavs(); }, 800); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { clearTimeout(t); }); });
+    b.onclick = function () { if (held) return; R('radioTune', k); cur = k; paint(); };
+    box.appendChild(b);
+  });
+  if (!favs.length) box.innerHTML = '<div style="grid-column:1/3;font-size:2.08vh;color:var(--muted);line-height:1.5;padding:1vh">Beğendiğin istasyonda ♥ tuşuna bas, burada dursun. Dokununca o istasyona geçer.</div>';
+}
+function save() { store('radio.favs', JSON.stringify(favs)); }
+function drawScale() {
+  // 87.5–108 MHz scale scrolling under the red needle
+  var svg = $('scale'), w = svg.clientWidth || 800, h = svg.clientHeight || 60, px = w / 6; // 6 MHz visible
+  var center = cur > 30000 ? cur / 1000 : 98, out = '';
+  for (var f = Math.floor((center - 3.5) * 10); f <= Math.ceil((center + 3.5) * 10); f++) {
+    var mhzV = f / 10, x = w / 2 + (mhzV - center) * px; if (mhzV < 87.5 || mhzV > 108) continue;
+    var major = f % 10 === 0, half = f % 5 === 0;
+    out += '<line x1="' + x + '" x2="' + x + '" y1="' + (major ? h * .25 : half ? h * .45 : h * .6) + '" y2="' + h + '" stroke="' + (major ? '#A3ADBA' : '#3A4452') + '" stroke-width="' + (major ? 2 : 1) + '"/>';
+    if (major) out += '<text x="' + x + '" y="' + h * .2 + '" fill="#A3ADBA" font-size="' + h * .2 + '" text-anchor="middle" font-family="Inter">' + f / 10 + '</text>';
+  }
+  favs.forEach(function (k) { var x = w / 2 + (k / 1000 - center) * px; out += '<circle cx="' + x + '" cy="' + h * .9 + '" r="' + h * .06 + '" fill="#5CC8B0"/>'; });
+  svg.innerHTML = out;
+}
+function paint() {
+  $('freq').textContent = cur ? mhz(cur) : '--.-';
+  $('save').style.background = favs.indexOf(cur) >= 0 ? '#FF6B6B' : '';
+  paintFavs(); drawScale();
+}
+function poll() {
+  var info = {}; try { info = JSON.parse(R('radioInfo') || '{}'); } catch (e) {}
+  if (!info.ok) { $('hint').textContent = 'Bu ünitede radyoya doğrudan erişilemedi — fabrika radyo uygulamasını kullan.'; }
+  else { $('hint').textContent = ''; }
+  if (info.khz && info.khz !== cur) { cur = info.khz; paint(); }
+  $('stereo').style.display = info.stereo ? 'inline' : 'none';
+  $('band').textContent = info.band || 'FM';
+  setTimeout(poll, 500);
+}
+$('seekUp').onclick = function () { R('radioSeek', true); };
+$('seekDn').onclick = function () { R('radioSeek', false); };
+$('stepUp').onclick = function () { R('radioStep', true); };
+$('stepDn').onclick = function () { R('radioStep', false); };
+$('save').onclick = function () {
+  if (!cur) return;
+  var i = favs.indexOf(cur);
+  if (i >= 0) favs.splice(i, 1); else { favs.push(cur); favs.sort(function (a, b) { return a - b; }); }
+  save(); paint();
+};
+// Drag the scale to tune
+(function () {
+  var d = $('dial'), sx = 0, base = 0, on = false;
+  d.addEventListener('pointerdown', function (e) { on = true; sx = e.clientX; base = cur || 98000; try { d.setPointerCapture(e.pointerId); } catch (x) {} });
+  d.addEventListener('pointermove', function (e) {
+    if (!on) return; var w = d.clientWidth / 6, k = Math.round((base / 1000 - (e.clientX - sx) / w) * 10) * 100;
+    k = Math.max(87500, Math.min(108000, k)); if (k !== cur) { cur = k; $('freq').textContent = mhz(cur); drawScale(); }
+  });
+  function up() { if (!on) return; on = false; R('radioTune', cur); paint(); }
+  d.addEventListener('pointerup', up); d.addEventListener('pointercancel', up);
+})();
+$('factory').onclick = function () { call('open', 'radioFactory'); };
+$('back').onclick = function () { call('open', 'themehome'); };
+R('radioPlay');
+paint(); poll();
+</script>
+</body>
+</html>

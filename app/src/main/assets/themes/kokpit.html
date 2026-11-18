@@ -35,7 +35,7 @@ body{background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif;
 <section class="c" aria-label="Müzik" id="musicCard" style="background:linear-gradient(135deg,#5B3A6E 0%,#2A2140 45%,var(--card) 100%);flex-direction:row;gap:3.06vh;align-items:center;color:#fff">
 <div style="width:min(31.94vh,15vw);height:min(31.94vh,15vw);flex-shrink:0;border-radius:3.06vh;background:linear-gradient(140deg,#8E5BAA,#3B2A5A);box-shadow:0 2.2vh 5.6vh rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55)" id="art"><svg style="width:8.89vh;height:8.89vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div>
 <div style="flex:1;min-width:0;align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;padding:.83vh 0">
-<div style="display:flex;gap:1.11vh"><button class="key" data-go="spotify" style="padding:.83vh 1.67vh;border-radius:99px;border:none;background:rgba(255,255,255,.16);color:#fff;font-size:1.81vh;font-weight:700">Spotify</button><button class="key" data-go="ytmusic" style="padding:.83vh 1.67vh;border-radius:99px;border:none;background:rgba(255,255,255,.06);color:rgba(255,255,255,.75);font-size:1.81vh;font-weight:600">YouTube Music</button></div>
+<div style="display:flex;gap:1.11vh"><span id="srcChip" style="padding:.83vh 1.67vh;border-radius:99px;background:rgba(255,255,255,.16);color:#fff;font-size:1.81vh;font-weight:700">Müzik</span></div>
 <div style="display:flex;flex-direction:column;gap:.83vh;min-width:0"><span style="font-size:4.44vh;font-weight:700;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="title">Çalan bir şey yok</span><span style="font-size:2.78vh;font-weight:500;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="artist"></span></div>
 <div style="display:flex;align-items:center;gap:1.94vh">
 <button class="key mb" id="prev" aria-label="Önceki" style="width:8.89vh;height:8.89vh;background:rgba(255,255,255,.1);color:#fff"><svg style="width:3.61vh;height:3.61vh" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
@@ -92,6 +92,7 @@ $('prev').onclick = function () { call('media', 'prev'); };
 $('next').onclick = function () { call('media', 'next'); };
 $('drive').onclick = function () { location.href = 'drive.html'; };
 car.on(function (s) {
+  if ($('srcChip')) $('srcChip').textContent = s.srcLabel || 'Müzik';
   if (s.inst !== undefined) $('inst').innerHTML = num(s.inst, 1) + ' <small>L/100</small>';
   document.body.classList.toggle('day', !s.night);
   $('clock').textContent = s.time || '--:--';

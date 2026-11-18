@@ -47,6 +47,7 @@ public final class BridgeService extends Service {
             startForeground(3, new Notification.Builder(this, "can").setSmallIcon(R.drawable.ic_stat)
                     .setContentTitle("CataraPatara CAN").setContentText("Araç verisi okunuyor").build());
         }
+        grantMediaAccess();
         if (!run) {
             run = true;
             new Thread(new Runnable() { public void run() { loop(); } }, "can-log").start();
@@ -69,6 +70,24 @@ public final class BridgeService extends Service {
             }, "can-status").start();
         }
         return START_STICKY;
+    }
+
+    /**
+     * MYDS reads the playing song and controls Spotify / YouTube Music / Bluetooth through a
+     * notification listener. On this unit nobody can reach that setting easily, so the bridge
+     * (system app) switches it on for MYDS once.
+     */
+    private void grantMediaAccess() {
+        try {
+            getPackageManager().getPackageInfo("com.thecarlauncher", 0);
+            String comp = "com.thecarlauncher/com.thecarlauncher.media.MediaListenerService";
+            String key = "enabled_notification_listeners";
+            String cur = android.provider.Settings.Secure.getString(getContentResolver(), key);
+            if (cur != null && (cur.contains(comp) || cur.contains("com.thecarlauncher/.media.MediaListenerService"))) return;
+            String next = cur == null || cur.isEmpty() ? comp : cur + ":" + comp;
+            android.provider.Settings.Secure.putString(getContentResolver(), key, next);
+        } catch (Throwable ignored) {
+        }
     }
 
     @Override

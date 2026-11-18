@@ -132,6 +132,13 @@ public final class DeviceReport {
             r.append("  (").append(e.getClass().getSimpleName()).append(")\n");
         }
 
+        r.append("\n== Radio (HCN / AutoChips) ==\n");
+        try {
+            r.append(com.thecarlauncher.radio.HcnRadio.describe());
+        } catch (Throwable e) {
+            r.append("  (").append(e.getClass().getSimpleName()).append(")\n");
+        }
+
         r.append("\n== CataraPatara ==\n");
         try {
             for (String pkg : new String[]{CanLive.PKG_CP, CanLive.PKG_BRIDGE}) {
@@ -317,6 +324,20 @@ public final class DeviceReport {
             body.write(("\r\n--" + b + "--\r\n").getBytes("UTF-8"));
             String r = post("https://litterbox.catbox.moe/resources/internals/api.php", "multipart/form-data; boundary=" + b, body.toByteArray());
             if (r != null && r.trim().startsWith("http")) return r.trim();
+        } catch (Exception ignored) {
+        }
+        // Fallback: tmpfiles.org (deleted after an hour); its page link opens a download page.
+        try {
+            String b = "----MYDS" + System.currentTimeMillis();
+            java.io.ByteArrayOutputStream body = new java.io.ByteArrayOutputStream();
+            body.write(("--" + b + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"" + name + "\"\r\nContent-Type: " + type + "\r\n\r\n").getBytes("UTF-8"));
+            body.write(data);
+            body.write(("\r\n--" + b + "--\r\n").getBytes("UTF-8"));
+            String r = post("https://tmpfiles.org/api/v1/upload", "multipart/form-data; boundary=" + b, body.toByteArray());
+            if (r != null) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"url\"\\s*:\\s*\"([^\"]+)\"").matcher(r);
+                if (m.find()) return m.group(1).replace("\\/", "/");
+            }
         } catch (Exception ignored) {
         }
         return null;
