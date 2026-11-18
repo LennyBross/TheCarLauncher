@@ -109,6 +109,9 @@ public class ThemeScreen extends Screen {
         load(theme == DS4PLUS ? "ds4plus-drive.html" : "drive.html");
     }
 
+    /** Open the internal radio with the currently selected theme. */
+    public void openRadioPage() { load("radio.html"); }
+
     /** Reloads whatever page is showing (after a sound pack import). */
     public void reloadPage() {
         if (web != null) web.reload();
@@ -315,11 +318,7 @@ public class ThemeScreen extends Screen {
             ui(new Runnable() {
                 public void run() {
                     switch (what == null ? "" : what) {
-                        case "radio":
-                            if (com.thecarlauncher.radio.HcnRadio.available()) load("radio.html");
-                            else act.openRadio();
-                            break;
-                        case "radioFactory": openPkg("com.hcn.autoradio"); break;
+                        case "radio": load("radio.html"); break;
                         case "media": act.show(LauncherActivity.MEDIA, true); break;
                         case "srcApp": {
                             String sp = MediaHub.get(act).packageName();
@@ -399,30 +398,23 @@ public class ThemeScreen extends Screen {
         @JavascriptInterface
         public String engineLive() { return com.thecarlauncher.engine.EngineSound.get(act).live(); }
 
-        // ---- Radio (AutoChips / HCN tuner) ----
+        // ---- Radio: unified native hardware bridge ----
         @JavascriptInterface
-        public String radioInfo() {
-            int[] i = com.thecarlauncher.radio.HcnRadio.info();
-            try {
-                JSONObject o = new JSONObject().put("ok", com.thecarlauncher.radio.HcnRadio.available());
-                if (i != null) o.put("khz", i[0]).put("stereo", i[1] == 1).put("band", com.thecarlauncher.radio.HcnRadio.band());
-                return o.toString();
-            } catch (Exception e) {
-                return "{}";
-            }
+        public void radioRefresh() {
+            ui(new Runnable() { public void run() {
+                if (web == null || !ready || web.getUrl() == null || !web.getUrl().endsWith("/radio.html")) return;
+                String json = com.thecarlauncher.radio.ThemeRadio.get(act).snapshot().toString();
+                web.evaluateJavascript("window.radioUpdate&&radioUpdate(" + json + ")", null);
+            } });
         }
 
         @JavascriptInterface
-        public void radioTune(int khz) { com.thecarlauncher.radio.HcnRadio.play(); com.thecarlauncher.radio.HcnRadio.tune(khz); }
-
-        @JavascriptInterface
-        public void radioSeek(boolean up) { com.thecarlauncher.radio.HcnRadio.play(); com.thecarlauncher.radio.HcnRadio.seek(up); }
-
-        @JavascriptInterface
-        public void radioStep(boolean up) { com.thecarlauncher.radio.HcnRadio.play(); com.thecarlauncher.radio.HcnRadio.step(up); }
-
-        @JavascriptInterface
-        public void radioPlay() { com.thecarlauncher.radio.HcnRadio.play(); }
+        public void radioAction(final String action, final int value) {
+            ui(new Runnable() { public void run() {
+                if (web == null || !ready || web.getUrl() == null || !web.getUrl().endsWith("/radio.html")) return;
+                com.thecarlauncher.radio.ThemeRadio.get(act).action(action, value);
+            } });
+        }
 
         @JavascriptInterface
         public void setOdometer(final double km) {

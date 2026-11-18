@@ -105,10 +105,19 @@ public final class HcnRadio {
     }
 
     /** Makes sure the tuner plays (some builds need an explicit start). */
-    public static void play() {
+    public static boolean play() {
         Object p = player();
-        if (p == null) return;
-        for (String n : new String[]{"play", "open", "start", "resume", "powerOn"}) if (call(p, n)) return;
+        if (p == null) return false;
+        for (String n : new String[]{"play", "open", "start", "resume", "powerOn"}) if (call(p, n)) return true;
+        return false;
+    }
+
+    /** Explicit stop only; never toggle unknown audio state. */
+    public static boolean stop() {
+        Object p = player();
+        if (p == null) return false;
+        for (String n : new String[]{"pause", "stop", "powerOff", "close"}) if (call(p, n)) return true;
+        return false;
     }
 
     /** The class's API, for the device report. */
