@@ -1173,6 +1173,9 @@ public class SettingsScreen extends Screen {
                         reportText = (path != null ? path + "\n\n" : "") + text;
                         push(s("Izveštaj o uređaju", "Device report"), new Page() {
                             public void build() {
+                                action(s("Pošalji na telefon", "Send to phone"), s("kratak link, 7 dana", "short link, 7 days"), new Runnable() {
+                                    public void run() { uploadReport(text); }
+                                });
                                 TextView t = Mib.text(act, reportText, 18, Mib.regular(act), Mib.WHITE);
                                 t.setSingleLine(false);
                                 t.setMaxLines(Integer.MAX_VALUE);
@@ -1187,6 +1190,41 @@ public class SettingsScreen extends Screen {
                 });
             }
         }, "device-report").start();
+    }
+
+    /** Uploads the report and shows a short link to type into the phone. */
+    private void uploadReport(final String text) {
+        com.thecarlauncher.mib.LoadingBanner.start("upload", s("Slanje izveštaja…", "Uploading the report…"));
+        new Thread(new Runnable() {
+            public void run() {
+                final String url = com.thecarlauncher.util.DeviceReport.upload(text);
+                ui.post(new Runnable() {
+                    public void run() {
+                        com.thecarlauncher.mib.LoadingBanner.stop("upload");
+                        push(s("Pošalji na telefon", "Send to phone"), new Page() {
+                            public void build() {
+                                String msg = url != null
+                                        ? s("Otvorite ovaj link na telefonu ili ga pošaljite:", "Open this link on your phone, or just send it:")
+                                        : s("Slanje nije uspelo. Proverite internet (hotspot telefona) i pokušajte ponovo.",
+                                        "Upload failed. Check the internet (phone hotspot) and try again.");
+                                TextView a = Mib.text(act, msg, 22, Mib.regular(act), Mib.WHITE);
+                                a.setSingleLine(false);
+                                a.setMaxLines(4);
+                                a.setPadding(Mib.px(act, 30), Mib.px(act, 20), Mib.px(act, 30), Mib.px(act, 10));
+                                content.addView(a);
+                                if (url != null) {
+                                    TextView b = Mib.text(act, url.replaceFirst("^https?://", ""), 64, Mib.regular(act), 0xFF5CC8B0);
+                                    b.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+                                    b.setTextIsSelectable(true);
+                                    b.setPadding(Mib.px(act, 30), Mib.px(act, 10), Mib.px(act, 30), Mib.px(act, 20));
+                                    content.addView(b);
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        }, "report-upload").start();
     }
 
     /** Copies the factory radio / BT / MCU apps to Download for a build made for this unit. */

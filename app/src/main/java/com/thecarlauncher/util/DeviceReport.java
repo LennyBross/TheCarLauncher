@@ -220,4 +220,47 @@ public final class DeviceReport {
         }
         return out;
     }
+
+    /**
+     * Uploads the report to a paste service (expires after 7 days) and returns its short link,
+     * or null. dpaste.com first, paste.rs as a fallback.
+     */
+    public static String upload(String text) {
+        try {
+            String body = "content=" + java.net.URLEncoder.encode(text, "UTF-8") + "&syntax=text&expiry_days=7&title=MYDS-report";
+            String r = post("https://dpaste.com/api/v2/", "application/x-www-form-urlencoded", body);
+            if (r != null && r.trim().startsWith("http")) return r.trim();
+        } catch (Exception ignored) {
+        }
+        try {
+            String r = post("https://paste.rs/", "text/plain; charset=utf-8", text);
+            if (r != null && r.trim().startsWith("http")) return r.trim();
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private static String post(String url, String type, String body) throws Exception {
+        java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+        c.setConnectTimeout(10000);
+        c.setReadTimeout(20000);
+        c.setDoOutput(true);
+        c.setRequestMethod("POST");
+        c.setRequestProperty("Content-Type", type);
+        c.setRequestProperty("User-Agent", "MYDS-launcher");
+        byte[] b = body.getBytes("UTF-8");
+        c.setFixedLengthStreamingMode(b.length);
+        java.io.OutputStream o = c.getOutputStream();
+        o.write(b);
+        o.close();
+        int code = c.getResponseCode();
+        if (code < 200 || code >= 300) return null;
+        java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(c.getInputStream(), "UTF-8"));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = in.readLine()) != null) sb.append(line).append('\n');
+        in.close();
+        c.disconnect();
+        return sb.toString();
+    }
 }
