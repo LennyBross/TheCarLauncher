@@ -1740,6 +1740,17 @@ public class SettingsScreen extends Screen {
         action(s("Pošalji aplikaciju vozila (CAN) na telefon", "Send the car (CAN) app to phone"), s("link, 72 sata", "link, 72 hours"), new Runnable() {
             public void run() { uploadCanApp(); }
         });
+        action(s("Pošalji fabrički radio na telefon", "Send the factory radio app to phone"), s("link, 72 sata", "link, 72 hours"), new Runnable() {
+            public void run() {
+                com.thecarlauncher.mib.LoadingBanner.start("upload", s("Slanje…", "Uploading…"));
+                new Thread(new Runnable() {
+                    public void run() {
+                        final String url = com.thecarlauncher.util.DeviceReport.uploadRadioApp(act);
+                        ui.post(new Runnable() { public void run() { com.thecarlauncher.mib.LoadingBanner.stop("upload"); showLink(url); } });
+                    }
+                }, "radio-upload").start();
+            }
+        });
         action(s("Zvuk", "Sound"), null, intent(Settings.ACTION_SOUND_SETTINGS));
         action(s("Podrazumevani pokretač", "Default launcher"), null, new Runnable() {
             public void run() {

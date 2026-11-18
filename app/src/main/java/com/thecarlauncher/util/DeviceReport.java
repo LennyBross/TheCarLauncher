@@ -324,7 +324,15 @@ public final class DeviceReport {
 
     /** The car (CAN) app of this unit, for analysis: its APK uploaded, link returned. Also copied to Download. */
     public static String uploadCanApp(Context c) {
-        String[] pkgs = {"com.hcn.autocan", "com.syu.canbus", "com.ts.can", "com.fyt.canbus", "com.autochips.canbus"};
+        return uploadApps(c, new String[]{"com.hcn.autocan", "com.syu.canbus", "com.ts.can", "com.fyt.canbus", "com.autochips.canbus"});
+    }
+
+    /** The factory radio app, for analysis (same as above). */
+    public static String uploadRadioApp(Context c) {
+        return uploadApps(c, new String[]{"com.hcn.autoradio", "com.autochips.radio", "com.android.fmradio", "com.mediatek.fmradio"});
+    }
+
+    private static String uploadApps(Context c, String[] pkgs) {
         for (String p : pkgs) {
             try {
                 android.content.pm.ApplicationInfo ai = c.getPackageManager().getApplicationInfo(p, 0);

@@ -10,8 +10,8 @@ android {
         applicationId 'com.thecarlauncher'
         minSdk 21
         targetSdk 34
-        versionCode 100
-        versionName '4.24.2'
+        versionCode 101
+        versionName '4.25.0'
     }
 
     // One build per head-unit family (same app id, so a unit can switch between them).

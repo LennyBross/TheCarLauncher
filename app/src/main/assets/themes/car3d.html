@@ -125,9 +125,36 @@ $('engine').onclick = function () { location.href = 'engine.html'; };
 $('logs').onclick = function () { call('open', 'vehicleNative'); };
 $('back').onclick = function () { call('open', 'themehome'); };
 
-// ---- 3D -------------------------------------------------------------------------------------
+// ---- 3D (WebGL), or a 360° photo spin where WebGL is missing or too slow ----------------------
+var RENDER_MODE = location.hash === '#render';
+var VIEWS, VIEWS2 = [0, 45, 90, 135, 180, 'top'];
+['Ön', '¾ Ön', 'Yan', '¾ Arka', 'Arka', 'Üst'].forEach(function (n) {
+  var b = document.createElement('button'); b.className = 'key chip'; b.textContent = n; $('views').appendChild(b);
+});
+function markView(i) { var s = $('views').children; for (var k = 0; k < s.length; k++) s[k].classList.toggle('on', k === i); }
+function webglOK() {
+  try { var c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && window.THREE && (c.getContext('webgl') || c.getContext('experimental-webgl'))); }
+  catch (e) { return false; }
+}
+var spritesStarted = false;
+function fallback(why) {
+  if (spritesStarted || RENDER_MODE) return;
+  spritesStarted = true;
+  try { if (window.__stop3d) window.__stop3d(); } catch (e) {}
+  $('c').style.display = 'none';
+  $('colors').style.display = 'none';
+  startSprites();
+}
+if (!RENDER_MODE && (store('myds.3d') === 'sprites' || !webglOK())) fallback('nogl');
+else {
+  try { init3D(); } catch (e) { fallback('error'); }
+  // Still nothing on screen after 15 s (slow GPU / old WebView): use the photo spin.
+  if (!RENDER_MODE) setTimeout(function () { if (!window.__shown3d) fallback('slow'); }, 15000);
+}
+
+function init3D() {
 var stage = $('stage'), canvas = $('c');
-var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !RENDER_MODE ? true : true, preserveDrawingBuffer: RENDER_MODE, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 renderer.physicallyCorrectLights = true;
 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -197,6 +224,8 @@ function loadModel() {
       scene.add(model);
       setColor(parseInt(store('myds.color') || '0', 10) || 0);
       $('load').style.display = 'none';
+      window.__shown3d = true;
+      if (RENDER_MODE) { ground.visible = true; ring.visible = false; return; }
       intro();
     }, function (err) { $('load').textContent = 'Model yüklenemedi.'; });
   } catch (e) { $('load').textContent = 'Bu cihaz 3D görüntüyü desteklemiyor.'; }
@@ -217,7 +246,7 @@ function setColor(i) {
 
 // ---- Camera animations --------------------------------------------------------------------------
 // The car's nose points along +x. Each view: azimuth (deg, 0 = front), elevation (deg), distance.
-var VIEWS = [['Ön', 0, 8, 6.4], ['¾ Ön', 45, 14, 7.6], ['Yan', 90, 8, 8.2], ['¾ Arka', 135, 14, 7.6], ['Arka', 180, 8, 6.4], ['Üst', 90, 82, 9.2]];
+VIEWS = [['Ön', 0, 8, 6.4], ['¾ Ön', 45, 14, 7.6], ['Yan', 90, 8, 8.2], ['¾ Arka', 135, 14, 7.6], ['Arka', 180, 8, 6.4], ['Üst', 90, 82, 9.2]];
 // Narrow stages (800×480 units) need the camera further back so the whole car fits.
 function fit(d) { return d * Math.max(1, 1.45 / camera.aspect); }
 function sph(az, el, d) {
@@ -246,11 +275,8 @@ function stepTween(now) {
   if (t >= 1) { var cb = tween.done; tween = null; controls.enabled = true; controls.update(); if (cb) cb(); }
 }
 VIEWS.forEach(function (v, i) {
-  var b = document.createElement('button'); b.className = 'key chip'; b.textContent = v[0];
-  b.onclick = function () { setSpin(false); markView(i); flyTo(v[1], v[2], v[3], 1100); };
-  $('views').appendChild(b);
+  $('views').children[i].onclick = function () { setSpin(false); markView(i); flyTo(v[1], v[2], v[3], 1100); };
 });
-function markView(i) { var s = $('views').children; for (var k = 0; k < s.length; k++) s[k].classList.toggle('on', k === i); }
 
 // Auto 360° turn: on after the intro, paused while touching, back on after a quiet spell.
 var spinWanted = store('myds.spin') !== '0', idleTimer = null;
@@ -275,15 +301,96 @@ function resize() {
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize); resize();
+var stopped = false;
+window.__stop3d = function () { stopped = true; };
+// Frame rate guard: under ~8 fps for 4 s after the model shows, switch to the photo spin.
+var slowSince = 0, lastT = 0;
 function loop(now) {
+  if (stopped) return;
+  if (window.__shown3d && !RENDER_MODE && lastT) {
+    var fps = 1000 / Math.max(1, now - lastT);
+    if (fps < 8) { if (!slowSince) slowSince = now; else if (now - slowSince > 4000) { fallback('fps'); return; } } else slowSince = 0;
+  }
+  lastT = now;
   stepTween(now);
   if (!tween) controls.update();
   if (ring.material.opacity < 0.35) ring.material.opacity = Math.min(0.35, ring.material.opacity + 0.004);
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
 }
-requestAnimationFrame(loop);
+if (!RENDER_MODE) requestAnimationFrame(loop);
 setTimeout(loadModel, 30);
+
+// Offline renderer for the photo spin (desktop only, #render).
+window.__render = function (az, el, d, w, h) {
+  renderer.setPixelRatio(1);
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  camera.position.copy(sph(az, el, d)); camera.lookAt(TARGET);
+  renderer.render(scene, camera);
+  return canvas.toDataURL('image/png');
+};
+}
+
+// ---- Photo spin ------------------------------------------------------------------------------------
+// 36 pictures round the car (every 10°, front = 0°) plus one from above, made from the same model.
+function startSprites() {
+  var stage = $('stage'), N = 36, frames = [], cur = 4, top = new Image();
+  var img = document.createElement('img');
+  img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;touch-action:none;user-select:none;-webkit-user-drag:none';
+  img.draggable = false;
+  stage.insertBefore(img, $('load'));
+  var loaded = 0;
+  for (var i = 0; i < N; i++) {
+    var im = new Image();
+    im.onload = function () { if (++loaded === 1) { $('load').style.display = 'none'; } };
+    im.src = '3d/spin/f' + ('0' + i).slice(-2) + '.webp';
+    frames.push(im);
+  }
+  top.src = '3d/spin/top.webp';
+  function show(i) { cur = ((i % N) + N) % N; img.src = frames[cur].src; }
+  show(4);
+  $('load').textContent = 'Görüntü yükleniyor…';
+  // Drag to turn, with a little momentum
+  var dragging = false, sx = 0, base = 0, vel = 0, lastX = 0, lastT = 0, spinOn = store('myds.spin') !== '0', idle = null, anim = null;
+  function setSpin2(on) { spinOn = on; $('spin').classList.toggle('on', on); }
+  setSpin2(spinOn);
+  img.addEventListener('pointerdown', function (e) {
+    dragging = true; sx = e.clientX; base = cur; vel = 0; lastX = e.clientX; lastT = performance.now();
+    try { img.setPointerCapture(e.pointerId); } catch (x) {}
+    clearTimeout(idle); markView(-1); stopAnim();
+  });
+  img.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var step = Math.max(8, stage.clientWidth / 72);
+    show(base - Math.round((e.clientX - sx) / step));
+    var now = performance.now(); vel = (e.clientX - lastX) / Math.max(1, now - lastT); lastX = e.clientX; lastT = now;
+  });
+  function up() {
+    if (!dragging) return; dragging = false;
+    var v = vel * 60;
+    (function coast() { if (Math.abs(v) < 0.4) return; show(cur - Math.sign(v)); v *= 0.86; anim = setTimeout(coast, 40); })();
+    if (spinOn) idle = setTimeout(function () { auto(); }, 8000);
+  }
+  img.addEventListener('pointerup', up); img.addEventListener('pointercancel', up);
+  function stopAnim() { clearTimeout(anim); anim = null; }
+  function auto() { stopAnim(); (function t() { if (!spinOn || dragging) return; show(cur + 1); anim = setTimeout(t, 110); })(); }
+  $('spin').onclick = function () { setSpin2(!spinOn); store('myds.spin', spinOn ? '1' : '0'); markView(-1); if (spinOn) auto(); else stopAnim(); };
+  // Preset views: walk round to the angle, frame by frame
+  var btns = $('views').children;
+  VIEWS2.forEach(function (v, k) {
+    btns[k].onclick = function () {
+      setSpin2(false); stopAnim(); markView(k);
+      if (v === 'top') { img.src = top.src; return; }
+      var target = Math.round(v / 10) % N, d = ((target - cur + N + N / 2) % N) - N / 2;
+      (function walk() { if (d === 0) return; show(cur + Math.sign(d)); d -= Math.sign(d); anim = setTimeout(walk, 35); })();
+    };
+  });
+  // Entrance: a quick turn into the ¾ front view, then the slow spin
+  var n0 = 18; show(4 - n0);
+  (function enter() { if (n0-- <= 0) { markView(1); if (spinOn) idle = setTimeout(auto, 1500); return; } show(cur + 1); anim = setTimeout(enter, 45); })();
+}
+
 </script>
 </body>
 </html>
