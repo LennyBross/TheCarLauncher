@@ -1,0 +1,141 @@
+package com.catarapatara.canbridge;
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.os.IBinder;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
+
+/**
+ * Follows the raw CAN-box frames that the factory CAN app (com.hcn.autocan) writes to the system
+ * log ("CanService: rev: FD…"), decodes the Raise PSA trip computer and passes the values on as
+ * broadcasts: com.catarapatara.DATA (for the engine sound) and com.thecarlauncher.CAN (for MYDS).
+ * Read-only: the serial port stays with the factory app.
+ */
+public final class BridgeService extends Service {
+    static volatile String status = "Başlatılıyor…";
+    static volatile float instant = -1, range = -1, outdoor = Float.NaN;
+    static volatile long lastFrameAt;
+    static final Map<Integer, String> frames = new TreeMap<>();
+    static final Map<Integer, Integer> counts = new TreeMap<>();
+
+    private volatile boolean run;
+    private Process proc;
+    private final byte[] buf = new byte[512];
+    private int n;
+
+    static void start(Context c) {
+        Intent i = new Intent(c, BridgeService.class);
+        if (Build.VERSION.SDK_INT >= 26) c.startForegroundService(i); else c.startService(i);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            nm.createNotificationChannel(new NotificationChannel("can", "CAN köprüsü", NotificationManager.IMPORTANCE_MIN));
+            startForeground(3, new Notification.Builder(this, "can").setSmallIcon(R.drawable.ic_stat)
+                    .setContentTitle("CataraPatara CAN").setContentText("Araç verisi okunuyor").build());
+        }
+        if (!run) {
+            run = true;
+            new Thread(new Runnable() { public void run() { loop(); } }, "can-log").start();
+        }
+        return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        run = false;
+        if (proc != null) proc.destroy();
+        super.onDestroy();
+    }
+
+    @Override
+    public IBinder onBind(Intent i) { return null; }
+
+    private void loop() {
+        while (run) {
+            try {
+                status = "Log okunuyor…";
+                // Only new lines (-T 1), only the CAN app's receive log.
+                proc = Runtime.getRuntime().exec(new String[]{"logcat", "-v", "raw", "-T", "1", "CanService:I", "*:S"});
+                BufferedReader r = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+                String line;
+                while (run && (line = r.readLine()) != null) {
+                    int i = line.indexOf("rev: ");
+                    if (i >= 0) feedHex(line.substring(i + 5).trim());
+                }
+                status = "Log akışı kapandı, yeniden deneniyor";
+            } catch (Exception e) {
+                status = "Log okunamıyor: " + e.getMessage();
+            }
+            if (proc != null) proc.destroy();
+            try { Thread.sleep(3000); } catch (InterruptedException ignored) { }
+        }
+    }
+
+    private void feedHex(String hex) {
+        hex = hex.replaceAll("[^0-9A-Fa-f]", "");
+        for (int i = 0; i + 1 < hex.length(); i += 2) {
+            if (n >= buf.length) n = 0;
+            buf[n++] = (byte) Integer.parseInt(hex.substring(i, i + 2), 16);
+        }
+        parse();
+    }
+
+    /** Raise frames: FD, len (len byte + data + checksum), data…, checksum = sum(len..data) & 0xFF. */
+    private void parse() {
+        int start = 0;
+        while (true) {
+            while (start < n && (buf[start] & 0xFF) != 0xFD) start++;
+            if (n - start < 3) break;
+            int len = buf[start + 1] & 0xFF;
+            if (len < 2 || len > 64) { start++; continue; }
+            if (n - start < 1 + len) break;
+            int sum = 0;
+            for (int k = 1; k < len; k++) sum += buf[start + k] & 0xFF;
+            if ((sum & 0xFF) != (buf[start + len] & 0xFF)) { start++; continue; }
+            byte[] f = new byte[1 + len];
+            System.arraycopy(buf, start, f, 0, f.length);
+            frame(f);
+            start += 1 + len;
+        }
+        System.arraycopy(buf, start, buf, 0, n - start);
+        n -= start;
+    }
+
+    private void frame(byte[] f) {
+        int cmd = f[2] & 0xFF;
+        lastFrameAt = System.currentTimeMillis();
+        status = "Bağlı · CAN verisi geliyor";
+        synchronized (frames) {
+            StringBuilder sb = new StringBuilder();
+            for (byte b : f) sb.append(String.format(Locale.US, "%02X ", b & 0xFF));
+            frames.put(cmd, sb.toString().trim());
+            Integer c = counts.get(cmd);
+            counts.put(cmd, c == null ? 1 : c + 1);
+        }
+        Intent out = null;
+        if (cmd == 0x33 && f.length >= 10) {
+            instant = (((f[3] & 0xFF) << 8) | (f[4] & 0xFF)) * 0.1f;
+            range = ((f[5] & 0xFF) << 8) | (f[6] & 0xFF);
+            out = new Intent("com.catarapatara.DATA").putExtra("l100", Math.min(300f, instant));
+            sendBroadcast(new Intent("com.thecarlauncher.CAN").putExtra("l100", instant).putExtra("range", range));
+        } else if (cmd == 0x36 && f.length >= 5) {
+            int t = f[3] & 0x7F;
+            outdoor = (f[3] & 0x80) != 0 ? -t : t;
+            sendBroadcast(new Intent("com.thecarlauncher.CAN").putExtra("outdoor", outdoor));
+        }
+        if (out != null) sendBroadcast(out);
+    }
+}

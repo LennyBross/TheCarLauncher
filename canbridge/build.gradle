@@ -1,0 +1,49 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Signed with the public AOSP test platform key: on head units whose firmware is built with
+// test-keys (the factory CAN app shares that key) it runs as the system user and may read the log
+// in which the factory CAN app records the raw CAN-box frames. Read-only: it never opens the port.
+android {
+    namespace 'com.catarapatara.canbridge'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.catarapatara.canbridge'
+        minSdk 21
+        targetSdk 27
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    signingConfigs {
+        platform {
+            storeFile rootProject.file('keystore/aosp-testkey-platform.p12')
+            storeType 'pkcs12'
+            storePassword 'android'
+            keyAlias 'platform'
+            keyPassword 'android'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.platform
+        }
+        debug {
+            signingConfig signingConfigs.platform
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}

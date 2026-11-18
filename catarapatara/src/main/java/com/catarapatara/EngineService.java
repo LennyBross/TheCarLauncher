@@ -144,6 +144,12 @@ public final class EngineService extends Service implements LocationListener, Ob
         IntentFilter f = new IntentFilter(ACTION_DATA);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(data, f, RECEIVER_EXPORTED); else registerReceiver(data, f);
         applyObd();
+        // CAN bridge (separate system app, if installed) feeds instant consumption.
+        try {
+            Intent b = new Intent().setClassName("com.catarapatara.canbridge", "com.catarapatara.canbridge.BridgeService");
+            if (Build.VERSION.SDK_INT >= 26) startForegroundService(b); else startService(b);
+        } catch (Exception ignored) {
+        }
         final int my = ++gen;
         audio = new Thread(new Runnable() { public void run() { loop(my); } }, "engine-audio");
         audio.start();
