@@ -25,6 +25,7 @@ public final class BridgeService extends Service {
     static volatile String status = "Başlatılıyor…";
     static volatile float instant = -1, range = -1, outdoor = Float.NaN;
     static volatile long lastFrameAt;
+    static volatile int lines, revLines, frameCount;
     static final Map<Integer, String> frames = new TreeMap<>();
     static final Map<Integer, Integer> counts = new TreeMap<>();
 
@@ -49,6 +50,23 @@ public final class BridgeService extends Service {
         if (!run) {
             run = true;
             new Thread(new Runnable() { public void run() { loop(); } }, "can-log").start();
+            new Thread(new Runnable() {
+                public void run() {
+                    while (run) {
+                        try {
+                            StringBuilder types = new StringBuilder();
+                            synchronized (frames) {
+                                for (Integer k : counts.keySet()) types.append(String.format(Locale.US, "%02X×%d ", k, counts.get(k)));
+                            }
+                            sendBroadcast(new Intent("com.thecarlauncher.CANSTATUS").putExtra("status", status)
+                                    .putExtra("lines", lines).putExtra("rev", revLines).putExtra("frames", frameCount)
+                                    .putExtra("types", types.toString().trim()).putExtra("age", lastFrameAt == 0 ? -1 : System.currentTimeMillis() - lastFrameAt));
+                            Thread.sleep(2000);
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+            }, "can-status").start();
         }
         return START_STICKY;
     }
@@ -67,13 +85,17 @@ public final class BridgeService extends Service {
         while (run) {
             try {
                 status = "Log okunuyor…";
-                // Only new lines (-T 1), only the CAN app's receive log.
-                proc = Runtime.getRuntime().exec(new String[]{"logcat", "-v", "raw", "-T", "1", "CanService:I", "*:S"});
+                // Only new lines (-T 1). No tag filter: some firmwares log under another tag; the
+                // receive lines are recognised by their "rev: <hex>" text.
+                proc = Runtime.getRuntime().exec(new String[]{"logcat", "-v", "brief", "-T", "1"});
                 BufferedReader r = new BufferedReader(new InputStreamReader(proc.getInputStream()));
                 String line;
+                lines = 0;
                 while (run && (line = r.readLine()) != null) {
+                    lines++;
                     int i = line.indexOf("rev: ");
-                    if (i >= 0) feedHex(line.substring(i + 5).trim());
+                    if (i >= 0) { revLines++; feedHex(line.substring(i + 5).trim()); }
+                    if (lastFrameAt == 0 && lines > 50 && revLines == 0) status = "Log okunuyor (" + lines + " satır), CAN satırı yok";
                 }
                 status = "Log akışı kapandı, yeniden deneniyor";
             } catch (Exception e) {
@@ -116,6 +138,7 @@ public final class BridgeService extends Service {
 
     private void frame(byte[] f) {
         int cmd = f[2] & 0xFF;
+        frameCount++;
         lastFrameAt = System.currentTimeMillis();
         status = "Bağlı · CAN verisi geliyor";
         synchronized (frames) {

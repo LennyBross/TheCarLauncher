@@ -45,6 +45,8 @@ public final class StatusActivity extends Activity {
         StringBuilder sb = new StringBuilder();
         sb.append("CataraPatara CAN köprüsü\n\n");
         sb.append(BridgeService.status).append('\n');
+        sb.append("Okunan log satırı: ").append(BridgeService.lines).append(" · CAN satırı: ").append(BridgeService.revLines)
+                .append(" · çerçeve: ").append(BridgeService.frameCount).append('\n');
         long age = System.currentTimeMillis() - BridgeService.lastFrameAt;
         sb.append(BridgeService.lastFrameAt == 0 ? "Henüz çerçeve yok (kontak açık mı?)" : "Son çerçeve: " + age / 1000 + " sn önce").append("\n\n");
         sb.append(String.format(Locale.US, "Anlık yakıt : %s L/100 km\n", BridgeService.instant < 0 ? "—" : String.format(Locale.US, "%.1f", BridgeService.instant)));

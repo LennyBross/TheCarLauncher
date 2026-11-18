@@ -148,6 +148,10 @@ public final class DeviceReport {
             r.append("  CAN bridge data: ").append(CanLive.canAt == 0 ? "never" : (now - CanLive.canAt) / 1000 + " s ago")
                     .append(" l100=").append(CanLive.l100).append(" range=").append(CanLive.range)
                     .append(" outdoor=").append(CanLive.outdoor).append('\n');
+            r.append("  CAN bridge status: ").append(CanLive.bridgeAt == 0 ? "never reported" : (now - CanLive.bridgeAt) / 1000 + " s ago")
+                    .append(" \"").append(CanLive.bridgeStatus).append("\" lines=").append(CanLive.bridgeLines)
+                    .append(" rev=").append(CanLive.bridgeRev).append(" frames=").append(CanLive.bridgeFrames)
+                    .append(" types=").append(CanLive.bridgeTypes).append('\n');
             r.append("  engine sound: ").append(CanLive.cpAt == 0 ? "never reported" : (now - CanLive.cpAt) / 1000 + " s ago")
                     .append(" on=").append(CanLive.cpOn).append(" rpm=").append(CanLive.cpRpm).append(" gear=").append(CanLive.cpGear)
                     .append(" engine=").append(CanLive.cpName).append(" src=").append(CanLive.cpSrc).append('\n');

@@ -67,7 +67,7 @@ input[type=text]{flex:1;height:6.11vh;border-radius:1.67vh;border:1px solid #2E3
 <div style="display:flex;flex-direction:column;gap:1vh;flex:1;min-width:0">
 <div style="display:flex;align-items:baseline;gap:1vh"><span class="sg" style="font-size:5vh" id="kmh">0</span><span style="font-size:1.94vh;color:var(--muted)">km/h</span>
 <span style="margin-left:2vh;font-size:1.94vh;color:var(--muted)">Gaz <b id="load" style="color:var(--fg)">0</b>%</span></div>
-<div style="display:flex;gap:1vh;flex-wrap:wrap"><span class="badge" id="bSrc">GPS</span><span class="badge" id="bObd" style="display:none"></span><span class="badge" id="bErr" style="display:none;background:rgba(255,90,60,.18);color:#FF8A6B"></span></div>
+<div style="display:flex;gap:1vh;flex-wrap:wrap"><span class="badge" id="bSrc">GPS</span><span class="badge" id="bObd" style="display:none"></span><span class="badge" id="bCan" style="display:none"></span><span class="badge" id="bErr" style="display:none;background:rgba(255,90,60,.18);color:#FF8A6B"></span></div>
 <div style="display:flex;align-items:center;gap:1.2vh"><span style="font-size:1.81vh;color:var(--muted);width:11vh">Ses çıkışı</span><div style="flex:1;height:1.4vh;border-radius:.7vh;background:#232A35;overflow:hidden"><div id="lvl" style="height:100%;width:0;background:#5CC8B0;transition:width .08s"></div></div></div>
 </div>
 <button class="key" id="gas">GAZ</button>
@@ -185,7 +185,7 @@ function drawScale(r) {
   }
   $('ticks').innerHTML = g;
 }
-var SRC = { gps: 'GPS hızı', fuel: 'CANBUS anlık yakıt', rpm: 'Gerçek devir', 'rpm+pedal': 'Gerçek devir + pedal' };
+var SRC = { gps: 'GPS hızı', fuel: 'CANBUS anlık yakıt + GPS hız', rpm: 'Gerçek devir', 'rpm+pedal': 'Gerçek devir + pedal' };
 var shown = 0;
 function tick() {
   var v = J(has ? CP.live() : '{}', {});
@@ -197,6 +197,8 @@ function tick() {
   $('gear').textContent = v.gear > 0 ? v.gear : 'N';
   $('kmh').textContent = v.kmh || 0;
   $('load').textContent = v.load || 0;
+  $('bCan').style.display = v.can ? 'inline-flex' : 'none'; $('bCan').textContent = 'CAN: ' + (v.can || '');
+  $('bCan').classList.toggle('ok', (v.can || '').indexOf('Bağlı') === 0);
   $('bErr').style.display = v.err ? 'inline-flex' : 'none'; $('bErr').textContent = v.err || '';
   if (v.gh) $('ghStat').textContent = v.gh;
   $('lvl').style.width = Math.min(100, (v.level || 0) * 1.6) + '%';

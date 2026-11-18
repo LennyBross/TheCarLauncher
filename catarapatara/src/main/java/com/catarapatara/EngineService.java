@@ -78,9 +78,18 @@ public final class EngineService extends Service implements LocationListener, Ob
     private volatile long obdKmhAt, lastFixAt;
     private Location lastLoc;
 
+    static volatile String canStatus = "";
+    static volatile long canStatusAt;
+
     private final BroadcastReceiver data = new BroadcastReceiver() {
         public void onReceive(Context c, Intent i) {
             long now = System.currentTimeMillis();
+            if ("com.thecarlauncher.CANSTATUS".equals(i.getAction())) {
+                long age = i.getLongExtra("age", -1);
+                canStatus = i.getStringExtra("status") + (age >= 0 ? " · " + age / 1000 + " sn" : "");
+                canStatusAt = now;
+                return;
+            }
             if (i.hasExtra("rpm")) sim.setRealRpm(i.getFloatExtra("rpm", 0), i.getFloatExtra("rpmMax", 4500), now);
             if (i.hasExtra("pedal")) sim.setPedal(i.getFloatExtra("pedal", 0), now);
             if (i.hasExtra("l100")) sim.setConsumption(i.getFloatExtra("l100", 0), now);
@@ -155,6 +164,7 @@ public final class EngineService extends Service implements LocationListener, Ob
             }
         }
         IntentFilter f = new IntentFilter(ACTION_DATA);
+        f.addAction("com.thecarlauncher.CANSTATUS");
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(data, f, RECEIVER_EXPORTED); else registerReceiver(data, f);
         applyObd();
         // CAN bridge (separate system app, if installed) feeds instant consumption.
@@ -238,7 +248,7 @@ public final class EngineService extends Service implements LocationListener, Ob
         try {
             return new JSONObject().put("rpm", Math.round(sim.rpm)).put("gear", sim.gear).put("kmh", Math.round(sim.speed))
                     .put("red", Math.round(synth.profile().redline())).put("load", Math.round(sim.load * 100))
-                    .put("src", sim.source(now)).put("level", Math.round(level * 100)).put("err", audioError).put("gh", SoundPacks.ghStatus).put("on", running).put("obd", obdStatus).put("gps", now - lastFixAt < 3000).toString();
+                    .put("src", sim.source(now)).put("level", Math.round(level * 100)).put("err", audioError).put("gh", SoundPacks.ghStatus).put("can", now - canStatusAt < 6000 ? canStatus : "").put("on", running).put("obd", obdStatus).put("gps", now - lastFixAt < 3000).toString();
         } catch (Exception e) {
             return "{}";
         }

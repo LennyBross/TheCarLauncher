@@ -23,6 +23,10 @@ public final class CanLive {
     public static volatile String cpName = "", cpSrc = "";
     public static volatile long cpAt;
 
+    public static volatile String bridgeStatus = "", bridgeTypes = "";
+    public static volatile int bridgeLines, bridgeRev, bridgeFrames;
+    public static volatile long bridgeAt;
+
     private static boolean registered;
 
     private CanLive() {}
@@ -34,6 +38,17 @@ public final class CanLive {
         BroadcastReceiver r = new BroadcastReceiver() {
             public void onReceive(Context ctx, Intent i) {
                 long now = System.currentTimeMillis();
+                if ("com.thecarlauncher.CANSTATUS".equals(i.getAction())) {
+                    String st = i.getStringExtra("status");
+                    if (st != null) bridgeStatus = st;
+                    String ty = i.getStringExtra("types");
+                    if (ty != null) bridgeTypes = ty;
+                    bridgeLines = i.getIntExtra("lines", 0);
+                    bridgeRev = i.getIntExtra("rev", 0);
+                    bridgeFrames = i.getIntExtra("frames", 0);
+                    bridgeAt = now;
+                    return;
+                }
                 if ("com.thecarlauncher.CAN".equals(i.getAction())) {
                     if (i.hasExtra("l100")) { l100 = i.getFloatExtra("l100", -1); canAt = now; }
                     if (i.hasExtra("range")) { range = i.getFloatExtra("range", -1); canAt = now; }
@@ -54,8 +69,15 @@ public final class CanLive {
         };
         IntentFilter f = new IntentFilter("com.thecarlauncher.CAN");
         f.addAction("com.catarapatara.LIVE");
+        f.addAction("com.thecarlauncher.CANSTATUS");
         if (Build.VERSION.SDK_INT >= 33) app.registerReceiver(r, f, Context.RECEIVER_EXPORTED);
         else app.registerReceiver(r, f);
+        // The CAN bridge, if installed, runs with MYDS too (not only while the engine sound plays).
+        try {
+            Intent b = new Intent().setClassName(PKG_BRIDGE, "com.catarapatara.canbridge.BridgeService");
+            if (Build.VERSION.SDK_INT >= 26) app.startForegroundService(b); else app.startService(b);
+        } catch (Exception ignored) {
+        }
     }
 
     public static boolean canFresh() { return System.currentTimeMillis() - canAt < 10000; }
