@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>CataraPatara</title>
+<style>
+@font-face{font-family:'Space Grotesk';src:url(fonts/SpaceGrotesk.ttf);font-weight:300 700}
+@font-face{font-family:'Inter';src:url(fonts/Inter.ttf);font-weight:100 900}
+:root{--a:#FF7A3C;--a2:#E8541E;--bg:#0B0E13;--fg:#F3F5F7;--card:#161B23;--muted:#A3ADBA;--chip:#1E252F;--line:#232A35}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;user-select:none}
+.sg{font-family:'Space Grotesk',sans-serif;font-weight:700}
+.r{width:100vw;height:100vh;padding:2.78vh;display:flex;gap:2.22vh}
+.card{border-radius:3.33vh;background:var(--card)}
+button{font-family:inherit;cursor:pointer}
+.chip{border:none;border-radius:1.67vh;background:var(--chip);color:var(--fg);height:6.67vh;padding:0 2.22vh;font-size:2.22vh;font-weight:600;white-space:nowrap}
+.chip.on{background:var(--a);color:#1A0E07}
+.key:active{transform:scale(.96)}
+.eng{border:none;border-radius:2.22vh;background:var(--chip);color:var(--fg);text-align:left;padding:1.67vh 2.22vh;display:flex;flex-direction:column;gap:.42vh;justify-content:center}
+.eng b{font-family:'Space Grotesk',sans-serif;font-size:2.64vh}
+.eng span{font-size:1.81vh;color:var(--muted)}
+.eng.pack{background:#2A2418;box-shadow:inset 0 0 0 1px #6c5a34}.eng.pack span{color:#dfbf83}
+.eng.add{border:1px dashed #3A4452;background:transparent;align-items:center;color:var(--muted)}
+.eng.on{background:var(--a);color:#1A0E07}.eng.on span{color:#1A0E07;opacity:.75}
+#gas{border:none;border-radius:50%;width:min(24vh,19vw);height:min(24vh,19vw);background:radial-gradient(circle at 50% 35%,#FF9A66,#C2321B);color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:4.44vh;box-shadow:0 1.67vh 4.44vh rgba(255,90,60,.35);touch-action:none}
+#gas.down{transform:scale(.94)}
+.tabs{display:flex;gap:1.11vh;padding:2.22vh 2.22vh 0}
+.pane{flex:1;min-height:0;overflow-y:auto;padding:2.22vh}
+.row{display:flex;align-items:center;gap:1.67vh;padding:1.53vh 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none}
+.row>span{font-size:2.22vh;width:22vh;flex-shrink:0}
+.row small{display:block;font-size:1.67vh;color:var(--muted);margin-top:.3vh}
+input[type=range]{flex:1;accent-color:var(--a);height:4.44vh}
+input[type=text]{flex:1;height:6.11vh;border-radius:1.67vh;border:1px solid #2E3744;background:#0F141B;color:var(--fg);font-size:2.22vh;padding:0 1.67vh;font-family:inherit}
+.seg{display:flex;gap:.83vh;flex:1}.seg .chip{flex:1;padding:0 1vh}
+.badge{display:inline-flex;align-items:center;gap:.8vh;font-size:1.81vh;padding:.7vh 1.4vh;border-radius:2vh;background:var(--chip);color:var(--muted)}
+.badge.ok{background:rgba(92,200,176,.16);color:#5CC8B0}
+.sw{width:9vh;height:5vh;border-radius:2.5vh;background:#2E3744;border:none;position:relative;flex-shrink:0}
+.sw::after{content:'';position:absolute;top:.6vh;left:.6vh;width:3.8vh;height:3.8vh;border-radius:50%;background:#fff;transition:left .15s}
+.sw.on{background:var(--a)}.sw.on::after{left:4.6vh}
+</style>
+</head>
+<body>
+<div class="r">
+<div class="card" style="flex:1;min-width:0;display:flex;flex-direction:column;padding:2.78vh;gap:1.39vh">
+<div style="display:flex;align-items:center;gap:1.67vh">
+<img src="logo.svg" style="height:6.11vh" alt="">
+<div style="display:flex;flex-direction:column"><span class="sg" style="font-size:3.61vh;line-height:1">CataraPatara</span><span style="font-size:1.81vh;color:var(--muted)" id="engName"></span></div>
+<div style="flex:1"></div>
+<button class="key chip" id="power" style="min-width:18vh">Kapalı</button>
+<button class="key chip" id="hide" aria-label="Gizle">—</button>
+</div>
+<div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center">
+<svg viewBox="0 0 400 300" style="width:100%;height:100%" aria-hidden="true">
+<path d="M70 250 A150 150 0 1 1 330 250" fill="none" stroke="#232A35" stroke-width="22" stroke-linecap="round"/>
+<path id="redZone" fill="none" stroke="#5A2219" stroke-width="22"/>
+<path id="arc" fill="none" stroke="#FF7A3C" stroke-width="22" stroke-linecap="round"/>
+<g id="ticks"></g>
+<text id="rpm" x="200" y="178" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="64" fill="#F3F5F7">0</text>
+<text x="200" y="204" text-anchor="middle" font-family="Inter" font-size="15" fill="#A3ADBA">d/d</text>
+<text id="gear" x="200" y="262" text-anchor="middle" font-family="Space Grotesk" font-weight="700" font-size="40" fill="#FF7A3C">N</text>
+</svg>
+</div>
+<div style="display:flex;align-items:center;gap:2.22vh">
+<div style="display:flex;flex-direction:column;gap:1vh;flex:1;min-width:0">
+<div style="display:flex;align-items:baseline;gap:1vh"><span class="sg" style="font-size:5vh" id="kmh">0</span><span style="font-size:1.94vh;color:var(--muted)">km/h</span>
+<span style="margin-left:2vh;font-size:1.94vh;color:var(--muted)">Gaz <b id="load" style="color:var(--fg)">0</b>%</span></div>
+<div style="display:flex;gap:1vh;flex-wrap:wrap"><span class="badge" id="bSrc">GPS</span><span class="badge" id="bObd" style="display:none"></span></div>
+</div>
+<button class="key" id="gas">GAZ</button>
+</div>
+</div>
+
+<div class="card" style="width:min(80vh,46vw);flex-shrink:0;display:flex;flex-direction:column;min-height:0">
+<div class="tabs"><button class="key chip on" data-tab="engines" style="flex:1">Motorlar</button><button class="key chip" data-tab="sound" style="flex:1">Ses</button><button class="key chip" data-tab="car" style="flex:1">Araç & veri</button></div>
+<div class="pane" id="engines"><div style="display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:11.11vh;gap:1.39vh" id="list"></div></div>
+<div class="pane" id="sound" style="display:none">
+<div class="row"><span>Egzoz</span><div class="seg" id="ex"></div></div>
+<div class="row"><span>Ses düzeyi</span><input type="range" min="0" max="100" step="5" id="vol"><b class="sg" id="volT" style="width:6vh;text-align:right"></b></div>
+<div class="row"><span>Bas<small>alt frekans güçlendirme</small></span><input type="range" min="0" max="9" step="1" id="bass"><b class="sg" id="bassT" style="width:6vh;text-align:right"></b></div>
+<div class="row"><span>Patlamalar<small>gazdan ayak çekince (gerçek kayıtlarda)</small></span><div style="flex:1"></div><button class="key sw" id="pops"></button></div>
+</div>
+<div class="pane" id="car" style="display:none">
+<div class="row"><span>OBD2 adaptörü<small>ELM327 · gerçek devir + gaz pedalı</small></span><div class="seg" id="obd"></div></div>
+<div class="row"><span>Adaptör adresi<small>Wi-Fi: 192.168.0.10:35000 · BT: cihaz adı</small></span><input type="text" id="obdTarget" placeholder="boş = otomatik"></div>
+<div class="row"><span>Aracın devir sınırı<small>DS4 1.6 e-HDi ≈ 4500</small></span><input type="range" min="3500" max="7500" step="100" id="carMax"><b class="sg" id="carMaxT" style="width:8vh;text-align:right"></b></div>
+<div class="row"><span>Yüzen egzoz düğmesi<small>Android Auto açıkken dokun: aç/kapat · basılı tut: uygulama</small></span><div style="flex:1"></div><button class="key chip" id="allow" style="display:none">İzin ver</button><button class="key sw" id="bubble"></button></div>
+<div class="row"><span>Araç açılınca hazırla</span><div style="flex:1"></div><button class="key sw" id="boot"></button></div>
+<div class="row" style="display:block;font-size:1.81vh;color:var(--muted);line-height:1.5">Veri önceliği: OBD2 (devir + pedal) → CANBUS anlık yakıt → GPS hızı. CANBUS verisi MYDS'ten ya da cihazın CAN uygulamasından gelir. Telefon görüşmesinde ses kendiliğinden susar.</div>
+</div>
+</div>
+</div>
+<script>
+function $(id) { return document.getElementById(id); }
+function J(s, d) { try { return JSON.parse(s); } catch (e) { return d; } }
+var has = typeof CP !== 'undefined';
+var cfg = J(has ? CP.config() : '{}', {}), PROFILES = J(has ? CP.profiles() : '[]', []);
+function set(k, v) { if (has) CP.set(k, String(v)); }
+
+PROFILES.forEach(function (p) {
+  var b = document.createElement('button'); b.className = 'key eng' + (p.pack ? ' pack' : ''); b.setAttribute('data-id', p.id);
+  b.innerHTML = '<b>' + p.name + '</b><span>' + (p.pack ? '● Gerçek kayıt · ' : '') + p.sub + '</span>';
+  b.onclick = function () { cfg.id = p.id; set('id', p.id); if (!cfg.on) power(true); paint(); };
+  if (p.pack) {
+    var t = null;
+    b.addEventListener('pointerdown', function () { t = setTimeout(function () { t = null; if (confirm(p.name + ' silinsin mi?')) { CP.deletePack(p.id); location.reload(); } }, 900); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { if (t) clearTimeout(t); }); });
+  }
+  $('list').appendChild(b);
+});
+var add = document.createElement('button'); add.className = 'key eng add';
+add.innerHTML = '<b style="font-size:2.36vh">+ Ses paketi ekle</b><span>USB / Download · .zip</span>';
+add.onclick = function () { if (has) CP.importPack(); };
+$('list').appendChild(add);
+
+['Stok', 'Spor', 'Yarış'].forEach(function (n, i) { seg('ex', n, function () { cfg.ex = i; set('ex', i); paint(); }); });
+[['off', 'Yok'], ['wifi', 'Wi-Fi'], ['bt', 'Bluetooth']].forEach(function (o) { seg('obd', o[1], function () { cfg.obd = o[0]; set('obd', o[0]); paint(); }); });
+function seg(id, text, fn) { var b = document.createElement('button'); b.className = 'key chip'; b.textContent = text; b.onclick = fn; $(id).appendChild(b); }
+
+document.querySelectorAll('[data-tab]').forEach(function (b) {
+  b.onclick = function () {
+    document.querySelectorAll('[data-tab]').forEach(function (x) { x.classList.toggle('on', x === b); });
+    ['engines', 'sound', 'car'].forEach(function (t) { $(t).style.display = t === b.getAttribute('data-tab') ? 'block' : 'none'; });
+  };
+});
+function range(id, key, fmt) {
+  $(id).oninput = function () { cfg[key] = +this.value; $(id + 'T').textContent = fmt(cfg[key]); set(key, cfg[key]); };
+}
+range('vol', 'vol', function (v) { return v; });
+range('bass', 'bass', function (v) { return '+' + v; });
+range('carMax', 'carMax', function (v) { return v; });
+function toggle(id) { $(id).onclick = function () { cfg[id] = !cfg[id]; set(id, cfg[id] ? 1 : 0); paint(); }; }
+toggle('pops'); toggle('bubble'); toggle('boot');
+$('obdTarget').onchange = function () { cfg.obdTarget = this.value.trim(); set('obdTarget', cfg.obdTarget); };
+$('allow').onclick = function () { if (has) CP.allowOverlay(); };
+$('hide').onclick = function () { if (has) CP.close(); };
+function power(on) { cfg.on = on; if (has) CP.power(on); paint(); }
+$('power').onclick = function () { power(!cfg.on); };
+var gas = $('gas');
+function rev(on) { gas.classList.toggle('down', on); if (has) CP.rev(on); }
+gas.addEventListener('pointerdown', function (e) { try { gas.setPointerCapture(e.pointerId); } catch (x) {} if (!cfg.on) power(true); rev(true); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { gas.addEventListener(ev, function () { rev(false); }); });
+
+function paint() {
+  var l = $('list').children;
+  for (var i = 0; i < l.length; i++) l[i].classList.toggle('on', l[i].getAttribute('data-id') === cfg.id);
+  var e = $('ex').children; for (var j = 0; j < e.length; j++) e[j].classList.toggle('on', j === cfg.ex);
+  var o = $('obd').children, om = ['off', 'wifi', 'bt']; for (var k = 0; k < o.length; k++) o[k].classList.toggle('on', om[k] === (cfg.obd || 'off'));
+  $('power').textContent = cfg.on ? 'Açık' : 'Kapalı'; $('power').classList.toggle('on', !!cfg.on);
+  $('vol').value = cfg.vol; $('volT').textContent = cfg.vol;
+  $('bass').value = cfg.bass; $('bassT').textContent = '+' + cfg.bass;
+  $('carMax').value = cfg.carMax; $('carMaxT').textContent = cfg.carMax;
+  $('obdTarget').value = cfg.obdTarget || '';
+  ['pops', 'bubble', 'boot'].forEach(function (k) { $(k).classList.toggle('on', !!cfg[k]); });
+  $('allow').style.display = cfg.bubble && !cfg.canDraw ? 'inline-block' : 'none';
+  var p = PROFILES.filter(function (x) { return x.id === cfg.id; })[0] || PROFILES[0] || { name: '', red: 6500 };
+  $('engName').textContent = p.name;
+  drawScale(p.red);
+}
+window.onResumeApp = function () { var c = J(has ? CP.config() : '{}', null); if (c) { cfg = c; paint(); } };
+
+function pt(f, r) { var a = (150 + 240 * f) * Math.PI / 180; return [200 + Math.cos(a) * r, 175 + Math.sin(a) * r]; }
+function arcPath(f0, f1, r) {
+  var a = pt(f0, r), b = pt(f1, r), large = (f1 - f0) * 240 > 180 ? 1 : 0;
+  return 'M' + a[0].toFixed(1) + ' ' + a[1].toFixed(1) + ' A' + r + ' ' + r + ' 0 ' + large + ' 1 ' + b[0].toFixed(1) + ' ' + b[1].toFixed(1);
+}
+var red = 6500, max = 7000;
+function drawScale(r) {
+  red = r; max = Math.ceil((red + 600) / 1000) * 1000;
+  $('redZone').setAttribute('d', arcPath(red / max, 1, 150));
+  var g = '';
+  for (var k = 0; k <= max / 1000; k++) {
+    var a = pt(k * 1000 / max, 118), b = pt(k * 1000 / max, 132), t = pt(k * 1000 / max, 102);
+    g += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" stroke="' + (k * 1000 >= red ? '#FF5A3C' : '#5D6878') + '" stroke-width="3"/>';
+    g += '<text x="' + t[0] + '" y="' + (t[1] + 5) + '" text-anchor="middle" font-family="Inter" font-size="13" fill="#A3ADBA">' + k + '</text>';
+  }
+  $('ticks').innerHTML = g;
+}
+var SRC = { gps: 'GPS hızı', fuel: 'CANBUS anlık yakıt', rpm: 'Gerçek devir', 'rpm+pedal': 'Gerçek devir + pedal' };
+var shown = 0;
+function tick() {
+  var v = J(has ? CP.live() : '{}', {});
+  var r = v.rpm || 0;
+  shown += (r - shown) * .5;
+  $('arc').setAttribute('d', arcPath(0, Math.max(.001, Math.min(1, shown / max)), 150));
+  $('arc').setAttribute('stroke', shown >= red * .97 ? '#FF3B2E' : '#FF7A3C');
+  $('rpm').textContent = cfg.on ? Math.round(shown / 10) * 10 : 0;
+  $('gear').textContent = v.gear > 0 ? v.gear : 'N';
+  $('kmh').textContent = v.kmh || 0;
+  $('load').textContent = v.load || 0;
+  var s = v.src || 'gps';
+  $('bSrc').textContent = (s === 'gps' && !v.gps ? 'GPS aranıyor' : SRC[s] || s);
+  $('bSrc').classList.toggle('ok', s !== 'gps' || !!v.gps);
+  $('bObd').style.display = v.obd ? 'inline-flex' : 'none'; $('bObd').textContent = v.obd || '';
+  $('bObd').classList.toggle('ok', v.obd === 'OBD bağlı');
+  setTimeout(tick, 80);
+}
+paint(); tick();
+</script>
+</body>
+</html>
