@@ -38,6 +38,8 @@ import java.util.regex.Pattern;
  */
 public final class Updater {
     public static final String REPO = "LennyBross/TheCarLauncher";
+    /** Install found updates right away (only while the car stands still). */
+    public static final String P_INSTANT = "update_instant";
     public static final String P_AUTO = "update_auto_check", P_BETA = "update_test_builds", P_LAST = "update_last_check";
     private static final String ACTION_DONE = "com.thecarlauncher.UPDATE_INSTALLED";
 
@@ -502,25 +504,48 @@ public final class Updater {
         s.close();
     }
 
-    /** Once a day (when allowed): look for an update and mention it in the banner. */
+    private static long sAutoAt;
+
+    /**
+     * Every 10 minutes while the launcher runs (and on every return to it): looks at GitHub for a
+     * newer MYDS, CataraPatara or CataraPatara CAN and, with "install at once" on, installs it
+     * straight away when the car is standing still; otherwise mentions it in the banner.
+     */
     public static void autoCheck(final Context c) {
-        if (!Prefs.bool(c, P_AUTO, true)) return;
-        long last = Prefs.longVal(c, P_LAST, 0);
-        if (System.currentTimeMillis() - last < 3600L * 1000) return;
+        if (!Prefs.bool(c, P_AUTO, true) || busy) return;
+        long now = System.currentTimeMillis();
+        if (now - sAutoAt < 10L * 60 * 1000) return;
+        sAutoAt = now;
         check(c, new Checked() {
             public void onChecked(Release r, String error) {
+                boolean instant = Prefs.bool(c, P_INSTANT, true) && stationary(c) && mayInstall(c);
                 for (Companion k : COMPANIONS) {
                     if (companionNewer(c, k, false)) {
+                        if (instant && !busy) {
+                            sAutoAt = 0; // look again right after this one, for the next update
+                            installCompanion(c, k);
+                            return;
+                        }
                         LoadingBanner.flash("update-" + k.pkg, k.label + LoadingBanner.t(": nova verzija — Podešavanje → Android sistem",
                                 ": new version — Setup → Android system"), 6000);
                     }
                 }
                 if (isNewer(c, r)) {
+                    if (instant && !busy) {
+                        install(c, r);
+                        return;
+                    }
                     LoadingBanner.flash("update-available", LoadingBanner.t("Dostupna je nova verzija " + r.versionName
                             + " — Podešavanje → Ažuriranje softvera", "Version " + r.versionName
                             + " is available — Setup → Software update"), 6000);
                 }
             }
         });
+    }
+
+    /** Below walking pace (or no GPS fix): safe to put an installer on screen. */
+    private static boolean stationary(Context c) {
+        com.thecarlauncher.nav.LocationTracker t = com.thecarlauncher.nav.LocationTracker.get(c);
+        return !t.hasFix() || t.speedMps() < 1.5f;
     }
 }

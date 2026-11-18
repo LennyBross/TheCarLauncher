@@ -243,7 +243,8 @@ public class UpdateScreen extends Screen implements Updater.Progress {
         button(s("Proveri ponovo", "Check again"), new Runnable() {
             public void run() { check(); }
         });
-        checkRow(s("Automatska provera (jednom dnevno)", "Automatic check (once a day)"), Updater.P_AUTO, true);
+        checkRow(s("Automatska provera (svakih 10 minuta)", "Automatic check (every 10 minutes)"), Updater.P_AUTO, true);
+        checkRow(s("Odmah instaliraj (kad auto stoji)", "Install at once (while the car stands still)"), Updater.P_INSTANT, true);
         checkRow(s("Test verzije (svaki build)", "Test builds (every build)"), Updater.P_BETA, false);
         if (!Updater.mayInstall(act)) {
             button(s("Dozvoli instaliranje ažuriranja", "Allow installing updates"), new Runnable() {

@@ -82,6 +82,14 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
     private ImageView btIcon, battIcon, signalIcon, msgIcon;
     private ImageView globe;
 
+    /** GitHub update check every 10 minutes while the launcher runs. */
+    private final Runnable updateTick = new Runnable() {
+        public void run() {
+            com.thecarlauncher.util.Updater.autoCheck(LauncherActivity.this);
+            main.postDelayed(this, 10L * 60 * 1000 + 5000);
+        }
+    };
+
     private final Runnable clock = new Runnable() {
         @Override
         public void run() {
@@ -393,7 +401,8 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         hadAllFiles = files;
         com.thecarlauncher.nav.OfflineMaps.get(this).finishDownloads();
         Weather.get(this).update(LocationTracker.get(this));
-        com.thecarlauncher.util.Updater.autoCheck(this);
+        main.removeCallbacks(updateTick);
+        main.post(updateTick);
         MediaHub.get(this).connectExternal();
         if (current >= 0) screens[current].onShow();
     }
@@ -408,6 +417,7 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
     @Override
     protected void onStop() {
         main.removeCallbacks(clock);
+        main.removeCallbacks(updateTick);
         LocationTracker t = LocationTracker.get(this);
         t.removeListener(this);
         // The engine sound follows the speed over other apps too, so GPS stays on for it.
