@@ -10,8 +10,8 @@ android {
         applicationId 'com.thecarlauncher'
         minSdk 21
         targetSdk 34
-        versionCode 106
-        versionName '4.28.0'
+        versionCode 107
+        versionName '4.29.0'
     }
 
     // One build per head-unit family (same app id, so a unit can switch between them).
@@ -71,4 +71,6 @@ android {
 dependencies {
     // Offline maps (mapsforge, LGPL-3.0) and its SVG helper (Apache-2.0); see NOTICE.
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    // CataraPatara engine sound, built in (was a separate APK).
+    implementation project(':catarapatara')
 }

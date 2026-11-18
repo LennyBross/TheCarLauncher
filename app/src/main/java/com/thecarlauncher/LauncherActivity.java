@@ -180,6 +180,11 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
 
         MediaHub.get(this).connectExternal();
         com.thecarlauncher.util.CanLive.start(this);
+        // CataraPatara now lives inside MYDS: offer once to remove the old stand-alone APK.
+        if (com.thecarlauncher.util.CanLive.standaloneCp(this) && !Prefs.bool(this, "cp_old_asked", false)) {
+            Prefs.put(this, "cp_old_asked", true);
+            com.thecarlauncher.util.CanLive.removeStandaloneCp(this);
+        }
         // CataraPatara is the engine sound when it is installed; the built-in one stays off then.
         if (com.thecarlauncher.util.CanLive.installed(this, com.thecarlauncher.util.CanLive.PKG_CP)) {
             com.thecarlauncher.engine.EngineSound.get(this).setOn(false);

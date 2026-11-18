@@ -45,8 +45,7 @@ jobs:
         run: |
           chmod +x gradlew
           # One APK per head-unit family; Software update on the unit picks the matching one.
-          ./gradlew :app:assembleQfRelease :app:assembleHzbhdRelease :app:assembleCarsvcRelease :app:assembleSyuRelease :catarapatara:assembleRelease :canbridge:assembleRelease --no-daemon --stacktrace
-          cp catarapatara/build/outputs/apk/release/catarapatara-release.apk CataraPatara.apk
+          ./gradlew :app:assembleQfRelease :app:assembleHzbhdRelease :app:assembleCarsvcRelease :app:assembleSyuRelease :canbridge:assembleRelease --no-daemon --stacktrace
           cp canbridge/build/outputs/apk/release/canbridge-release.apk CataraPatara-CAN.apk
           cp app/build/outputs/apk/qf/release/app-qf-release.apk TheCarLauncher.apk
           cp app/build/outputs/apk/hzbhd/release/app-hzbhd-release.apk TheCarLauncher_hzbhd.apk
@@ -56,7 +55,6 @@ jobs:
           cp app/src/main/assets/units.json units.json
           echo "VNAME=$(grep -oP "versionName '\K[^']+" app/build.gradle)" >> "$GITHUB_ENV"
           echo "VCODE=$(grep -oP 'versionCode \K[0-9]+' app/build.gradle)" >> "$GITHUB_ENV"
-          echo "CP_CODE=$(grep -oP 'versionCode \K[0-9]+' catarapatara/build.gradle)" >> "$GITHUB_ENV"
           echo "CB_CODE=$(grep -oP 'versionCode \K[0-9]+' canbridge/build.gradle)" >> "$GITHUB_ENV"
           # Magisk module that installs this APK as a privileged system app.
           bash scripts/build-magisk.sh TheCarLauncher.apk
@@ -72,7 +70,6 @@ jobs:
             TheCarLauncher_syu.apk
             units.json
             TheCarLauncher-magisk.zip
-            CataraPatara.apk
             CataraPatara-CAN.apk
 
       # main publishes the release the launcher updates to ("v4.5.1", marked latest).
@@ -92,7 +89,6 @@ jobs:
             TheCarLauncher_syu.apk
             units.json
             TheCarLauncher-magisk.zip
-            CataraPatara.apk
             CataraPatara-CAN.apk
           prerelease: false
           make_latest: true
@@ -101,7 +97,6 @@ jobs:
 
             versionName: ${{ env.VNAME }}
             versionCode: ${{ env.VCODE }}
-            catarapatara versionCode: ${{ env.CP_CODE }}
             canbridge versionCode: ${{ env.CB_CODE }}
             Download **TheCarLauncher.apk** (UIS7862 / QF units), **TheCarLauncher_hzbhd.apk** (Allwinner T3 / hzbhd units), **TheCarLauncher_carsvc.apk** (android.car firmware units) or **TheCarLauncher_syu.apk** (SYU / FYT units) below, or update from Setup → Software update on the head unit (it picks the right one). Coming from an older version on a newly supported unit: run Software update twice (the first update brings the QF build, the second switches to the build for your unit).
 
@@ -119,7 +114,6 @@ jobs:
             TheCarLauncher_syu.apk
             units.json
             TheCarLauncher-magisk.zip
-            CataraPatara.apk
             CataraPatara-CAN.apk
           prerelease: true
           make_latest: false

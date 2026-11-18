@@ -74,10 +74,11 @@ body.day #carBox{box-shadow:inset 0 0 0 1px #E3E8EE}
 <div class="c" style="flex:1;min-width:0;padding:2.22vh 2.78vh;display:flex;flex-direction:column;gap:1.25vh">
 <div style="display:flex;align-items:center;gap:1.39vh"><svg id="fuelIcon" style="width:3.61vh;height:3.61vh;color:var(--a)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17"/><line x1="2" y1="22" x2="15" y2="22"/><line x1="6" y1="8" x2="11" y2="8"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg><span style="font-size:2.08vh;color:var(--muted);flex:1">Yakıt</span><span class="sg" style="font-size:3.33vh;color:var(--a)" id="pct">—</span></div>
 <div style="height:1.39vh;border-radius:.7vh;background:var(--track);overflow:hidden"><div id="bar" style="height:100%;width:0;background:var(--a);transition:width .4s"></div></div>
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1vh">
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1vh">
 <div style="display:flex;flex-direction:column"><span style="font-size:2.5vh;font-weight:600" id="liters">— L</span><span style="font-size:1.67vh;color:var(--muted)">Depoda</span></div>
 <div style="display:flex;flex-direction:column"><span style="font-size:2.5vh;font-weight:600" id="cons">—</span><span style="font-size:1.67vh;color:var(--muted)" id="consLab">L/100 km</span></div>
 <div style="display:flex;flex-direction:column"><span style="font-size:2.5vh;font-weight:600" id="price">—</span><span style="font-size:1.67vh;color:var(--muted)">₺ / litre</span></div>
+<div style="display:flex;flex-direction:column"><span style="font-size:2.5vh;font-weight:600" id="eco">—</span><span style="font-size:1.67vh;color:var(--muted)">Eko puan</span></div>
 </div>
 </div>
 </div>
@@ -169,6 +170,7 @@ car.on(function (s) {
   $('liters').textContent = s.fuelLeft !== undefined ? num(s.fuelLeft, 1) + ' L' : '— L';
   var live = s.inst !== undefined;
   $('cons').textContent = num(live ? s.inst : s.l100, 1);
+  var ec = eco.feed(s); $('eco').textContent = ec; $('eco').style.color = ec >= 80 ? 'var(--a)' : ec >= 60 ? '#E0A030' : '#E05040';
   $('consLab').textContent = live ? 'Anlık L/100' : 'L/100 km';
   $('price').textContent = num(s.price, 2);
   hasCp = !!s.cp;

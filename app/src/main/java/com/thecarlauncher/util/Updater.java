@@ -151,7 +151,6 @@ public final class Updater {
     }
 
     public static final Companion[] COMPANIONS = {
-            new Companion("com.catarapatara", "CataraPatara", "CataraPatara.apk", "catarapatara versionCode"),
             new Companion("com.catarapatara.canbridge", "CataraPatara CAN", "CataraPatara-CAN.apk", "canbridge versionCode"),
     };
 

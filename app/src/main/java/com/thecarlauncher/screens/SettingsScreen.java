@@ -291,16 +291,19 @@ public class SettingsScreen extends Screen {
         });
         // Home page theme: Classic tiles, Modern cards, Retro, Pilot (kids) or Panel.
         final String[][] tn = ThemeScreen.NAMES;
-        final String[] themeNames = new String[tn.length];
-        for (int i = 0; i < tn.length; i++) themeNames[i] = s(tn[i][0], tn[i][1]);
+        final int[] offered = ThemeScreen.OFFERED;
+        final String[] themeNames = new String[offered.length];
+        for (int i = 0; i < offered.length; i++) themeNames[i] = s(tn[offered[i]][0], tn[offered[i]][1]);
         final int curTheme = ThemeScreen.current(act);
+        int curIdx = 0;
+        for (int i = 0; i < offered.length; i++) if (offered[i] == curTheme) curIdx = i;
+        final int curPos = curIdx;
         final boolean modern = curTheme == ThemeScreen.MODERN;
-        action(s("Tema početnog ekrana", "Home screen theme"), themeNames[curTheme], new Runnable() {
+        action(s("Tema početnog ekrana", "Home screen theme"), s(tn[curTheme][0], tn[curTheme][1]), new Runnable() {
             public void run() {
-                Dialogs.choose(act, s("Tema početnog ekrana", "Home screen theme"), themeNames, curTheme, new Dialogs.Chosen() {
+                Dialogs.choose(act, s("Tema početnog ekrana", "Home screen theme"), themeNames, curPos, new Dialogs.Chosen() {
                     public void onChosen(int i) {
-                        if (i == ThemeScreen.PILOT && curTheme != ThemeScreen.PILOT) Prefs.put(act, ThemeScreen.P_PREV, curTheme);
-                        ThemeScreen.set(act, i);
+                        ThemeScreen.set(act, offered[i]);
                         act.restartUi();
                     }
                 });
@@ -1714,6 +1717,14 @@ public class SettingsScreen extends Screen {
     }
 
     private void buildAndroid() {
+        action("CataraPatara", s("ugrađen motor zvuk", "built-in engine sound"), new Runnable() {
+            public void run() { com.thecarlauncher.util.CanLive.openCp(act); }
+        });
+        if (com.thecarlauncher.util.CanLive.standaloneCp(act)) {
+            action(s("Ukloni staru CataraPatara aplikaciju", "Remove the old CataraPatara app"), s("sada je u MYDS", "now inside MYDS"), new Runnable() {
+                public void run() { com.thecarlauncher.util.CanLive.removeStandaloneCp(act); }
+            });
+        }
         // CataraPatara apps from the same GitHub release: install or update.
         for (final com.thecarlauncher.util.Updater.Companion k : com.thecarlauncher.util.Updater.COMPANIONS) {
             long have = installedCodeOf(k.pkg);

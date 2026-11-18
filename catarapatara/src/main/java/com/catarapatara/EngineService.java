@@ -182,6 +182,7 @@ public final class EngineService extends Service implements LocationListener, Ob
     private void end() {
         running = false;
         takeFocus(false);
+        watchPlayback(false);
         level = 0;
         publish(false, System.currentTimeMillis());
         try { ((LocationManager) getSystemService(LOCATION_SERVICE)).removeUpdates(this); } catch (Exception ignored) { }
@@ -222,6 +223,86 @@ public final class EngineService extends Service implements LocationListener, Ob
             sim.setProfile(prof);
         }
         setBass(p.getInt("bass", 3));
+        setEq(p);
+    }
+
+    // ---- 5-band cabin EQ (Sub, Low-mid, Mid, Presence, Treble), idea from CAR-SOUND-CHANGER (MIT) ----
+    static final int[] EQ_HZ = {50, 160, 600, 2500, 8000};
+    private final float[][] eqC = new float[5][5], eqZ = new float[5][2];
+    private volatile boolean eqOn;
+
+    private void setEq(SharedPreferences p) {
+        boolean any = false;
+        for (int k = 0; k < 5; k++) {
+            int db = Math.max(-9, Math.min(9, p.getInt("eq" + k, 0)));
+            any |= db != 0;
+            double A = Math.pow(10, db / 40.0), w = 2 * Math.PI * Math.min(EQ_HZ[k], SR * 0.45) / SR, c = Math.cos(w), sn = Math.sin(w);
+            double b0, b1, b2, a0, a1, a2;
+            if (k == 0 || k == 4) { // shelves
+                double al = sn / 2 * Math.sqrt(2), sq = 2 * Math.sqrt(A) * al, sg = k == 0 ? 1 : -1;
+                b0 = A * ((A + 1) - sg * (A - 1) * c + sq);
+                b1 = sg * 2 * A * ((A - 1) - sg * (A + 1) * c);
+                b2 = A * ((A + 1) - sg * (A - 1) * c - sq);
+                a0 = (A + 1) + sg * (A - 1) * c + sq;
+                a1 = -sg * 2 * ((A - 1) + sg * (A + 1) * c);
+                a2 = (A + 1) + sg * (A - 1) * c - sq;
+            } else { // peaking, Q 1
+                double al = sn / 2;
+                b0 = 1 + al * A; b1 = -2 * c; b2 = 1 - al * A; a0 = 1 + al / A; a1 = -2 * c; a2 = 1 - al / A;
+            }
+            synchronized (eqC) {
+                eqC[k][0] = (float) (b0 / a0); eqC[k][1] = (float) (b1 / a0); eqC[k][2] = (float) (b2 / a0);
+                eqC[k][3] = (float) (a1 / a0); eqC[k][4] = (float) (a2 / a0);
+            }
+        }
+        eqOn = any;
+    }
+
+    private float eq(float x) {
+        for (int k = 0; k < 5; k++) {
+            float[] c = eqC[k], z = eqZ[k];
+            float y = c[0] * x + z[0];
+            z[0] = c[1] * x - c[3] * y + z[1];
+            z[1] = c[2] * x - c[4] * y;
+            x = y;
+        }
+        return x;
+    }
+
+    // ---- Ducking: engine drops by 18 dB while a navigation prompt or assistant speaks ----
+    private volatile boolean duckNav, duckFocus;
+    private Object playbackCb;
+
+    private void watchPlayback(boolean on) {
+        if (Build.VERSION.SDK_INT < 26) return;
+        AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+        if (am == null) return;
+        try {
+            if (on && playbackCb == null) {
+                AudioManager.AudioPlaybackCallback cb = new AudioManager.AudioPlaybackCallback() {
+                    @Override
+                    public void onPlaybackConfigChanged(java.util.List<android.media.AudioPlaybackConfiguration> configs) {
+                        boolean nav = false;
+                        for (android.media.AudioPlaybackConfiguration c : configs) {
+                            int u = c.getAudioAttributes().getUsage();
+                            if (u == AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE || u == AudioAttributes.USAGE_ASSISTANT
+                                    || u == AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY) {
+                                // our own track uses the nav channel in "nav" mode: ignore it
+                                if (!"nav".equals(prefs(EngineService.this).getString("out", "focus"))) nav = true;
+                            }
+                        }
+                        duckNav = nav;
+                    }
+                };
+                am.registerAudioPlaybackCallback(cb, main);
+                playbackCb = cb;
+            } else if (!on && playbackCb != null) {
+                am.unregisterAudioPlaybackCallback((AudioManager.AudioPlaybackCallback) playbackCb);
+                playbackCb = null;
+                duckNav = false;
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     void applyObd() {
@@ -329,7 +410,11 @@ public final class EngineService extends Service implements LocationListener, Ob
         AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
         if (am == null) return;
         if (take && "focus".equals(prefs(this).getString("out", "focus"))) {
-            if (focus == null) focus = new AudioManager.OnAudioFocusChangeListener() { public void onAudioFocusChange(int f) { } };
+            if (focus == null) focus = new AudioManager.OnAudioFocusChangeListener() {
+                public void onAudioFocusChange(int f) {
+                    duckFocus = f == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK || f == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT;
+                }
+            };
             am.requestAudioFocus(focus, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
         } else if (focus != null) {
             am.abandonAudioFocus(focus);
@@ -342,6 +427,7 @@ public final class EngineService extends Service implements LocationListener, Ob
         if (!running) return;
         takeFocus(false);
         takeFocus(true);
+        watchPlayback(true);
         final int my = ++gen;
         audio = new Thread(new Runnable() { public void run() { loop(my); } }, "engine-audio");
         audio.start();
@@ -376,8 +462,10 @@ public final class EngineService extends Service implements LocationListener, Ob
         float gain = 0, fade = 1, dt = BLOCK / (float) SR;
         long checkAt = 0;
         boolean muted = false;
-        float vol = .7f, popLevel = .6f;
+        float vol = .7f, popLevel = .6f, cut = 1f;
         boolean pops = true;
+        int lastGear = -1;
+        long shiftUntil = 0;
         try {
             while (true) {
                 long now = System.currentTimeMillis();
@@ -402,13 +490,18 @@ public final class EngineService extends Service implements LocationListener, Ob
                         synth.render(buf, 0, BLOCK, sim.rpm, sim.load, sim.starter());
                     }
                 }
-                float want = muted ? 0f : vol;
+                // Gear change: a short torque-cut dip (~120 ms), like a real shift.
+                if (lastGear >= 0 && sim.gear != lastGear && sim.gear > 0) shiftUntil = now + 120;
+                lastGear = sim.gear;
+                cut += ((now < shiftUntil ? .45f : 1f) - cut) * .5f;
+                float want = muted ? 0f : vol * cut * (duckNav || duckFocus ? .125f : 1f);
+                boolean useEq = eqOn;
                 boolean live = running && my == gen;
                 if (!live) fade -= dt / .8f;
                 float pk = 0;
                 for (int i = 0; i < BLOCK; i++) {
                     gain += (want - gain) * .002f;
-                    float x = buf[i];
+                    float x = useEq ? eq(buf[i]) : buf[i];
                     float y = bassB0 * x + bz1;
                     bz1 = bassB1 * x - bassA1 * y + bz2;
                     bz2 = bassB2 * x - bassA2 * y;
@@ -440,6 +533,7 @@ public final class EngineService extends Service implements LocationListener, Ob
     /** Called when the settings change from the app screen. */
     void settingsChanged(String key) {
         if ("out".equals(key)) main.post(new Runnable() { public void run() { restartAudio(); } });
+        if (key.startsWith("eq")) setEq(prefs(this));
         if ("id".equals(key) || "ex".equals(key) || "bass".equals(key)) {
             main.post(new Runnable() { public void run() { applyEngine(); } });
         }

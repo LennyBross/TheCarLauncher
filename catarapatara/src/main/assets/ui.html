@@ -80,6 +80,8 @@ input[type=text]{flex:1;height:6.11vh;border-radius:1.67vh;border:1px solid #2E3
 <div class="pane" id="sound" style="display:none">
 <div class="row"><span>Egzoz</span><div class="seg" id="ex"></div></div>
 <div class="row"><span>Ses düzeyi</span><input type="range" min="0" max="100" step="5" id="vol"><b class="sg" id="volT" style="width:6vh;text-align:right"></b></div>
+<div class="row" style="display:block"><span>Kabin ekolayzeri<small>arabanın hoparlörlerine göre ayarla · navigasyon konuşunca motor sesi kendiliğinden kısılır</small></span>
+<div id="eqBox" style="display:flex;gap:2vh;margin-top:1.6vh"></div></div>
 <div class="row"><span>Bas<small>alt frekans güçlendirme</small></span><input type="range" min="0" max="9" step="1" id="bass"><b class="sg" id="bassT" style="width:6vh;text-align:right"></b></div>
 <div class="row"><span>Ses çıkışı<small>ses gelmezse diğerlerini dene</small></span><div class="seg" id="out"></div></div>
 <div class="row"><span>Ses testi<small>açar ve 2 sn gaz verir</small></span><div style="flex:1"></div><button class="key chip on" id="test">Test et</button></div>
@@ -138,6 +140,15 @@ function range(id, key, fmt) {
 range('vol', 'vol', function (v) { return v; });
 range('bass', 'bass', function (v) { return '+' + v; });
 range('carMax', 'carMax', function (v) { return v; });
+// 5-band cabin EQ (Sub · Alt-orta · Orta · Varlık · Tiz), ±9 dB
+var EQN = ['Sub', 'Alt-orta', 'Orta', 'Varlık', 'Tiz'];
+EQN.forEach(function (n, k) {
+  var d = document.createElement('div');
+  d.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;gap:.8vh';
+  d.innerHTML = '<b class="sg" id="eqT' + k + '" style="font-size:2.2vh">0</b><input type="range" min="-9" max="9" step="1" id="eq' + k + '" style="width:100%"><span style="font-size:1.8vh;color:var(--muted)">' + n + '</span>';
+  $('eqBox').appendChild(d);
+  $('eq' + k).oninput = function () { var v = +this.value; $('eqT' + k).textContent = (v > 0 ? '+' : '') + v; set('eq' + k, v); };
+});
 function toggle(id) { $(id).onclick = function () { cfg[id] = !cfg[id]; set(id, cfg[id] ? 1 : 0); paint(); }; }
 toggle('pops'); toggle('bubble'); toggle('boot');
 [['std', 'OBD2'], ['psa', 'PSA CAN']].forEach(function (o) { seg('obdProto', o[1], function () { cfg.obdProto = o[0]; set('obdProto', o[0]); paint(); }); });
@@ -159,6 +170,7 @@ function paint() {
   var o = $('obd').children, om = ['off', 'wifi', 'bt']; for (var k = 0; k < o.length; k++) o[k].classList.toggle('on', om[k] === (cfg.obd || 'off'));
   $('power').textContent = cfg.on ? 'Açık' : 'Kapalı'; $('power').classList.toggle('on', !!cfg.on);
   $('vol').value = cfg.vol; $('volT').textContent = cfg.vol;
+  (cfg.eq || [0, 0, 0, 0, 0]).forEach(function (v, k) { if ($('eq' + k)) { $('eq' + k).value = v; $('eqT' + k).textContent = (v > 0 ? '+' : '') + v; } });
   $('bass').value = cfg.bass; $('bassT').textContent = '+' + cfg.bass;
   $('carMax').value = cfg.carMax; $('carMaxT').textContent = cfg.carMax;
   $('obdTarget').value = cfg.obdTarget || '';

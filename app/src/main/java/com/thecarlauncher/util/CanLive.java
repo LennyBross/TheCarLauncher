@@ -88,6 +88,7 @@ public final class CanLive {
     public static boolean cpFresh() { return System.currentTimeMillis() - cpAt < 3000; }
 
     public static boolean installed(Context c, String pkg) {
+        if (PKG_CP.equals(pkg)) return true;   // CataraPatara is built into MYDS now
         try {
             c.getPackageManager().getPackageInfo(pkg, 0);
             return true;
@@ -96,9 +97,36 @@ public final class CanLive {
         }
     }
 
+    /** Opens the built-in CataraPatara screen. */
+    public static void openCp(Context c) {
+        try {
+            c.startActivity(new Intent().setClassName(c.getPackageName(), "com.catarapatara.MainActivity")
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** The old stand-alone CataraPatara APK is still on the unit (it would play a second engine). */
+    public static boolean standaloneCp(Context c) {
+        try {
+            c.getPackageManager().getPackageInfo(PKG_CP, 0);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Opens the system uninstall dialog for the old stand-alone CataraPatara. */
+    public static void removeStandaloneCp(Context c) {
+        try {
+            c.startActivity(new Intent(Intent.ACTION_DELETE, android.net.Uri.parse("package:" + PKG_CP)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (Exception ignored) {
+        }
+    }
+
     /** Asks CataraPatara to switch its sound: "toggle", "on" or "off". */
     public static void cpCommand(Context c, String cmd) {
-        Intent i = new Intent("com.catarapatara.CONTROL").setClassName(PKG_CP, "com.catarapatara.ControlReceiver").putExtra("cmd", cmd);
+        Intent i = new Intent("com.catarapatara.CONTROL").setClassName(c.getPackageName(), "com.catarapatara.ControlReceiver").putExtra("cmd", cmd);
         c.sendBroadcast(i);
         if ("toggle".equals(cmd)) cpOn = !cpOn; else cpOn = "on".equals(cmd);
         cpAt = System.currentTimeMillis();

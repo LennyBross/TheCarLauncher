@@ -13,16 +13,16 @@
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
-    <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="CataraPatara"
-        android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen"
-        android:hardwareAccelerated="true">
+    <application>
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:icon="@mipmap/cp_launcher"
+            android:label="CataraPatara"
+            android:taskAffinity="com.catarapatara"
+            android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen"
+            android:hardwareAccelerated="true"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"
             android:launchMode="singleTask">
             <intent-filter>

@@ -39,6 +39,8 @@ import java.util.Locale;
 public class ThemeScreen extends Screen {
     public static final String P_THEME = "home_theme", P_PREV = "home_theme_prev";
     public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7, STOCK = 8;
+    /** The themes offered in Settings (ids into NAMES). */
+    public static final int[] OFFERED = {STOCK, DS4PLUS, PANEL};
     public static final String[][] NAMES = {
             {"Klasična", "Classic"}, {"Moderna", "Modern"}, {"Retro", "Retro"}, {"Pilot", "Pilot"}, {"Panel", "Panel"},
             {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}, {"Stock", "Stock"}};
@@ -69,7 +71,12 @@ public class ThemeScreen extends Screen {
     /** The chosen home page; the old "modern" switch still counts. */
     public static int current(Context c) {
         int t = Prefs.integer(c, P_THEME, -1);
-        if (t < 0) t = ModernScreen.enabled(c) ? MODERN : CLASSIC;
+        // Only DS4+, Panel and Stock are offered now; anything else moves to Stock.
+        if (t != DS4PLUS && t != PANEL && t != STOCK) {
+            t = STOCK;
+            Prefs.put(c, P_THEME, t);
+            Prefs.put(c, ModernScreen.P_MODERN, false);
+        }
         return t;
     }
 
@@ -90,9 +97,6 @@ public class ThemeScreen extends Screen {
 
     private String page() {
         switch (theme) {
-            case RETRO: return "retro.html";
-            case PILOT: return "pilot.html";
-            case KOKPIT: return "kokpit.html";
             case DRIVE: return "drive.html";
             case DS4PLUS: return "ds4plus.html";
             case STOCK: return "stock.html";
@@ -331,14 +335,14 @@ public class ThemeScreen extends Screen {
                         case "vehicleNative": act.show(LauncherActivity.VEHICLE, true); break;
                         case "themehome": load(page()); break;
                         case "engine":
-                            if (com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_CP)) openPkg(com.thecarlauncher.util.CanLive.PKG_CP);
-                            else load("engine.html");
+                            com.thecarlauncher.util.CanLive.openCp(act);
                             break;
-                        case "cpInstall": com.thecarlauncher.util.Updater.installCompanionNow(act, com.thecarlauncher.util.CanLive.PKG_CP); break;
+                        case "cpInstall": com.thecarlauncher.util.CanLive.openCp(act); break;
                         case "cpToggle": com.thecarlauncher.util.CanLive.cpCommand(act, "toggle"); push(); break;
                         case "canbridge": openPkg(com.thecarlauncher.util.CanLive.PKG_BRIDGE); break;
                         case "settings": act.show(LauncherActivity.SETTINGS, true); break;
                         case "sound": act.show(LauncherActivity.SOUND, true); break;
+                        case "eq": openEq(); break;
                         case "spotify": openSpotify(); break;
                         case "ytmusic": openPkg(PKG_YTMUSIC); break;
                         case "youtube": openPkg(PKG_YOUTUBE); break;
@@ -523,6 +527,28 @@ public class ThemeScreen extends Screen {
     }
 
     /** Opens an installed app; if missing, its Play Store page. */
+    /** The unit's equalizer: the system audio-effect panel, a vendor EQ / DSP app, else MYDS's sound page. */
+    private void openEq() {
+        android.content.pm.PackageManager pm = act.getPackageManager();
+        try {
+            Intent i = new Intent(android.media.audiofx.AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL)
+                    .putExtra(android.media.audiofx.AudioEffect.EXTRA_CONTENT_TYPE, android.media.audiofx.AudioEffect.CONTENT_TYPE_MUSIC)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (i.resolveActivity(pm) != null) { act.startActivity(i); return; }
+        } catch (Exception ignored) { }
+        String[] known = {"com.hcn.eq", "com.hcn.autoeq", "com.hcn.sound", "com.hcn.dsp", "com.syu.eq", "com.fyt.equalizer",
+                "com.ts.main.eq", "com.teyes.dsp", "com.microntek.eq", "com.android.musicfx"};
+        for (String k : known) if (pm.getLaunchIntentForPackage(k) != null) { openPkg(k); return; }
+        try {
+            for (android.content.pm.ApplicationInfo a : pm.getInstalledApplications(0)) {
+                String n = a.packageName.toLowerCase(java.util.Locale.ROOT);
+                if ((n.contains("equaliz") || n.endsWith(".eq") || n.contains(".eq.") || n.contains("dsp") || n.contains("soundeffect"))
+                        && pm.getLaunchIntentForPackage(a.packageName) != null) { openPkg(a.packageName); return; }
+            }
+        } catch (Exception ignored) { }
+        act.show(LauncherActivity.SOUND, true);
+    }
+
     private void openPkg(String pkg) {
         Intent i = act.getPackageManager().getLaunchIntentForPackage(pkg);
         try {
