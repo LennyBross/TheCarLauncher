@@ -38,6 +38,7 @@ public final class EngineSound {
     private final EngineSim sim = new EngineSim(synth);
     private volatile Thread thread;
     private volatile boolean stopping;
+    private volatile SoundPacks.Loaded pack;
     private volatile float fadeOut = 1f;
 
     private EngineSound(Context c) {
@@ -51,11 +52,28 @@ public final class EngineSound {
     public int volume() { return Prefs.integer(app, P_VOL, 70); }
 
     private void applyPrefs() {
+        String id = id();
+        SoundPacks.Loaded lp = id.startsWith("pack:") ? SoundPacks.load(app, id, SR) : null;
         synchronized (synth) {
-            EngineSynth.Profile p = EngineSynth.profile(id());
+            EngineSynth.Profile p;
+            if (lp != null) {
+                // A recording: the synth only handles the starter and pops, the sim needs its idle and redline.
+                EngineSynth.Profile b = EngineSynth.PROFILES[0];
+                p = new EngineSynth.Profile(id, lp.name, lp.sub, b.fire, b.bank, b.amp, lp.idle, lp.redline,
+                        b.resL, b.resR, b.resG, b.q, b.bright, b.noise, b.drive, 0, 0, 0);
+            } else {
+                p = EngineSynth.profile(id);
+            }
+            pack = lp;
             synth.setProfile(p, exhaust());
             sim.setProfile(p);
         }
+    }
+
+    public boolean deletePack(String id) {
+        boolean ok = SoundPacks.delete(app, id);
+        if (ok && id.equals(id())) setProfile("v8us");
+        return ok;
     }
 
     public void setProfile(String id) { Prefs.put(app, P_ID, id); applyPrefs(); }
@@ -86,9 +104,14 @@ public final class EngineSound {
                 + Math.round(synth.profile().redline()) + "," + (running() ? 1 : 0);
     }
 
-    public static String profilesJson() {
+    public String profilesJson() {
         JSONArray a = new JSONArray();
         try {
+            for (SoundPacks.Info i : SoundPacks.list(app)) {
+                JSONObject o = new JSONObject();
+                o.put("id", i.id); o.put("name", i.name); o.put("sub", i.sub); o.put("red", i.redline); o.put("pack", true);
+                a.put(o);
+            }
             for (EngineSynth.Profile p : EngineSynth.PROFILES) {
                 JSONObject o = new JSONObject();
                 o.put("id", p.id()); o.put("name", p.name()); o.put("sub", p.sub()); o.put("red", Math.round(p.redline()));
@@ -163,7 +186,12 @@ public final class EngineSound {
                 }
                 synchronized (synth) {
                     sim.step(dt, now);
-                    synth.render(buf, 0, BLOCK, sim.rpm, sim.load, sim.starter());
+                    SoundPacks.Loaded lp = pack;
+                    if (lp != null && sim.starter() <= 0 && sim.rpm > 250) {
+                        lp.engine.render(buf, 0, BLOCK, sim.rpm, sim.load);
+                    } else {
+                        synth.render(buf, 0, BLOCK, sim.rpm, sim.load, sim.starter());
+                    }
                 }
                 float want = muted ? 0f : volume() / 100f;
                 if (stopping) fadeOut -= dt / .8f;

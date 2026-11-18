@@ -104,6 +104,11 @@ public class ThemeScreen extends Screen {
         load(theme == DS4PLUS ? "ds4plus-drive.html" : "drive.html");
     }
 
+    /** Reloads whatever page is showing (after a sound pack import). */
+    public void reloadPage() {
+        if (web != null) web.reload();
+    }
+
     private void load(String pg) {
         if (web == null) return;
         ready = false;
@@ -289,7 +294,15 @@ public class ThemeScreen extends Screen {
 
         // ---- Engine sound ----
         @JavascriptInterface
-        public String engineProfiles() { return com.thecarlauncher.engine.EngineSound.profilesJson(); }
+        public String engineProfiles() { return com.thecarlauncher.engine.EngineSound.get(act).profilesJson(); }
+
+        @JavascriptInterface
+        public void engineImport() {
+            ui(new Runnable() { public void run() { act.pickSoundPack(); } });
+        }
+
+        @JavascriptInterface
+        public boolean engineDelete(String id) { return com.thecarlauncher.engine.EngineSound.get(act).deletePack(id); }
 
         @JavascriptInterface
         public String engineConfig() {

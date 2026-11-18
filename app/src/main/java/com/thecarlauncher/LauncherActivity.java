@@ -308,6 +308,41 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         }
     }
 
+    private static final int REQ_PACK = 7311;
+
+    /** Lets the user pick an engine sound pack (zip) from USB / Download. */
+    public void pickSoundPack() {
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+                .putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/zip", "application/x-zip-compressed", "application/octet-stream"});
+        try {
+            startActivityForResult(i, REQ_PACK);
+        } catch (Exception e) {
+            try {
+                startActivityForResult(new Intent(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"), REQ_PACK);
+            } catch (Exception e2) {
+                android.widget.Toast.makeText(this, "Dosya seçici yok", android.widget.Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void importSoundPack(final android.net.Uri uri) {
+        android.widget.Toast.makeText(this, "Ses paketi yükleniyor…", android.widget.Toast.LENGTH_SHORT).show();
+        new Thread(new Runnable() {
+            public void run() {
+                final String name = com.thecarlauncher.engine.SoundPacks.importZip(LauncherActivity.this, uri);
+                main.post(new Runnable() {
+                    public void run() {
+                        android.widget.Toast.makeText(LauncherActivity.this, name != null ? "Yüklendi: " + name
+                                : "Bu dosya bir MYDS ses paketi değil", android.widget.Toast.LENGTH_LONG).show();
+                        if (name != null && screens[MENU] instanceof com.thecarlauncher.screens.ThemeScreen) {
+                            ((com.thecarlauncher.screens.ThemeScreen) screens[MENU]).reloadPage();
+                        }
+                    }
+                });
+            }
+        }, "pack-import").start();
+    }
+
     private int screenFromIntent(Intent i, int def) {
         String s = i == null ? null : i.getStringExtra(EXTRA_SCREEN);
         if ("media".equals(s)) return MEDIA;
@@ -503,6 +538,10 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
+        if (req == REQ_PACK) {
+            if (res == RESULT_OK && data != null && data.getData() != null) importSoundPack(data.getData());
+            return;
+        }
         if (req == REQ_IMAGE && res == RESULT_OK && data != null && data.getData() != null) {
             if (imagePicked != null) {
                 imagePicked.onPicked(data.getData());

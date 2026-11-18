@@ -16,6 +16,8 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
 .eng{border:none;border-radius:2.22vh;background:var(--chip);color:var(--fg);text-align:left;padding:1.67vh 2.22vh;display:flex;flex-direction:column;gap:.42vh;min-height:0}
 .eng b{font-family:'Space Grotesk',sans-serif;font-size:2.64vh}
 .eng span{font-size:1.81vh;color:var(--muted)}
+.eng.pack{background:#2A2418;box-shadow:inset 0 0 0 1px #6c5a34}.eng.pack span{color:#dfbf83}
+.eng.add{border:1px dashed #3A4452;background:transparent;align-items:center;justify-content:center;color:var(--muted)}
 .eng.on{background:var(--a);color:#0B0E13}.eng.on span{color:#0B0E13;opacity:.75}
 #gas{border:none;border-radius:50%;width:min(25vh,20vw);height:min(25vh,20vw);background:radial-gradient(circle at 50% 35%,#FF7A55,#C2321B);color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:4.44vh;box-shadow:0 1.67vh 4.44vh rgba(255,90,60,.35);touch-action:none;user-select:none}
 #gas.down{transform:scale(.94);box-shadow:0 .56vh 1.67vh rgba(255,90,60,.5)}
@@ -49,7 +51,7 @@ input[type=range]{width:100%;accent-color:var(--a);height:4.44vh}
 </div>
 </div>
 <div style="width:min(76vh,44vw);flex-shrink:0;display:flex;flex-direction:column;gap:2.22vh;min-height:0">
-<div class="card" style="flex:1;min-height:0;padding:2.22vh;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:minmax(0,1fr);gap:1.39vh" id="list"></div>
+<div class="card" style="flex:1;min-height:0;padding:2.22vh;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:11.11vh;gap:1.39vh;overflow-y:auto;align-content:start" id="list"></div>
 <div class="card" style="padding:2.22vh 2.78vh;display:flex;flex-direction:column;gap:1.67vh">
 <div style="display:flex;align-items:center;gap:1.39vh"><span style="font-size:2.08vh;color:var(--muted);width:12vh">Egzoz</span>
 <div style="display:flex;gap:1.11vh;flex:1" id="ex"></div></div>
@@ -77,11 +79,21 @@ function paint() {
   drawScale();
 }
 PROFILES.forEach(function (p) {
-  var b = document.createElement('button'); b.className = 'key eng'; b.setAttribute('data-id', p.id);
-  b.innerHTML = '<b>' + p.name + '</b><span>' + p.sub + '</span>';
+  var b = document.createElement('button'); b.className = 'key eng' + (p.pack ? ' pack' : ''); b.setAttribute('data-id', p.id);
+  b.innerHTML = '<b>' + p.name + '</b><span>' + (p.pack ? '● Gerçek kayıt · ' : '') + p.sub + '</span>';
   b.onclick = function () { cfg.id = p.id; call('engineSet', 'id', p.id); if (!cfg.on) { cfg.on = true; call('engineSet', 'on', '1'); } paint(); };
+  if (p.pack) {
+    var t = null;
+    b.addEventListener('pointerdown', function () { t = setTimeout(function () { t = null; if (confirmDel(p)) { call('engineDelete', p.id); location.reload(); } }, 900); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { if (t) clearTimeout(t); }); });
+  }
   $('list').appendChild(b);
 });
+function confirmDel(p) { return window.confirm ? window.confirm(p.name + ' silinsin mi?') : true; }
+var add = document.createElement('button'); add.className = 'key eng add';
+add.innerHTML = '<b style="font-size:2.36vh">+ Ses paketi ekle</b><span>USB / Download · .zip</span>';
+add.onclick = function () { call('engineImport'); };
+$('list').appendChild(add);
 ['Stok', 'Spor', 'Yarış'].forEach(function (n, i) {
   var b = document.createElement('button'); b.className = 'key chip'; b.style.flex = '1'; b.textContent = n;
   b.onclick = function () { cfg.ex = i; call('engineSet', 'ex', String(i)); paint(); };
