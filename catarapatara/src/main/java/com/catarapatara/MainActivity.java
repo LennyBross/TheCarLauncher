@@ -112,7 +112,7 @@ public final class MainActivity extends Activity {
                         .put("vol", p.getInt("vol", 70)).put("bass", p.getInt("bass", 3)).put("pops", p.getBoolean("pops", true))
                         .put("bubble", p.getBoolean("bubble", true)).put("canDraw", Bubble.canDraw(MainActivity.this))
                         .put("obd", p.getString("obd", "off")).put("obdTarget", p.getString("obdTarget", "")).put("obdProto", p.getString("obdProto", "std"))
-                        .put("carMax", p.getInt("carMax", 4500)).put("out", p.getString("out", "focus")).put("boot", p.getBoolean("boot", true))
+                        .put("carMax", p.getInt("carMax", 4500)).put("out", p.getString("out", "focus")).put("boot", p.getBoolean("boot", true)).put("duckMusic", p.getBoolean("duckMusic", false)).put("duckAmt", p.getInt("duckAmt", 40))
                         .put("eq", new org.json.JSONArray().put(p.getInt("eq0", 0)).put(p.getInt("eq1", 0)).put(p.getInt("eq2", 0)).put(p.getInt("eq3", 0)).put(p.getInt("eq4", 0))).toString();
             } catch (Exception e) {
                 return "{}";
@@ -133,8 +133,8 @@ public final class MainActivity extends Activity {
             SharedPreferences.Editor e = EngineService.prefs(MainActivity.this).edit();
             switch (key) {
                 case "id": case "obd": case "obdTarget": case "obdProto": case "out": e.putString(key, value); break;
-                case "ex": case "vol": case "bass": case "carMax": case "eq0": case "eq1": case "eq2": case "eq3": case "eq4": e.putInt(key, Integer.parseInt(value)); break;
-                case "pops": case "bubble": case "boot": e.putBoolean(key, "1".equals(value)); break;
+                case "ex": case "vol": case "bass": case "carMax": case "duckAmt": case "eq0": case "eq1": case "eq2": case "eq3": case "eq4": e.putInt(key, Integer.parseInt(value)); break;
+                case "pops": case "bubble": case "boot": case "duckMusic": e.putBoolean(key, "1".equals(value)); break;
                 default: return;
             }
             e.apply();

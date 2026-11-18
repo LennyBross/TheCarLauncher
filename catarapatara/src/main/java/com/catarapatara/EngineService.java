@@ -270,7 +270,21 @@ public final class EngineService extends Service implements LocationListener, Ob
     }
 
     // ---- Ducking: engine drops by 18 dB while a navigation prompt or assistant speaks ----
-    private volatile boolean duckNav, duckFocus;
+    private volatile boolean duckNav, duckFocus, musicOn;
+    private volatile float duckNow = 1f;
+    /** 12-band spectrum of what the engine plays (0..100), for the app's visualiser. */
+    static final float[] SPEC_HZ = {40, 60, 90, 130, 190, 280, 400, 580, 850, 1250, 1800, 2600};
+    final int[] spectrum = new int[SPEC_HZ.length];
+
+    private void analyse(float[] x, int n) {
+        for (int k = 0; k < SPEC_HZ.length; k++) {
+            double w = 2 * Math.PI * SPEC_HZ[k] / SR, c = 2 * Math.cos(w), s1 = 0, s2 = 0;
+            for (int i = 0; i < n; i++) { double s0 = x[i] + c * s1 - s2; s2 = s1; s1 = s0; }
+            double mag = Math.sqrt(Math.max(0, s1 * s1 + s2 * s2 - c * s1 * s2)) / n;
+            int v = (int) Math.max(0, Math.min(100, 100 + 20 * Math.log10(mag + 1e-6) * 1.6));
+            spectrum[k] = spectrum[k] * 2 / 3 + v / 3;
+        }
+    }
     private Object playbackCb;
 
     private void watchPlayback(boolean on) {
@@ -282,9 +296,11 @@ public final class EngineService extends Service implements LocationListener, Ob
                 AudioManager.AudioPlaybackCallback cb = new AudioManager.AudioPlaybackCallback() {
                     @Override
                     public void onPlaybackConfigChanged(java.util.List<android.media.AudioPlaybackConfiguration> configs) {
-                        boolean nav = false;
+                        boolean nav = false, music = false;
                         for (android.media.AudioPlaybackConfiguration c : configs) {
                             int u = c.getAudioAttributes().getUsage();
+                            // our own engine track is USAGE_GAME (media / focus modes), so MEDIA here is somebody's music
+                            if (u == AudioAttributes.USAGE_MEDIA) music = true;
                             if (u == AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE || u == AudioAttributes.USAGE_ASSISTANT
                                     || u == AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY) {
                                 // our own track uses the nav channel in "nav" mode: ignore it
@@ -292,6 +308,7 @@ public final class EngineService extends Service implements LocationListener, Ob
                             }
                         }
                         duckNav = nav;
+                        musicOn = music;
                     }
                 };
                 am.registerAudioPlaybackCallback(cb, main);
@@ -324,12 +341,19 @@ public final class EngineService extends Service implements LocationListener, Ob
 
     void rev(boolean on) { sim.setRev(on); }
 
+    private java.util.List<Integer> spectrumList() {
+        java.util.List<Integer> l = new java.util.ArrayList<>();
+        for (int v : spectrum) l.add(running ? v : 0);
+        return l;
+    }
+
     String live() {
         long now = System.currentTimeMillis();
         try {
             return new JSONObject().put("rpm", Math.round(sim.rpm)).put("gear", sim.gear).put("kmh", Math.round(sim.speed))
                     .put("red", Math.round(synth.profile().redline())).put("load", Math.round(sim.load * 100))
-                    .put("src", sim.source(now)).put("level", Math.round(level * 100)).put("err", audioError).put("gh", SoundPacks.ghStatus).put("can", now - canStatusAt < 6000 ? canStatus : "").put("on", running).put("obd", obdStatus).put("gps", now - lastFixAt < 3000).toString();
+                    .put("src", sim.source(now)).put("level", Math.round(level * 100)).put("err", audioError).put("gh", SoundPacks.ghStatus).put("can", now - canStatusAt < 6000 ? canStatus : "").put("on", running).put("obd", obdStatus).put("gps", now - lastFixAt < 3000)
+                    .put("duck", Math.round(duckNow * 100)).put("music", musicOn).put("nav", duckNav).put("spec", new JSONArray(spectrumList())).toString();
         } catch (Exception e) {
             return "{}";
         }
@@ -400,7 +424,8 @@ public final class EngineService extends Service implements LocationListener, Ob
         if ("nav".equals(out)) {
             b.setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION);
         } else {
-            b.setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC);
+            // USAGE_GAME plays on the music stream like media, and lets us tell our track from real music.
+            b.setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION);
         }
         return b.build();
     }
@@ -463,6 +488,7 @@ public final class EngineService extends Service implements LocationListener, Ob
         long checkAt = 0;
         boolean muted = false;
         float vol = .7f, popLevel = .6f, cut = 1f;
+        int blocks = 0;
         boolean pops = true;
         int lastGear = -1;
         long shiftUntil = 0;
@@ -494,7 +520,10 @@ public final class EngineService extends Service implements LocationListener, Ob
                 if (lastGear >= 0 && sim.gear != lastGear && sim.gear > 0) shiftUntil = now + 120;
                 lastGear = sim.gear;
                 cut += ((now < shiftUntil ? .45f : 1f) - cut) * .5f;
-                float want = muted ? 0f : vol * cut * (duckNav || duckFocus ? .125f : 1f);
+                float duck = duckNav || duckFocus ? .125f : 1f;
+                if (musicOn && p.getBoolean("duckMusic", false)) duck = Math.min(duck, 1f - Math.max(0, Math.min(90, p.getInt("duckAmt", 40))) / 100f);
+                duckNow = duck;
+                float want = muted ? 0f : vol * cut * duck;
                 boolean useEq = eqOn;
                 boolean live = running && my == gen;
                 if (!live) fade -= dt / .8f;
@@ -510,6 +539,7 @@ public final class EngineService extends Service implements LocationListener, Ob
                     pk = Math.max(pk, Math.abs(v));
                 }
                 level = level * .8f + pk * .2f;
+                if ((++blocks & 3) == 0) analyse(buf, BLOCK);
                 track.write(pcm, 0, BLOCK);
                 if (!live && fade <= 0) break;
             }
