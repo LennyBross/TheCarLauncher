@@ -1030,7 +1030,7 @@ public class SettingsScreen extends Screen {
     }
 
     private void buildMedia() {
-        toggle(s("Nastavi reprodukciju pri pokretanju", "Resume playback on start"), Prefs.RESUME_MEDIA, true, false);
+        toggle(s("Nastavi reprodukciju pri pokretanju", "Resume playback on start"), Prefs.RESUME_MEDIA, false, false);
         action(s("Duboki - Srednji - Visoki", "Bass - Mid - Treble"), toneSummary(), new Runnable() {
             public void run() { act.show(LauncherActivity.SOUND, true); }
         });
@@ -1078,7 +1078,7 @@ public class SettingsScreen extends Screen {
                 public void run() { act.show(LauncherActivity.BTDEVICES, true); }
             });
             toggle(s("BT audio čim se telefon poveže", "BT audio as soon as the phone connects"),
-                    Prefs.BT_AUTO_SELECT, true, false);
+                    Prefs.BT_AUTO_SELECT, false, false);
         } else {
             // Other units: the factory BT music app plays the sound; the launcher opens it briefly.
             AppRepository.App screen = MediaHub.get(act).bluetooth().appScreen();

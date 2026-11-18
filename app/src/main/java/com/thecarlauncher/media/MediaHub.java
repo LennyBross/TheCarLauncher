@@ -534,7 +534,7 @@ public final class MediaHub {
      * after the phone was gone. A song the user paused on the phone is left alone.
      */
     public void resumeBluetooth() {
-        if (!btSelected || isRadio()) return;
+        if (!btSelected || isRadio() || !Prefs.bool(app, Prefs.BT_AUTO_SELECT, false)) return;
         long now = System.currentTimeMillis();
         if (now - btAutoAt < 8000) return;
         boolean idle = !goc().hasSong() && !isPlaying();
@@ -546,7 +546,7 @@ public final class MediaHub {
     /** The phone just connected over Bluetooth: BT audio becomes the source, like its key. */
     public void onPhoneConnected() {
         BtDevices.get(app).known(); // remembers the phone
-        if (!Prefs.bool(app, Prefs.BT_AUTO_SELECT, true)) return;
+        if (!Prefs.bool(app, Prefs.BT_AUTO_SELECT, false)) return;
         btAutoAt = System.currentTimeMillis();
         select(BLUETOOTH);
     }

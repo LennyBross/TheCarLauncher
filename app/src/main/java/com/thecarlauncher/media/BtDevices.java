@@ -313,8 +313,7 @@ public final class BtDevices {
                 connecting = null;
                 LoadingBanner.stop("bt-connect");
                 LoadingBanner.flash("bt-connected", LoadingBanner.t("Povezano: ", "Connected: ") + label, 2500);
-                // BT audio becomes the source (done already when "BT audio on connect" is on).
-                if (!Prefs.bool(app, Prefs.BT_AUTO_SELECT, true)) MediaHub.get(app).select(MediaHub.BLUETOOTH);
+                // No music starts by itself: the driver presses play (or turns on "BT audio on connect").
                 changed();
                 return;
             }

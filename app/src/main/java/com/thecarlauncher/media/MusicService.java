@@ -574,12 +574,18 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     /** Reloads the last queue; auto-resumes once per boot if the driver enabled it. */
     private void restoreState() {
+        // Music no longer starts by itself: switched off once for everyone (the driver can turn it back on).
+        if (!Prefs.bool(this, "resume_media_off_v1", false)) {
+            Prefs.put(this, "resume_media_off_v1", true);
+            Prefs.put(this, Prefs.RESUME_MEDIA, false);
+            Prefs.put(this, Prefs.BT_AUTO_SELECT, false);
+        }
         final String ctx = Prefs.str(this, Prefs.LAST_QUEUE, null);
         if (ctx == null || !MusicLibrary.hasPermission(this)) return;
         final long trackId = Prefs.of(this).getLong(Prefs.LAST_TRACK, -1);
         final int pos = Prefs.integer(this, Prefs.LAST_POS, 0);
         // Only resume our own player if it was the last thing playing (not e.g. Spotify).
-        final boolean autoplay = !sResumeChecked && Prefs.bool(this, Prefs.RESUME_MEDIA, true)
+        final boolean autoplay = !sResumeChecked && Prefs.bool(this, Prefs.RESUME_MEDIA, false)
                 && getPackageName().equals(Prefs.str(this, Prefs.LAST_SOURCE, getPackageName()));
         sResumeChecked = true;
         new Thread(new Runnable() {
