@@ -36,6 +36,12 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback|location" />
 
+        <receiver android:name=".ControlReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="com.catarapatara.CONTROL" />
+            </intent-filter>
+        </receiver>
+
         <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

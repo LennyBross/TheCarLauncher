@@ -171,7 +171,13 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         show(screenFromIntent(getIntent(), start), false);
 
         MediaHub.get(this).connectExternal();
-        com.thecarlauncher.engine.EngineSound.get(this).resume();
+        com.thecarlauncher.util.CanLive.start(this);
+        // CataraPatara is the engine sound when it is installed; the built-in one stays off then.
+        if (com.thecarlauncher.util.CanLive.installed(this, com.thecarlauncher.util.CanLive.PKG_CP)) {
+            com.thecarlauncher.engine.EngineSound.get(this).setOn(false);
+        } else {
+            com.thecarlauncher.engine.EngineSound.get(this).resume();
+        }
         if (MusicLibrary.hasPermission(this)) MusicService.start(this);
         AppRepository.get(this);
         TripComputer.get(this);

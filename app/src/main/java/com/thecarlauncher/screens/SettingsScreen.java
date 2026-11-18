@@ -1192,6 +1192,15 @@ public class SettingsScreen extends Screen {
         }, "device-report").start();
     }
 
+    private long installedCodeOf(String pkg) {
+        try {
+            android.content.pm.PackageInfo pi = act.getPackageManager().getPackageInfo(pkg, 0);
+            return android.os.Build.VERSION.SDK_INT >= 28 ? pi.getLongVersionCode() : pi.versionCode;
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
     private void showLink(final String url) {
         push(s("Pošalji na telefon", "Send to phone"), new Page() {
             public void build() {
@@ -1705,6 +1714,23 @@ public class SettingsScreen extends Screen {
     }
 
     private void buildAndroid() {
+        // CataraPatara apps from the same GitHub release: install or update.
+        for (final com.thecarlauncher.util.Updater.Companion k : com.thecarlauncher.util.Updater.COMPANIONS) {
+            long have = installedCodeOf(k.pkg);
+            String v = k.url == null ? s("proveri ažuriranje", "check for updates")
+                    : have < 0 ? s("instaliraj", "install") : k.code > have ? s("ažuriraj", "update") : s("najnovija", "up to date");
+            action(k.label, v, new Runnable() {
+                public void run() {
+                    if (k.url == null) {
+                        com.thecarlauncher.util.Updater.check(act, new com.thecarlauncher.util.Updater.Checked() {
+                            public void onChecked(com.thecarlauncher.util.Updater.Release r, String error) { refreshKeep(); }
+                        });
+                    } else {
+                        com.thecarlauncher.util.Updater.installCompanion(act, k);
+                    }
+                }
+            });
+        }
         action(s("Izveštaj o uređaju", "Device report"), s("za podršku novih uređaja", "to support new units"), new Runnable() {
             public void run() { deviceReport(); }
         });

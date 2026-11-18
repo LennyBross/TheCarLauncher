@@ -56,6 +56,8 @@ jobs:
           cp app/src/main/assets/units.json units.json
           echo "VNAME=$(grep -oP "versionName '\K[^']+" app/build.gradle)" >> "$GITHUB_ENV"
           echo "VCODE=$(grep -oP 'versionCode \K[0-9]+' app/build.gradle)" >> "$GITHUB_ENV"
+          echo "CP_CODE=$(grep -oP 'versionCode \K[0-9]+' catarapatara/build.gradle)" >> "$GITHUB_ENV"
+          echo "CB_CODE=$(grep -oP 'versionCode \K[0-9]+' canbridge/build.gradle)" >> "$GITHUB_ENV"
           # Magisk module that installs this APK as a privileged system app.
           bash scripts/build-magisk.sh TheCarLauncher.apk
           cp build/TheCarLauncher-magisk.zip TheCarLauncher-magisk.zip
@@ -99,6 +101,8 @@ jobs:
 
             versionName: ${{ env.VNAME }}
             versionCode: ${{ env.VCODE }}
+            catarapatara versionCode: ${{ env.CP_CODE }}
+            canbridge versionCode: ${{ env.CB_CODE }}
             Download **TheCarLauncher.apk** (UIS7862 / QF units), **TheCarLauncher_hzbhd.apk** (Allwinner T3 / hzbhd units), **TheCarLauncher_carsvc.apk** (android.car firmware units) or **TheCarLauncher_syu.apk** (SYU / FYT units) below, or update from Setup → Software update on the head unit (it picks the right one). Coming from an older version on a newly supported unit: run Software update twice (the first update brings the QF build, the second switches to the build for your unit).
 
       - name: Publish test build (other branches)

@@ -139,6 +139,82 @@ public final class Updater {
 
     public static Release lastFound() { return lastFound; }
 
+    // ---- Companion apps (CataraPatara, its CAN bridge): published in the same release --------------
+    public static final class Companion {
+        public final String pkg, label, asset, marker;
+        public volatile String url;
+        public volatile long code;
+
+        Companion(String pkg, String label, String asset, String marker) { this.pkg = pkg; this.label = label; this.asset = asset; this.marker = marker; }
+    }
+
+    public static final Companion[] COMPANIONS = {
+            new Companion("com.catarapatara", "CataraPatara", "CataraPatara.apk", "catarapatara versionCode"),
+            new Companion("com.catarapatara.canbridge", "CataraPatara CAN", "CataraPatara-CAN.apk", "canbridge versionCode"),
+    };
+
+    static long codeOf(Context c, String pkg) {
+        try {
+            PackageInfo pi = c.getPackageManager().getPackageInfo(pkg, 0);
+            return Build.VERSION.SDK_INT >= 28 ? pi.getLongVersionCode() : pi.versionCode;
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    /** Installed and older than the release (or missing when install=true). */
+    public static boolean companionNewer(Context c, Companion k, boolean includeMissing) {
+        if (k.url == null || k.code <= 0) return false;
+        long have = codeOf(c, k.pkg);
+        return have < 0 ? includeMissing : k.code > have;
+    }
+
+    private static void parseCompanions(JSONObject o) {
+        if (o == null) return;
+        String body = o.optString("body", "");
+        JSONArray assets = o.optJSONArray("assets");
+        for (Companion k : COMPANIONS) {
+            Matcher m = Pattern.compile(Pattern.quote(k.marker) + "[:= ]+(\\d+)").matcher(body);
+            if (!m.find()) continue;
+            String url = null;
+            if (assets != null) for (int i = 0; i < assets.length(); i++) {
+                JSONObject a = assets.optJSONObject(i);
+                if (a != null && k.asset.equals(a.optString("name"))) url = a.optString("browser_download_url");
+            }
+            if (url == null) continue;
+            k.code = Long.parseLong(m.group(1));
+            k.url = url;
+        }
+    }
+
+    /** Downloads and installs a companion app (Android asks to confirm). */
+    public static void installCompanion(final Context c, final Companion k) {
+        if (busy || k == null || k.url == null) return;
+        if (!mayInstall(c)) {
+            askInstallPermission(c);
+            return;
+        }
+        busy = true;
+        final Context app = c.getApplicationContext();
+        new Thread(new Runnable() {
+            public void run() {
+                File f = new File(app.getCacheDir(), "companion.apk");
+                try {
+                    LoadingBanner.start("update", k.label + LoadingBanner.t(" — preuzimanje…", " — downloading…"));
+                    download(k.url, f);
+                    PackageInfo pi = app.getPackageManager().getPackageArchiveInfo(f.getPath(), 0);
+                    if (pi == null || !k.pkg.equals(pi.packageName)) throw new java.io.IOException(LoadingBanner.t("Pogrešan paket", "Wrong package"));
+                    LoadingBanner.start("update", k.label + LoadingBanner.t(" — instaliranje…", " — installing…"));
+                    commit(app, f, k.pkg);
+                } catch (Exception e) {
+                    busy = false;
+                    LoadingBanner.stop("update");
+                    LoadingBanner.flash("update-fail", k.label + ": " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), 4000);
+                }
+            }
+        }, "companion-install").start();
+    }
+
     /** Newer, or the build for this unit while another unit's build is installed (same version is fine). */
     public static boolean isNewer(Context c, Release r) {
         return r != null && (r.versionCode > installedCode(c) || (switching(c) && r.versionCode >= installedCode(c)));
@@ -174,6 +250,7 @@ public final class Updater {
                     } else {
                         found = parse(a.getJSONObject(0), want);
                     }
+                    for (int i = a.length() - 1; i >= 0; i--) parseCompanions(a.optJSONObject(i)); // newest wins
                     if (found == null) err = LoadingBanner.t("nema verzije za ovaj uređaj", "no build for this unit");
                 } catch (Exception e) {
                     err = e.getClass().getSimpleName() + (e.getMessage() != null ? ": " + e.getMessage() : "");
@@ -365,9 +442,13 @@ public final class Updater {
     }
 
     private static void commit(final Context c, File apk) throws Exception {
+        commit(c, apk, c.getPackageName());
+    }
+
+    private static void commit(final Context c, File apk, String pkg) throws Exception {
         PackageInstaller pi = c.getPackageManager().getPackageInstaller();
         PackageInstaller.SessionParams p = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-        p.setAppPackageName(c.getPackageName());
+        p.setAppPackageName(pkg);
         int id = pi.createSession(p);
         PackageInstaller.Session s = pi.openSession(id);
         InputStream in = new FileInputStream(apk);
@@ -425,9 +506,15 @@ public final class Updater {
     public static void autoCheck(final Context c) {
         if (!Prefs.bool(c, P_AUTO, true)) return;
         long last = Prefs.longVal(c, P_LAST, 0);
-        if (System.currentTimeMillis() - last < 24L * 3600 * 1000) return;
+        if (System.currentTimeMillis() - last < 3600L * 1000) return;
         check(c, new Checked() {
             public void onChecked(Release r, String error) {
+                for (Companion k : COMPANIONS) {
+                    if (companionNewer(c, k, false)) {
+                        LoadingBanner.flash("update-" + k.pkg, k.label + LoadingBanner.t(": nova verzija — Podešavanje → Android sistem",
+                                ": new version — Setup → Android system"), 6000);
+                    }
+                }
                 if (isNewer(c, r)) {
                     LoadingBanner.flash("update-available", LoadingBanner.t("Dostupna je nova verzija " + r.versionName
                             + " — Podešavanje → Ažuriranje softvera", "Version " + r.versionName

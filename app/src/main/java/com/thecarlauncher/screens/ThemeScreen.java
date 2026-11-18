@@ -209,6 +209,25 @@ public class ThemeScreen extends Screen {
         float temp = Prefs.of(act).getFloat("weather_temp", Float.NaN);
         if (!Float.isNaN(temp)) o.put("temp", Math.round(temp));
         o.put("hasMaps", installed(PKG_MAPS));
+        // Live CAN (CataraPatara CAN bridge) and engine sound (CataraPatara)
+        if (com.thecarlauncher.util.CanLive.canFresh()) {
+            if (com.thecarlauncher.util.CanLive.l100 >= 0) o.put("inst", com.thecarlauncher.util.CanLive.l100);
+            if (com.thecarlauncher.util.CanLive.range >= 0) { o.put("canRange", com.thecarlauncher.util.CanLive.range); o.put("range", com.thecarlauncher.util.CanLive.range); }
+        }
+        if (com.thecarlauncher.util.CanLive.outdoorFresh()) o.put("outdoor", com.thecarlauncher.util.CanLive.outdoor);
+        boolean cp = com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_CP);
+        o.put("cp", cp);
+        o.put("canBridge", com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_BRIDGE));
+        if (cp) {
+            boolean fresh = com.thecarlauncher.util.CanLive.cpFresh();
+            o.put("cpOn", fresh && com.thecarlauncher.util.CanLive.cpOn);
+            o.put("cpRpm", fresh ? com.thecarlauncher.util.CanLive.cpRpm : 0);
+            o.put("cpGear", com.thecarlauncher.util.CanLive.cpGear);
+            o.put("cpRed", com.thecarlauncher.util.CanLive.cpRed);
+            o.put("cpLoad", com.thecarlauncher.util.CanLive.cpLoad);
+            o.put("cpName", com.thecarlauncher.util.CanLive.cpName);
+            o.put("cpSrc", com.thecarlauncher.util.CanLive.cpSrc);
+        }
         CarData cd = CarData.get(act);
         if (cd.hasOdometer()) o.put("odo", cd.odometer());
         double avg = cd.averageConsumption();
@@ -276,7 +295,12 @@ public class ThemeScreen extends Screen {
                         case "vehicle": load("car3d.html"); break;
                         case "vehicleNative": act.show(LauncherActivity.VEHICLE, true); break;
                         case "themehome": load(page()); break;
-                        case "engine": load("engine.html"); break;
+                        case "engine":
+                            if (com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_CP)) openPkg(com.thecarlauncher.util.CanLive.PKG_CP);
+                            else load("engine.html");
+                            break;
+                        case "cpToggle": com.thecarlauncher.util.CanLive.cpCommand(act, "toggle"); push(); break;
+                        case "canbridge": openPkg(com.thecarlauncher.util.CanLive.PKG_BRIDGE); break;
                         case "settings": act.show(LauncherActivity.SETTINGS, true); break;
                         case "sound": act.show(LauncherActivity.SOUND, true); break;
                         case "spotify": openSpotify(); break;

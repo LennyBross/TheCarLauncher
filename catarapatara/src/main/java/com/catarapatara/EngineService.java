@@ -157,6 +157,7 @@ public final class EngineService extends Service implements LocationListener, Ob
 
     private void end() {
         running = false;
+        publish(false, System.currentTimeMillis());
         try { ((LocationManager) getSystemService(LOCATION_SERVICE)).removeUpdates(this); } catch (Exception ignored) { }
         try { unregisterReceiver(data); } catch (Exception ignored) { }
         if (obd != null) obd.stop();
@@ -327,6 +328,7 @@ public final class EngineService extends Service implements LocationListener, Ob
                     popLevel = .3f + .25f * p.getInt("ex", 1);
                     boolean obdFresh = obdKmh >= 0 && now - obdKmhAt < 3000;
                     sim.setSpeed(obdFresh ? obdKmh : gpsKmh);
+                    if (my == gen) publish(running, now);
                 }
                 synchronized (synth) {
                     sim.step(dt, now);
@@ -357,6 +359,16 @@ public final class EngineService extends Service implements LocationListener, Ob
         } finally {
             try { track.stop(); } catch (Throwable ignored) { }
             track.release();
+        }
+    }
+
+    /** Tells MYDS (and anyone listening) what the engine is doing. */
+    private void publish(boolean on, long now) {
+        try {
+            sendBroadcast(new Intent("com.catarapatara.LIVE").putExtra("on", on).putExtra("rpm", Math.round(sim.rpm))
+                    .putExtra("gear", sim.gear).putExtra("red", Math.round(synth.profile().redline()))
+                    .putExtra("load", Math.round(sim.load * 100)).putExtra("name", name()).putExtra("src", sim.source(now)));
+        } catch (Exception ignored) {
         }
     }
 

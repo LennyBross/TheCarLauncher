@@ -81,6 +81,7 @@ body{background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif}
   $('city').innerHTML = h;
   var sp = $('spark'); for (var i = 0; i < 20; i++) { var b = document.createElement('span'); b.style.cssText = 'flex:1;height:8%;border-radius:.42vh;background:#2A2E36'; sp.appendChild(b); }
 })();
+var instHist = [];
 var TURN = {
   left: '<path d="M16 20V11H6"/><path d="M10 7L6 11l4 4"/>', right: '<path d="M8 20V11h10"/><path d="M14 7l4 4-4 4"/>',
   'slight left': '<path d="M15 20v-6l-6-6"/><path d="M9 13V8h5"/>', 'slight right': '<path d="M9 20v-6l6-6"/><path d="M15 13V8h-5"/>',
@@ -100,6 +101,19 @@ car.on(function (s) {
   $('clock').textContent = s.time || '--:--';
   $('speed').textContent = s.gps === 'ok' ? s.speed : '—';
   $('avg').textContent = num(s.l100, 1);
+  if (s.inst !== undefined) {
+    $('inst').textContent = num(s.inst, 1);
+    $('instNote').textContent = 'CANBUS · canlı';
+    instHist.push(s.inst); if (instHist.length > 20) instHist.shift();
+    var bars = $('spark').children, mx = Math.max.apply(null, instHist.concat([10]));
+    for (var q = 0; q < bars.length; q++) {
+      var v = instHist[instHist.length - bars.length + q];
+      bars[q].style.height = v === undefined ? '8%' : Math.max(8, Math.min(100, v / mx * 100)) + '%';
+      bars[q].style.background = v === undefined ? '#2A2E36' : (v > 12 ? '#E8541E' : '#2FBF71');
+    }
+  } else {
+    $('instNote').textContent = s.canBridge ? 'CANBUS bekleniyor' : 'CAN köprüsü kurulu değil';
+  }
   $('perkm').textContent = num(s.perKm, 2);
   $('range').textContent = s.range ? Math.round(s.range) : '—';
   $('title').textContent = s.title || 'Çalan bir şey yok';

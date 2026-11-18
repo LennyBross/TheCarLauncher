@@ -141,8 +141,12 @@ public final class EdgePanel {
         paintEngine(app, eng);
         eng.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                com.thecarlauncher.engine.EngineSound e = com.thecarlauncher.engine.EngineSound.get(app);
-                e.setOn(!e.on());
+                if (CanLive.installed(app, CanLive.PKG_CP)) {
+                    CanLive.cpCommand(app, "toggle");
+                } else {
+                    com.thecarlauncher.engine.EngineSound e = com.thecarlauncher.engine.EngineSound.get(app);
+                    e.setOn(!e.on());
+                }
                 paintEngine(app, eng);
             }
         });
@@ -180,7 +184,7 @@ public final class EdgePanel {
     }
 
     private static void paintEngine(Context app, TextView t) {
-        boolean on = com.thecarlauncher.engine.EngineSound.get(app).on();
+        boolean on = CanLive.installed(app, CanLive.PKG_CP) ? CanLive.cpOn : com.thecarlauncher.engine.EngineSound.get(app).on();
         t.setText(on ? "Motor sesi: açık" : "Motor sesi: kapalı");
         t.setBackground(round(on ? 0xFF3E2A26 : 0xFF262D38, dp(app, 14)));
         t.setTextColor(on ? 0xFFFF8A6B : FG);

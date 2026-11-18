@@ -92,6 +92,7 @@ $('prev').onclick = function () { call('media', 'prev'); };
 $('next').onclick = function () { call('media', 'next'); };
 $('drive').onclick = function () { location.href = 'drive.html'; };
 car.on(function (s) {
+  if (s.inst !== undefined) $('inst').innerHTML = num(s.inst, 1) + ' <small>L/100</small>';
   document.body.classList.toggle('day', !s.night);
   $('clock').textContent = s.time || '--:--';
   var d = (s.date || '').split(' ');

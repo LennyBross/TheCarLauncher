@@ -22,6 +22,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
 <div class="top">
 <button class="key" id="home" style="height:7.78vh;padding:0 2.78vh;border:none;border-radius:2.22vh;background:var(--card);color:var(--fg);display:flex;align-items:center;gap:1.39vh;font-size:2.5vh;font-weight:600"><svg style="width:3.33vh;height:3.33vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Ana ekran</button>
 <span class="sg" style="font-size:4.72vh" id="clock">--:--</span>
+<button class="key" id="eng" style="height:7.78vh;padding:0 2.22vh;border:none;border-radius:2.22vh;background:var(--card);color:#FF8A6B;display:flex;align-items:center;gap:1.11vh;font-size:2.36vh;font-weight:700;white-space:nowrap"><svg style="width:3.61vh;height:3.61vh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h3l2-2h5l2 2h2v2h2v-2h1v6h-1v-2h-2v3h-3l-2 2H9l-2-2H4z"/><path d="M8 5h6M11 5v3"/></svg><span id="engT">Motor</span></button>
 <div class="strip">
 <svg style="width:3.61vh;height:3.61vh;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" id="fuelIcon"><path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17"/><line x1="2" y1="22" x2="15" y2="22"/><line x1="6" y1="8" x2="11" y2="8"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg>
 <div style="width:15.28vh;height:1.39vh;border-radius:.7vh;background:var(--track);overflow:hidden;flex-shrink:0"><div id="bar" style="height:100%;width:0;background:var(--a)"></div></div>
@@ -79,6 +80,10 @@ var TURN = { left: '<path d="M16 20V11H6"/><path d="M10 7L6 11l4 4"/>', right: '
   uturn: '<path d="M8 20V9a4 4 0 0 1 8 0v4"/><path d="M12 10l4 4 4-4"/>', straight: '<path d="M12 20V5"/><path d="M6 11l6-6 6 6"/>',
   arrive: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>' };
 $('home').onclick = function () { location.href = 'ds4plus.html'; };
+var hasCp = false, engT = null, engHeld = false;
+$('eng').addEventListener('pointerdown', function () { engHeld = false; engT = setTimeout(function () { engHeld = true; call('open', 'engine'); }, 700); });
+['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { $('eng').addEventListener(ev, function () { clearTimeout(engT); }); });
+$('eng').onclick = function () { if (!engHeld) call('open', hasCp ? 'cpToggle' : 'engine'); };
 $('gmaps').onclick = function (e) { e.stopPropagation(); call('open', 'gmaps'); };
 $('map').onclick = function () { call('open', 'nav'); };
 $('play').onclick = function () { call('media', 'play'); };
@@ -94,6 +99,12 @@ car.on(function (s) {
   $('pct').textContent = 'Depoda' + (pct !== null ? ' · %' + pct : '');
   $('low').style.display = low ? 'inline' : 'none';
   $('price').textContent = num(s.price, 2);
+  $('inst').textContent = s.inst !== undefined ? num(s.inst, 1) : '—';
+  hasCp = !!s.cp;
+  var on = !!s.cpOn;
+  $('eng').style.background = on ? '#E8541E' : 'var(--card)';
+  $('eng').style.color = on ? '#fff' : '#FF8A6B';
+  $('engT').textContent = on ? (s.cpRpm + ' d/d' + (s.cpGear > 0 ? ' · ' + s.cpGear : '')) : (hasCp ? 'Motor sesi' : 'Motor');
   $('per100').textContent = s.per100 ? Math.round(s.per100) : '—';
   $('range').textContent = (s.range ? Math.round(s.range) : '—') + ' km';
   $('title').textContent = s.title || 'Çalan bir şey yok';
