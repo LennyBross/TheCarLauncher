@@ -226,6 +226,12 @@ public final class DeviceReport {
      * or null. dpaste.com first, paste.rs as a fallback.
      */
     public static String upload(String text) {
+        // A file link the phone can download and attach (paste sites block automated readers).
+        try {
+            String u = uploadFile("MYDS-rapor.txt", text.getBytes("UTF-8"), "text/plain");
+            if (u != null) return u;
+        } catch (Exception ignored) {
+        }
         try {
             String body = "content=" + java.net.URLEncoder.encode(text, "UTF-8") + "&syntax=text&expiry_days=7&title=MYDS-report";
             String r = post("https://dpaste.com/api/v2/", "application/x-www-form-urlencoded", body);
@@ -241,6 +247,10 @@ public final class DeviceReport {
     }
 
     private static String post(String url, String type, String body) throws Exception {
+        return post(url, type, body.getBytes("UTF-8"));
+    }
+
+    private static String post(String url, String type, byte[] b) throws Exception {
         java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
         c.setConnectTimeout(10000);
         c.setReadTimeout(20000);
@@ -248,7 +258,6 @@ public final class DeviceReport {
         c.setRequestMethod("POST");
         c.setRequestProperty("Content-Type", type);
         c.setRequestProperty("User-Agent", "MYDS-launcher");
-        byte[] b = body.getBytes("UTF-8");
         c.setFixedLengthStreamingMode(b.length);
         java.io.OutputStream o = c.getOutputStream();
         o.write(b);
@@ -262,5 +271,48 @@ public final class DeviceReport {
         in.close();
         c.disconnect();
         return sb.toString();
+    }
+
+    /** Uploads a file to litterbox.catbox.moe (deleted after 72 hours); returns its link or null. */
+    public static String uploadFile(String name, byte[] data, String type) {
+        try {
+            String b = "----MYDS" + System.currentTimeMillis();
+            java.io.ByteArrayOutputStream body = new java.io.ByteArrayOutputStream();
+            String head = "--" + b + "\r\nContent-Disposition: form-data; name=\"reqtype\"\r\n\r\nfileupload\r\n"
+                    + "--" + b + "\r\nContent-Disposition: form-data; name=\"time\"\r\n\r\n72h\r\n"
+                    + "--" + b + "\r\nContent-Disposition: form-data; name=\"fileToUpload\"; filename=\"" + name + "\"\r\nContent-Type: " + type + "\r\n\r\n";
+            body.write(head.getBytes("UTF-8"));
+            body.write(data);
+            body.write(("\r\n--" + b + "--\r\n").getBytes("UTF-8"));
+            String r = post("https://litterbox.catbox.moe/resources/internals/api.php", "multipart/form-data; boundary=" + b, body.toByteArray());
+            if (r != null && r.trim().startsWith("http")) return r.trim();
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    /** The car (CAN) app of this unit, for analysis: its APK uploaded, link returned. Also copied to Download. */
+    public static String uploadCanApp(Context c) {
+        String[] pkgs = {"com.hcn.autocan", "com.syu.canbus", "com.ts.can", "com.fyt.canbus", "com.autochips.canbus"};
+        for (String p : pkgs) {
+            try {
+                android.content.pm.ApplicationInfo ai = c.getPackageManager().getApplicationInfo(p, 0);
+                java.io.File f = new java.io.File(ai.sourceDir);
+                byte[] d = new byte[(int) f.length()];
+                java.io.DataInputStream in = new java.io.DataInputStream(new java.io.FileInputStream(f));
+                in.readFully(d);
+                in.close();
+                try {
+                    java.io.File dl = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS);
+                    java.io.FileOutputStream o = new java.io.FileOutputStream(new java.io.File(dl, p + ".apk"));
+                    o.write(d);
+                    o.close();
+                } catch (Exception ignored) {
+                }
+                return uploadFile(p + ".apk", d, "application/vnd.android.package-archive");
+            } catch (Exception ignored) {
+            }
+        }
+        return null;
     }
 }
