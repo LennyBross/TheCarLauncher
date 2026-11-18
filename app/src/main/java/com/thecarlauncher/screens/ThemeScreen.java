@@ -429,6 +429,14 @@ public class ThemeScreen extends Screen {
             });
         }
 
+        @JavascriptInterface
+        public void setAutoNight() {
+            ui(new Runnable() { public void run() { DayNight.setMode(act, DayNight.AUTO); push(); } });
+        }
+
+        @JavascriptInterface
+        public int dayMode() { return DayNight.mode(act); }
+
         /** Brightness 10..100 from the page's dimmer wheel; full brightness turns the dark layer off. */
         @JavascriptInterface
         public void setBrightness(final int pct) {

@@ -10,7 +10,9 @@
 body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
 .sg{font-family:'Space Grotesk',sans-serif;font-weight:700}
 .r{width:100vw;height:100vh;padding:2.78vh;display:flex;gap:2.22vh}
-#stage{flex:1;min-width:0;border-radius:3.33vh;overflow:hidden;position:relative;background:radial-gradient(120% 90% at 50% 35%,#1A212B 0%,#0E1217 70%)}
+#stage{flex:1;min-width:0;border-radius:3.33vh;overflow:hidden;position:relative;background:#000}
+body.day{--bg:#EEF1F4;--fg:#11161D;--card:#FFFFFF;--muted:#56606C;--sep:#E3E8EE;--chip:#EEF1F4;--a:#1F8F78}
+body.day #stage{background:#FFFFFF;box-shadow:inset 0 0 0 1px #E3E8EE}
 #c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .chip{border:none;border-radius:1.67vh;background:var(--chip);color:var(--fg);height:6.67vh;padding:0 2.22vh;font-size:2.22vh;font-weight:600;white-space:nowrap}
 .chip.on{background:var(--a);color:#0B0E13}
@@ -100,7 +102,7 @@ function paintInfo() {
     return '<div class="row"><span>' + r[0] + '</span><b>' + String(r[1]).replace(/</g, '&lt;') + '</b></div>'; }).join('')
     || '<div class="row"><span>Bilgi eklemek için Düzenle</span></div>';
 }
-car.on(function (s) { live = s; paintInfo(); });
+car.on(function (s) { live = s; document.body.classList.toggle('day', s.night === false); paintInfo(); });
 paintInfo();
 
 FIELDS.forEach(function (f) {
@@ -127,6 +129,14 @@ $('back').onclick = function () { call('open', 'themehome'); };
 
 // ---- 3D (WebGL), or a 360° photo spin where WebGL is missing or too slow ----------------------
 var RENDER_MODE = location.hash === '#render';
+// A shader that does not compile leaves the car invisible: switch to the photo spin.
+(function () {
+  var ce = console.error;
+  console.error = function () {
+    try { var m = [].join.call(arguments, ' '); if (/Shader Error|shader not compiled|VALIDATE_STATUS/i.test(m)) setTimeout(function () { fallback('shader'); }, 0); } catch (e) {}
+    return ce.apply(console, arguments);
+  };
+})();
 var VIEWS, VIEWS2 = [0, 45, 90, 135, 180, 'top'];
 ['Ön', '¾ Ön', 'Yan', '¾ Arka', 'Arka', 'Üst'].forEach(function (n) {
   var b = document.createElement('button'); b.className = 'key chip'; b.textContent = n; $('views').appendChild(b);
@@ -155,6 +165,7 @@ else {
 function init3D() {
 var stage = $('stage'), canvas = $('c');
 var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !RENDER_MODE ? true : true, preserveDrawingBuffer: RENDER_MODE, alpha: true });
+if (!RENDER_MODE && renderer.capabilities.precision !== 'highp') throw new Error('lowp');
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 renderer.physicallyCorrectLights = true;
 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -200,7 +211,7 @@ function loadModel() {
     if (loadModel.tried) { $('load').textContent = 'Model bulunamadı.'; return; }
     loadModel.tried = true;
     var sc = document.createElement('script'); sc.src = '3d/ds4model.js';
-    sc.onload = loadModel; sc.onerror = function () { $('load').textContent = 'Model bulunamadı.'; };
+    sc.onload = loadModel; sc.onerror = function () { fallback('nofile'); };
     document.body.appendChild(sc);
     return;
   }
@@ -227,8 +238,8 @@ function loadModel() {
       window.__shown3d = true;
       if (RENDER_MODE) { ground.visible = true; ring.visible = false; return; }
       intro();
-    }, function (err) { $('load').textContent = 'Model yüklenemedi.'; });
-  } catch (e) { $('load').textContent = 'Bu cihaz 3D görüntüyü desteklemiyor.'; }
+    }, function (err) { fallback('load'); });
+  } catch (e) { fallback('parse'); }
 }
 
 // Body colours
