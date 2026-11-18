@@ -334,7 +334,9 @@ public class ThemeScreen extends Screen {
                         }
                         case "nav": act.show(LauncherActivity.NAV, true); break;
                         case "phone": act.openPhone(); break;
-                        case "aa": act.openProjection(); break;
+                        case "aa": if (!com.thecarlauncher.screens.AppConnectScreen.openZlink(act, false)) act.openProjection(); break;
+                        case "carplay": if (!com.thecarlauncher.screens.AppConnectScreen.openZlink(act, true)) act.openProjection(); break;
+                        case "appconnect": act.openProjection(); break;
                         case "apps": act.show(LauncherActivity.APPS, true); break;
                         case "vehicle": load("car3d.html"); break;
                         case "vehicleNative": act.show(LauncherActivity.VEHICLE, true); break;

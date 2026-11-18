@@ -192,6 +192,24 @@ public class AppConnectScreen extends Screen {
                 0, 0, 0, 1.5f * alpha, 0});
     }
 
+    /**
+     * Theme buttons: hand straight over to ZLink's own screen (it runs the wireless
+     * Android Auto / CarPlay link); the phone's screen if a phone is already connected.
+     * Returns false when ZLink is not on the unit.
+     */
+    public static boolean openZlink(LauncherActivity act, boolean carplay) {
+        try { act.getPackageManager().getPackageInfo(ZLINK, 0); } catch (Exception e) { return false; }
+        try {
+            act.sendBroadcast(new Intent("zjinnova.android.intent.action.START_DAEMON_SERVICE").setPackage(ZLINK));
+        } catch (Exception ignored) { }
+        boolean connected = "CONNECTED".equals(status);
+        String cls = connected ? (carplay || (mode != null && mode.startsWith("carplay")) ? CARPLAY : AUTO) : MAIN;
+        if (Ui.start(act, new Intent(Intent.ACTION_MAIN).setComponent(new ComponentName(ZLINK, cls)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))) return true;
+        Intent li = act.getPackageManager().getLaunchIntentForPackage(ZLINK);
+        if (li != null) { act.startActivity(li.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true; }
+        return false;
+    }
+
     /** 0 Android Auto, 1 CarPlay, 2 mirroring. */
     private void open(int idx) {
         if (!installed()) {
