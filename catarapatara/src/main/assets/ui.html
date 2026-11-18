@@ -10,6 +10,11 @@
    cabin soundstage, output & ducking, drive tray. Own code, DS4 / CataraPatara styling. */
 @font-face{font-family:'Space Grotesk';src:url(fonts/SpaceGrotesk.ttf);font-weight:300 700}
 @font-face{font-family:'Inter';src:url(fonts/Inter.ttf);font-weight:100 900}
+@font-face{font-family:'Montserrat';src:url(themes/fonts/Montserrat-Regular.ttf);font-weight:400}
+@font-face{font-family:'Montserrat';src:url(themes/fonts/Montserrat-SemiBold.ttf);font-weight:600}
+@font-face{font-family:'Montserrat';src:url(themes/fonts/Montserrat-Bold.ttf);font-weight:700}
+/* MYDS theme font: Stock & Panel = Montserrat everywhere */
+body.f-montserrat,body.f-montserrat button,body.f-montserrat input,body.f-montserrat .sg,body.f-montserrat h1,body.f-montserrat .eng b,body.f-montserrat #gas{font-family:'Montserrat',sans-serif}
 :root{--acid:#D9FF78;--acid2:rgba(217,255,120,.16);--hot:#FF6A3D;--bg:#070A08;--card:#121814;--card2:#171E19;--ink:#F1EFE8;--muted:#8F998F;--line:rgba(241,239,232,.09)}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -209,6 +214,7 @@ function J(s, d) { try { return JSON.parse(s); } catch (e) { return d; } }
 var has = typeof CP !== 'undefined';
 var cfg = J(has ? CP.config() : '{}', {}), PROFILES = J(has ? CP.profiles() : '[]', []);
 function set(k, v) { if (has) CP.set(k, String(v)); }
+document.body.classList.toggle('f-montserrat', (cfg.font || 'montserrat') === 'montserrat');
 
 // ---- engine rack ----
 PROFILES.forEach(function (p) {

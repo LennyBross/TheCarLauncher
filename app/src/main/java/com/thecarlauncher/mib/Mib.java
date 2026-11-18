@@ -55,10 +55,20 @@ public final class Mib {
         return Prefs.integer(c, "home_theme", 0) == 8;
     }
 
+    /** The home theme's typeface family: "inter" for DS4+, "montserrat" for Stock and Panel. */
+    private static String sFamily = "";
+
+    public static String family(Context c) {
+        int t = Prefs.integer(c, "home_theme", 8);
+        return t == 7 ? "inter" : "montserrat";
+    }
+
     public static void loadAmbient(Context c) {
         boolean was = sStock;
         sStock = stock(c);
-        if (was != sStock) sRegular = sSemibold = sBold = null;
+        String fam = family(c);
+        if (was != sStock || !fam.equals(sFamily)) sRegular = sSemibold = sBold = null;
+        sFamily = fam;
         if (sStock) { BLUE = 0xFFE2CBA2; return; }
         BLUE = shade(Prefs.integer(c, Prefs.AMBIENT, DEFAULT_AMBIENT),
                 Prefs.integer(c, Prefs.AMBIENT_LEVEL, 100) / 100f, 0xFF);
@@ -134,18 +144,31 @@ public final class Mib {
     // ---- Type -------------------------------------------------------------------------------
 
     public static Typeface regular(Context c) {
-        if (sRegular == null) sRegular = sStock ? Typeface.create("sans-serif-condensed", Typeface.NORMAL) : load(c, "fonts/regular.ttf", Typeface.NORMAL);
+        if (sRegular == null) sRegular = themed(c, Typeface.NORMAL);
         return sRegular;
     }
 
     public static Typeface semibold(Context c) {
-        if (sSemibold == null) sSemibold = sStock ? Typeface.create("sans-serif-condensed", Typeface.BOLD) : load(c, "fonts/semibold.ttf", Typeface.BOLD);
+        if (sSemibold == null) sSemibold = themed(c, -1);
         return sSemibold;
     }
 
     public static Typeface bold(Context c) {
-        if (sBold == null) sBold = sStock ? Typeface.create("sans-serif-condensed", Typeface.BOLD) : load(c, "fonts/bold.ttf", Typeface.BOLD);
+        if (sBold == null) sBold = themed(c, Typeface.BOLD);
         return sBold;
+    }
+
+    /** Same type as the theme's pages: Montserrat (Stock, Panel) or Inter (DS4+). style -1 = semibold. */
+    private static Typeface themed(Context c, int style) {
+        if ("inter".equals(family(c))) {
+            Typeface base = load(c, "themes/fonts/Inter.ttf", Typeface.NORMAL);
+            if (style == Typeface.NORMAL) return base;
+            if (android.os.Build.VERSION.SDK_INT >= 28) return Typeface.create(base, style == -1 ? 600 : 700, false);
+            return Typeface.create(base, Typeface.BOLD);
+        }
+        if (style == Typeface.NORMAL) return load(c, "themes/fonts/Montserrat-Regular.ttf", Typeface.NORMAL);
+        if (style == -1) return load(c, "themes/fonts/Montserrat-SemiBold.ttf", Typeface.BOLD);
+        return load(c, "themes/fonts/Montserrat-Bold.ttf", Typeface.BOLD);
     }
 
     private static Typeface load(Context c, String asset, int fallback) {
