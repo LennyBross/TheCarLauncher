@@ -3,102 +3,217 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta id="stockcss">
 <title>Radyo</title>
 <link rel="stylesheet" href="common.css">
 <style>
-:root{--a:#5CC8B0;--bg:#0B0E13;--fg:#F3F5F7;--card:#161B23;--muted:#A3ADBA;--chip:#1E252F;--hot:#FF6B6B}
-body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
-.sg{font-family:'Space Grotesk',sans-serif;font-weight:700}
+/* One radio, three looks: it takes the skin of the home theme (Stock, DS4+, Panel). */
+:root{--a:#5CC8B0;--on:#0B0E13;--bg:#0B0E13;--fg:#F3F5F7;--card:#161B23;--chip:#1E252F;--muted:#A3ADBA;--line:#232A35;--hot:#FF6B6B;--r:3.33vh;--rb:2.22vh}
+body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;transition:background .3s,color .3s}
+.num{font-family:'Space Grotesk',sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
 .r{width:100vw;height:100vh;padding:2.78vh;display:flex;gap:2.22vh}
-.card{border-radius:3.33vh;background:var(--card)}
-.chip{border:none;border-radius:1.67vh;background:var(--chip);color:var(--fg);height:6.67vh;padding:0 2.22vh;font-size:2.22vh;font-weight:600}
-.big{border:none;border-radius:50%;background:var(--chip);color:var(--fg);width:12.22vh;height:12.22vh;display:flex;align-items:center;justify-content:center}
-.big svg{width:5vh;height:5vh}
-.fav{border:none;border-radius:2.22vh;background:var(--chip);color:var(--fg);height:10vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4vh}
-.fav b{font-family:'Space Grotesk',sans-serif;font-size:3.61vh}
-.fav span{font-size:1.67vh;color:var(--muted)}
-.fav.on{background:var(--a);color:#0B0E13}.fav.on span{color:#0B0E13}
-#dial{position:relative;height:9vh;overflow:hidden;border-radius:2.22vh;background:#0F141B}
+.card{border-radius:var(--r);background:var(--card)}
+.chip{border:none;border-radius:var(--rb);background:var(--chip);color:var(--fg);height:6.67vh;padding:0 2.22vh;font-size:2.08vh;font-weight:600;display:inline-flex;align-items:center;gap:1vh;white-space:nowrap}
+.chip.hot{background:var(--a);color:var(--on)}
+.ctl{border:none;background:var(--chip);color:var(--fg);width:11.5vh;height:11.5vh;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:4.4vh;font-weight:700}
+.ctl svg{width:4.6vh;height:4.6vh}
+.ctl.sm{width:9vh;height:9vh}
+.ctl.save{width:13.5vh;height:13.5vh;background:var(--a);color:var(--on)}
+.ctl.save.saved{background:var(--hot);color:#fff}
+.fav{border:none;border-radius:var(--rb);background:var(--chip);color:var(--fg);height:9.6vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3vh}
+.fav b{font-family:'Space Grotesk',sans-serif;font-size:3.4vh}
+.fav span{font-size:1.5vh;color:var(--muted)}
+.fav.on{background:var(--a);color:var(--on)}.fav.on span{color:var(--on);opacity:.7}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;grid-auto-rows:9.6vh;gap:1.2vh;align-content:start}
+.ttl{font-size:2.5vh;font-weight:700}
+.sub{font-size:1.6vh;color:var(--muted)}
+#lin{position:relative;height:10vh;overflow:hidden;border-radius:var(--rb);background:rgba(0,0,0,.25);touch-action:none}
+#lin .needle{position:absolute;left:50%;top:0;bottom:0;width:.42vh;margin-left:-.21vh;background:var(--hot);border-radius:.2vh}
+#arcBox{display:none;position:relative;flex:1;min-height:0;touch-action:none}
+#arcBox svg{position:absolute;inset:0;width:100%;height:100%}
+#src{display:none}
+#srcBar{display:flex;align-items:center;gap:1.4vh;padding:1.2vh 1.6vh;border-radius:var(--rb);background:rgba(255,107,107,.12);color:#FFB0A0;font-size:1.9vh}
+#srcBar.hide{display:none}
+
+/* ---- DS4+ day ---- */
+body.day{--bg:#EEF1F4;--fg:#11161D;--card:#FFFFFF;--chip:#EEF1F4;--muted:#56606C;--a:#1F8F78;--on:#fff}
+
+/* ---- Panel ---- */
+body.t-panel{--a:#C9A27A;--on:#14110D;--bg:#0C0E12;--card:#1A1D23;--chip:#262A31;--muted:#A9ADB6;--r:3.61vh;--rb:3.9vh;font-family:'Montserrat',sans-serif}
+body.t-panel.day{--bg:#E9ECF0;--card:#FFFFFF;--chip:#EEF0F3;--fg:#15171B;--muted:#565B64;--a:#8A6438;--on:#fff}
+body.t-panel .num{font-family:'Montserrat',sans-serif;font-weight:600}
+body.t-panel .fav{border-radius:4.8vh}
+body.t-panel .chip{border-radius:3.9vh}
+
+/* ---- Stock ---- */
+body.t-stock{--a:#E8D5B0;--on:#111;--bg:#050506;--card:transparent;--chip:#1a1b1f;--muted:#A8A39A;--fg:#EEEAE2;--hot:#D3242E;--r:44px;--rb:14px;font-family:'Montserrat',sans-serif;
+  background:radial-gradient(70% 60% at 50% 42%,#1b1c1f 0%,#0b0b0d 55%,#040405 100%)}
+body.t-stock .num{font-family:'Montserrat',sans-serif;font-style:italic;font-weight:600}
+body.t-stock .card{background:linear-gradient(180deg,rgba(28,29,32,.92),rgba(10,10,12,.92));box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.18),0 18px 40px rgba(0,0,0,.6)}
+body.t-stock .ttl{font-style:italic;font-weight:600}
+body.t-stock .chip{background:linear-gradient(180deg,rgba(36,37,41,.95),rgba(12,12,14,.95));box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);font-style:italic}
+body.t-stock .chip.hot{background:linear-gradient(180deg,#f3e6cc,#cdb58b);color:#111}
+body.t-stock .fav{transform:skewX(-10deg);background:linear-gradient(180deg,rgba(36,37,41,.95),rgba(12,12,14,.95));box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.2)}
+body.t-stock .fav>*{transform:skewX(10deg)}
+body.t-stock .fav b{font-family:'Montserrat',sans-serif;font-style:italic;font-weight:600}
+body.t-stock .fav.on{background:linear-gradient(180deg,rgba(60,56,48,.95),rgba(16,16,18,.95));color:var(--fg);box-shadow:inset 0 0 0 1px rgba(240,222,186,.6),inset 0 2px 0 rgba(255,236,200,.85),0 -2px 18px rgba(240,215,170,.25)}
+body.t-stock .fav.on span{color:var(--a);opacity:1}
+body.t-stock .ctl{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+body.t-stock .ctl.save{background:transparent;color:var(--a);box-shadow:0 0 0 2px #E2CFA8,0 0 14px rgba(226,207,168,.35),inset 0 0 12px rgba(226,207,168,.15)}
+body.t-stock .ctl.save.saved{background:rgba(211,36,46,.18);color:#ff8b7e;box-shadow:0 0 0 2px #D3242E,0 0 16px rgba(211,36,46,.45)}
+body.t-stock #lin{display:none}
+body.t-stock #arcBox{display:block}
+body.t-stock #bigFreq{display:none !important}
+body.t-stock #srcBar{background:rgba(211,36,46,.14)}
 </style>
 </head>
 <body>
 <div class="r">
-<div class="card" style="flex:1;min-width:0;padding:2.78vh;display:flex;flex-direction:column;gap:2.22vh">
-<div style="display:flex;align-items:center;gap:1.67vh">
-<button class="key chip" id="back">‹ Geri</button>
-<span class="sg" style="font-size:3.33vh">Radyo</span>
-<div style="flex:1"></div>
-<span id="stereo" style="font-size:1.94vh;font-weight:700;color:var(--a);display:none">STEREO</span>
-<span id="band" style="font-size:1.94vh;color:var(--muted)">FM</span>
-</div>
-<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.11vh">
-<div style="display:flex;align-items:baseline;gap:1.67vh"><span class="sg" id="freq" style="font-size:20vh;line-height:1;letter-spacing:-.6vh">--.-</span><span class="sg" style="font-size:4.44vh;color:var(--muted)">MHz</span></div>
-<span id="hint" style="font-size:2.08vh;color:var(--muted)"></span>
-</div>
-<div id="dial"><svg id="scale" width="100%" height="100%" preserveAspectRatio="none"></svg><div style="position:absolute;left:50%;top:0;bottom:0;width:.42vh;margin-left:-.21vh;background:var(--hot);border-radius:.2vh"></div></div>
-<div style="display:flex;align-items:center;justify-content:center;gap:2.78vh">
-<button class="key big" id="seekDn" aria-label="Önceki istasyon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
-<button class="key big" id="stepDn" aria-label="0.1 aşağı" style="width:9.44vh;height:9.44vh;font-size:4.44vh;font-weight:700">−</button>
-<button class="key big" id="save" aria-label="Kaydet" style="width:14.44vh;height:14.44vh;background:var(--a);color:#0B0E13"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.7-9.3C.8 8.4 2.9 4.5 6.7 4.5c2 0 3.6 1.1 4.3 2.6.7-1.5 2.3-2.6 4.3-2.6 3.8 0 5.9 3.9 4.4 7.2C19.5 16.4 12 21 12 21z"/></svg></button>
-<button class="key big" id="stepUp" aria-label="0.1 yukarı" style="width:9.44vh;height:9.44vh;font-size:4.44vh;font-weight:700">+</button>
-<button class="key big" id="seekUp" aria-label="Sonraki istasyon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
-</div>
-</div>
-<div class="card" style="width:min(64vh,38vw);flex-shrink:0;padding:2.78vh;display:flex;flex-direction:column;gap:1.67vh;min-height:0">
-<div style="display:flex;align-items:center"><span class="sg" style="font-size:2.78vh;flex:1">Kayıtlı istasyonlar</span><span style="font-size:1.67vh;color:var(--muted)">silmek için basılı tut</span></div>
-<div id="favs" style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:10vh;gap:1.39vh;align-content:start"></div>
-<button class="key chip" id="factory" style="height:7.22vh">Fabrika radyo uygulaması</button>
-</div>
+  <section class="card" style="flex:1;min-width:0;padding:2.78vh;display:flex;flex-direction:column;gap:2vh">
+    <div style="display:flex;align-items:center;gap:1.6vh">
+      <button class="key chip" id="back">‹ Geri</button>
+      <span class="ttl" style="font-size:3.2vh">Radyo</span>
+      <div style="flex:1"></div>
+      <span id="stereo" class="sub" style="font-weight:700;color:var(--a);display:none;letter-spacing:.2vh">STEREO</span>
+      <span id="band" class="sub">FM</span>
+    </div>
+    <div id="srcBar" class="hide"><span style="flex:1" id="srcT">Hoparlörlerde başka bir kaynak çalıyor.</span><button class="key chip hot" id="takeOver" style="height:5.6vh">Radyoyu aç</button></div>
+    <div id="bigFreq" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vh">
+      <div style="display:flex;align-items:baseline;gap:1.6vh"><span class="num" id="freq" style="font-size:19vh;line-height:1;letter-spacing:-.5vh">--.-</span><span class="num" id="unit" style="font-size:4.2vh;color:var(--muted)">MHz</span></div>
+      <span id="hint" class="sub" style="font-size:2vh"></span>
+    </div>
+    <div id="arcBox"><svg id="arc" viewBox="0 0 600 420"></svg></div>
+    <div id="lin"><svg id="scale" width="100%" height="100%" preserveAspectRatio="none"></svg><div class="needle"></div></div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:2.6vh">
+      <button class="key ctl" id="seekDn" aria-label="Önceki istasyon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14"/><path d="M19 5 9 12l10 7z"/></svg></button>
+      <button class="key ctl sm" id="stepDn" aria-label="0,1 aşağı">−</button>
+      <button class="key ctl save" id="save" aria-label="Kaydet"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.7-9.3C.8 8.4 2.9 4.5 6.7 4.5c2 0 3.6 1.1 4.3 2.6.7-1.5 2.3-2.6 4.3-2.6 3.8 0 5.9 3.9 4.4 7.2C19.5 16.4 12 21 12 21z"/></svg></button>
+      <button class="key ctl sm" id="stepUp" aria-label="0,1 yukarı">+</button>
+      <button class="key ctl" id="seekUp" aria-label="Sonraki istasyon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 5v14"/><path d="M5 5l10 7-10 7z"/></svg></button>
+    </div>
+  </section>
+  <section class="card" style="width:min(66vh,40vw);flex-shrink:0;padding:2.78vh;display:flex;flex-direction:column;gap:1.4vh;min-height:0">
+    <div style="display:flex;align-items:baseline"><span class="ttl" style="flex:1">Kayıtlı istasyonlar</span><span class="sub">silmek için basılı tut</span></div>
+    <div id="favs" class="grid" style="flex:1;min-height:0;overflow-y:auto"></div>
+    <div id="presetBox" style="display:none"><div class="sub" style="margin:.6vh 0 1vh;letter-spacing:.2vh">RADYONUN HAFIZASI</div><div id="presets" class="grid" style="grid-auto-rows:7.6vh"></div></div>
+  </section>
 </div>
 <script src="common.js"></script>
 <script>
 var has = typeof Car !== 'undefined';
 function R(name) { var a = [].slice.call(arguments, 1); try { return has && Car[name] ? Car[name].apply(Car, a) : null; } catch (e) { return null; } }
+var TH = +(R('theme') || 7);
+document.body.classList.add(TH === 8 ? 't-stock' : TH === 4 ? 't-panel' : 't-ds4');
+car.on(function (s) { if (TH !== 8) document.body.classList.toggle('day', s.night === false); });
+
 var favs = [];
 try { favs = JSON.parse(store('radio.favs') || '[]') || []; } catch (e) { favs = []; }
-var cur = 0;
-function mhz(k) { return k > 30000 ? (k / 1000).toFixed(1) : String(k); }
-function paintFavs() {
-  var box = $('favs'); box.innerHTML = '';
-  favs.forEach(function (k, i) {
+var cur = 0, presets = [];
+function mhz(k) { return k > 30000 ? (k / 1000).toFixed(1).replace('.', ',') : String(k); }
+function unit(k) { return k > 30000 ? 'MHz' : 'kHz'; }
+function grid(box, list, cls, onHold) {
+  box.innerHTML = '';
+  list.forEach(function (k, i) {
     var b = document.createElement('button'); b.className = 'key fav' + (k === cur ? ' on' : '');
     b.innerHTML = '<b>' + mhz(k) + '</b><span>' + (k > 30000 ? 'FM' : 'AM') + ' · ' + (i + 1) + '</span>';
     var t = null, held = false;
-    b.addEventListener('pointerdown', function () { held = false; t = setTimeout(function () { held = true; favs.splice(i, 1); save(); paintFavs(); }, 800); });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { clearTimeout(t); }); });
+    if (onHold) {
+      b.addEventListener('pointerdown', function () { held = false; t = setTimeout(function () { held = true; onHold(i); }, 800); });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { clearTimeout(t); }); });
+    }
     b.onclick = function () { if (held) return; R('radioTune', k); cur = k; paint(); };
     box.appendChild(b);
   });
-  if (!favs.length) box.innerHTML = '<div style="grid-column:1/3;font-size:2.08vh;color:var(--muted);line-height:1.5;padding:1vh">Beğendiğin istasyonda ♥ tuşuna bas, burada dursun. Dokununca o istasyona geçer.</div>';
+}
+function paintFavs() {
+  grid($('favs'), favs, 'fav', function (i) { favs.splice(i, 1); save(); paint(); });
+  if (!favs.length) $('favs').innerHTML = '<div class="sub" style="grid-column:1/4;font-size:2vh;line-height:1.5;padding:1vh">Beğendiğin istasyonda ♥ tuşuna bas, burada dursun. Dokununca o istasyona geçer.</div>';
+  $('presetBox').style.display = presets.length ? 'block' : 'none';
+  grid($('presets'), presets, 'fav', null);
 }
 function save() { store('radio.favs', JSON.stringify(favs)); }
+
+// ---- linear scale (DS4+, Panel) ----
 function drawScale() {
-  // 87.5–108 MHz scale scrolling under the red needle
-  var svg = $('scale'), w = svg.clientWidth || 800, h = svg.clientHeight || 60, px = w / 6; // 6 MHz visible
-  var center = cur > 30000 ? cur / 1000 : 98, out = '';
-  for (var f = Math.floor((center - 3.5) * 10); f <= Math.ceil((center + 3.5) * 10); f++) {
-    var mhzV = f / 10, x = w / 2 + (mhzV - center) * px; if (mhzV < 87.5 || mhzV > 108) continue;
-    var major = f % 10 === 0, half = f % 5 === 0;
-    out += '<line x1="' + x + '" x2="' + x + '" y1="' + (major ? h * .25 : half ? h * .45 : h * .6) + '" y2="' + h + '" stroke="' + (major ? '#A3ADBA' : '#3A4452') + '" stroke-width="' + (major ? 2 : 1) + '"/>';
-    if (major) out += '<text x="' + x + '" y="' + h * .2 + '" fill="#A3ADBA" font-size="' + h * .2 + '" text-anchor="middle" font-family="Inter">' + f / 10 + '</text>';
+  var svg = $('scale'), w = svg.clientWidth || 800, h = svg.clientHeight || 60, px = w / 6, center = (cur || 98000) / 1000, g = '';
+  var col = getComputedStyle(document.body).getPropertyValue('--muted').trim() || '#A3ADBA';
+  for (var f = Math.floor((center - 4) * 10) / 10; f <= center + 4; f = Math.round((f + 0.1) * 10) / 10) {
+    var x = w / 2 + (f - center) * px, major = Math.abs(f - Math.round(f)) < 0.01;
+    g += '<line x1="' + x + '" y1="' + (major ? h * .25 : h * .55) + '" x2="' + x + '" y2="' + h + '" stroke="' + col + '" stroke-opacity="' + (major ? .9 : .4) + '" stroke-width="' + (major ? 2 : 1) + '"/>';
+    if (major) g += '<text x="' + x + '" y="' + (h * .2) + '" fill="' + col + '" font-size="' + (h * .2) + '" text-anchor="middle" font-family="Inter">' + Math.round(f) + '</text>';
   }
-  favs.forEach(function (k) { var x = w / 2 + (k / 1000 - center) * px; out += '<circle cx="' + x + '" cy="' + h * .9 + '" r="' + h * .06 + '" fill="#5CC8B0"/>'; });
-  svg.innerHTML = out;
+  svg.innerHTML = g;
 }
+(function () {
+  var d = $('lin'), sx = 0, base = 0, on = false;
+  d.addEventListener('pointerdown', function (e) { on = true; sx = e.clientX; base = cur || 98000; try { d.setPointerCapture(e.pointerId); } catch (x) {} });
+  d.addEventListener('pointermove', function (e) {
+    if (!on) return; var w = d.clientWidth / 6, k = Math.round((base / 1000 - (e.clientX - sx) / w) * 10) * 100;
+    k = Math.max(87500, Math.min(108000, k)); if (k !== cur) { cur = k; $('freq').textContent = mhz(cur); drawScale(); }
+  });
+  function up() { if (!on) return; on = false; R('radioTune', cur); paint(); }
+  d.addEventListener('pointerup', up); d.addEventListener('pointercancel', up);
+})();
+
+// ---- Stock: round tuner dial, like the Stock speed dial ----
+var A0 = -135, SW = 270, F0 = 87.5, F1 = 108, CX = 300, CY = 236, RR = 182;
+function angF(f) { return A0 + (Math.max(F0, Math.min(F1, f)) - F0) / (F1 - F0) * SW; }
+function pt(a, r) { var t = a * Math.PI / 180; return [CX + r * Math.sin(t), CY - r * Math.cos(t)]; }
+function drawArc() {
+  var f = (cur || 98000) / 1000, g = '<defs><linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6f1e7"/><stop offset=".35" stop-color="#5b5852"/><stop offset=".6" stop-color="#2a2928"/><stop offset="1" stop-color="#d9d2c4"/></linearGradient>' +
+    '<radialGradient id="face" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#2a2b2f"/><stop offset=".65" stop-color="#121215"/><stop offset="1" stop-color="#050506"/></radialGradient></defs>';
+  g += '<circle cx="' + CX + '" cy="' + CY + '" r="' + (RR + 26) + '" fill="#08080a"/><circle cx="' + CX + '" cy="' + CY + '" r="' + (RR + 24) + '" fill="none" stroke="url(#rim)" stroke-width="3"/>';
+  for (var v = 875; v <= 1080; v += 5) {
+    var a = angF(v / 10), big = v % 20 === 0, mid = v % 10 === 0, p1 = pt(a, RR + 14), p2 = pt(a, big ? RR - 4 : mid ? RR + 2 : RR + 7);
+    g += '<line x1="' + p1[0].toFixed(1) + '" y1="' + p1[1].toFixed(1) + '" x2="' + p2[0].toFixed(1) + '" y2="' + p2[1].toFixed(1) + '" stroke="' + (big ? '#F0EBE2' : '#9e998f') + '" stroke-width="' + (big ? 2.2 : 1.1) + '"/>';
+    if (big) { var q = pt(a, RR - 22); g += '<text x="' + q[0].toFixed(1) + '" y="' + q[1].toFixed(1) + '" transform="rotate(' + a.toFixed(1) + ' ' + q[0].toFixed(1) + ' ' + q[1].toFixed(1) + ')" text-anchor="middle" dominant-baseline="central" font-family="Montserrat" font-style="italic" font-weight="500" font-size="20" fill="#F0EBE2">' + (v / 10) + '</text>'; }
+  }
+  var s = pt(A0, RR + 22), e = pt(angF(f), RR + 22), big2 = angF(f) - A0 > 180 ? 1 : 0;
+  if (cur) g += '<path d="M' + s[0] + ' ' + s[1] + ' A' + (RR + 22) + ' ' + (RR + 22) + ' 0 ' + big2 + ' 1 ' + e[0] + ' ' + e[1] + '" fill="none" stroke="#E8D5B0" stroke-width="3" stroke-linecap="round" opacity=".6"/>';
+  g += '<circle cx="' + CX + '" cy="' + CY + '" r="' + (RR - 42) + '" fill="url(#face)" stroke="url(#rim)" stroke-width="3"/>';
+  var n1 = pt(angF(f), RR - 2), n2 = pt(angF(f), RR + 24);
+  g += '<line x1="' + n1[0] + '" y1="' + n1[1] + '" x2="' + n2[0] + '" y2="' + n2[1] + '" stroke="#ff4a3f" stroke-width="5" stroke-linecap="round"/>';
+  g += '<text x="' + CX + '" y="' + (CY - 62) + '" text-anchor="middle" font-family="Montserrat" font-style="italic" font-size="20" letter-spacing="5" fill="#E9E5DC">RADYO</text>';
+  g += '<text x="' + CX + '" y="' + (CY + 24) + '" text-anchor="middle" font-family="Montserrat" font-style="italic" font-weight="600" font-size="80" fill="#F2EEE6">' + (cur ? mhz(cur) : '--,-') + '</text>';
+  g += '<text x="' + CX + '" y="' + (CY + 62) + '" text-anchor="middle" font-family="Montserrat" font-style="italic" font-size="22" fill="#A8A39A">' + unit(cur || 98000) + ($('band').textContent ? ' · ' + $('band').textContent : '') + '</text>';
+  $('arc').innerHTML = g;
+}
+(function () {
+  var d = $('arcBox'), on = false;
+  function at(e) {
+    var r = d.getBoundingClientRect(), k = Math.min(r.width / 600, r.height / 420), ox = r.left + (r.width - 600 * k) / 2, oy = r.top + (r.height - 420 * k) / 2;
+    var x = (e.clientX - ox) / k - CX, y = (e.clientY - oy) / k - CY, a = Math.atan2(x, -y) * 180 / Math.PI;
+    if (a < A0 || a > A0 + SW) return null;
+    return Math.round((F0 + (a - A0) / SW * (F1 - F0)) * 10) * 100;
+  }
+  d.addEventListener('pointerdown', function (e) { var k = at(e); if (k === null) return; on = true; try { d.setPointerCapture(e.pointerId); } catch (x) {} cur = k; paint(); });
+  d.addEventListener('pointermove', function (e) { if (!on) return; var k = at(e); if (k !== null && k !== cur) { cur = k; paint(); } });
+  function up() { if (!on) return; on = false; R('radioTune', cur); }
+  d.addEventListener('pointerup', up); d.addEventListener('pointercancel', up);
+})();
+
 function paint() {
-  $('freq').textContent = cur ? mhz(cur) : '--.-';
-  $('save').style.background = favs.indexOf(cur) >= 0 ? '#FF6B6B' : '';
-  paintFavs(); drawScale();
+  $('freq').textContent = cur ? mhz(cur) : '--,-'; $('unit').textContent = unit(cur || 98000);
+  $('save').classList.toggle('saved', favs.indexOf(cur) >= 0);
+  paintFavs();
+  if (TH === 8) drawArc(); else drawScale();
 }
+var srcOk = true;
 function poll() {
   var info = {}; try { info = JSON.parse(R('radioInfo') || '{}'); } catch (e) {}
-  if (!info.ok) { $('hint').textContent = 'Bu ünitede radyoya doğrudan erişilemedi — fabrika radyo uygulamasını kullan.'; }
-  else { $('hint').textContent = ''; }
+  $('hint').textContent = info.ok ? '' : 'Bu ünitede tuner bulunamadı.';
   if (info.khz && info.khz !== cur) { cur = info.khz; paint(); }
   $('stereo').style.display = info.stereo ? 'inline' : 'none';
-  $('band').textContent = info.band || 'FM';
+  var b = info.band || 'FM'; if ($('band').textContent !== b) { $('band').textContent = b; if (TH === 8) drawArc(); }
+  var p = (info.presets || []).filter(function (k) { return k > 0; });
+  if (p.join() !== presets.join()) { presets = p; paintFavs(); }
+  // the tuner is not on the speakers: offer to switch (MYDS asks the system, the factory app stays closed)
+  var other = info.ok && info.source && !info.active;
+  $('srcBar').classList.toggle('hide', !other);
+  if (other) $('srcT').textContent = 'Hoparlörlerde şu an başka kaynak çalıyor.';
   setTimeout(poll, 500);
 }
+$('takeOver').onclick = function () { R('radioPlay'); };
 $('seekUp').onclick = function () { R('radioSeek', true); };
 $('seekDn').onclick = function () { R('radioSeek', false); };
 $('stepUp').onclick = function () { R('radioStep', true); };
@@ -109,19 +224,8 @@ $('save').onclick = function () {
   if (i >= 0) favs.splice(i, 1); else { favs.push(cur); favs.sort(function (a, b) { return a - b; }); }
   save(); paint();
 };
-// Drag the scale to tune
-(function () {
-  var d = $('dial'), sx = 0, base = 0, on = false;
-  d.addEventListener('pointerdown', function (e) { on = true; sx = e.clientX; base = cur || 98000; try { d.setPointerCapture(e.pointerId); } catch (x) {} });
-  d.addEventListener('pointermove', function (e) {
-    if (!on) return; var w = d.clientWidth / 6, k = Math.round((base / 1000 - (e.clientX - sx) / w) * 10) * 100;
-    k = Math.max(87500, Math.min(108000, k)); if (k !== cur) { cur = k; $('freq').textContent = mhz(cur); drawScale(); }
-  });
-  function up() { if (!on) return; on = false; R('radioTune', cur); paint(); }
-  d.addEventListener('pointerup', up); d.addEventListener('pointercancel', up);
-})();
-$('factory').onclick = function () { call('open', 'radioFactory'); };
 $('back').onclick = function () { call('open', 'themehome'); };
+addEventListener('resize', paint);
 R('radioPlay');
 paint(); poll();
 </script>

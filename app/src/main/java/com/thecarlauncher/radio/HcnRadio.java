@@ -32,17 +32,34 @@ public final class HcnRadio {
 
     public static boolean available() { return player() != null; }
 
-    /** Current station: [freq in kHz, stereo 0/1, preset index] or null. FM band names start with "FM". */
+    /*
+     * How the firmware works (from the factory CAN app, com.hcn.autocan):
+     *  - RadioInfo.mFreq is in 10 kHz units on FM (9850 = 98.50 MHz) and in kHz on AM; mUiBand "FM-1".."AM-1".
+     *  - RadioPlayer.setUibandIndexFreq(RadioPlayer.BAND.FM1, 0, freq) tunes (same units as mFreq).
+     *  - RadioPlayer.getPreset(BAND) returns the band's stored stations.
+     *  - android.sourceservice.SourceInfo.getInstance().onRequestPlayAudio("com.hcn.autoradio") makes the
+     *    tuner the active audio source; getSourcePackage() says which source plays now.
+     */
+    public static final String RADIO_PKG = "com.hcn.autoradio";
+
+    private static boolean fm(String band, int raw) {
+        String b = band == null ? "" : band.toUpperCase(Locale.ROOT);
+        return b.startsWith("FM") || (!b.startsWith("AM") && raw > 3000);
+    }
+
+    /** Current station: [freq in kHz, stereo 0/1, preset index] or null. */
     public static int[] info() {
         Object p = player();
         if (p == null) return null;
         try {
             Object ri = sCls.getMethod("getRadioInfo").invoke(p);
             if (ri == null) return null;
-            int f = intField(ri, "mFreq");
+            int raw = intField(ri, "mFreq");
+            Object b = field(ri, "mUiBand");
+            int khz = fm(b == null ? "" : b.toString(), raw) ? raw * 10 : raw;
             Object st = field(ri, "mIsStereo");
             boolean stereo = st instanceof Boolean ? (Boolean) st : st instanceof Number && ((Number) st).intValue() != 0;
-            return new int[]{f, stereo ? 1 : 0, intField(ri, "mIndexof")};
+            return new int[]{khz, stereo ? 1 : 0, intField(ri, "mIndexof")};
         } catch (Throwable t) {
             return null;
         }
@@ -60,34 +77,73 @@ public final class HcnRadio {
         }
     }
 
-    /** Tunes to a frequency (kHz, e.g. 98500 for 98.5 MHz) on the current band. */
+    /** RadioPlayer.BAND constant by name ("FM1", "AM1"…), or null. */
+    private static Object bandConst(String name) {
+        try {
+            for (Class<?> c : sCls.getDeclaredClasses()) {
+                if (!c.getSimpleName().equals("BAND")) continue;
+                if (c.isEnum()) for (Object e : c.getEnumConstants()) if (e.toString().equalsIgnoreCase(name)) return e;
+                try { return c.getField(name).get(null); } catch (Throwable ignored) { }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
+    private static Object curBand() {
+        try { return sCls.getMethod("getUiband").invoke(player()); } catch (Throwable t) { return null; }
+    }
+
+    /** Tunes to a frequency in kHz (98500 = 98.5 MHz; 531..1602 = AM). */
     public static boolean tune(int khz) {
         Object p = player();
         if (p == null) return false;
-        // Plain setters first, if this firmware has one.
-        for (String n : new String[]{"setFreq", "setFrequency", "tune", "setCurFreq", "playFreq", "gotoFreq"}) {
-            if (call(p, n, khz)) return true;
-        }
+        boolean wantFm = khz > 30000;
+        Object band = curBand();
+        String bn = band == null ? "" : band.toString().toUpperCase(Locale.ROOT).replace("-", "");
+        if (band == null || bn.startsWith("FM") != wantFm) band = bandConst(wantFm ? "FM1" : "AM1");
+        int raw = wantFm ? Math.round(khz / 10f) : khz;
         try {
-            Object band = sCls.getMethod("getUiband").invoke(p);
             for (Method m : sCls.getMethods()) {
                 if (!m.getName().equals("setUibandIndexFreq") || m.getParameterTypes().length != 3) continue;
-                int[] cur = info();
-                int idx = cur == null ? 0 : Math.max(0, cur[2]);
-                m.invoke(p, band, idx, khz);
+                m.invoke(p, band, 0, raw);
                 return true;
             }
         } catch (Throwable ignored) {
         }
+        for (String n : new String[]{"setFreq", "setFrequency", "tune", "setCurFreq", "playFreq", "gotoFreq"}) {
+            if (call(p, n, raw)) return true;
+        }
         return false;
+    }
+
+    /** Stations stored in the firmware for the current band (kHz). */
+    public static int[] presets() {
+        Object p = player();
+        if (p == null) return new int[0];
+        try {
+            Object band = curBand();
+            if (band == null) band = bandConst("FM1");
+            String b = band == null ? "FM" : band.toString();
+            Object r = null;
+            for (Method m : sCls.getMethods()) {
+                if (m.getName().equals("getPreset") && m.getParameterTypes().length == 1) { r = m.invoke(p, band); break; }
+            }
+            if (!(r instanceof int[])) return new int[0];
+            int[] raw = (int[]) r, out = new int[raw.length];
+            for (int i = 0; i < raw.length; i++) out[i] = fm(b, raw[i]) ? raw[i] * 10 : raw[i];
+            return out;
+        } catch (Throwable t) {
+            return new int[0];
+        }
     }
 
     /** Seeks to the next station up or down (falls back to a 100 kHz step). */
     public static void seek(boolean up) {
         Object p = player();
         if (p == null) return;
-        String[] names = up ? new String[]{"seekUp", "searchUp", "nextStation", "seekNext", "autoSeekUp"}
-                : new String[]{"seekDown", "searchDown", "prevStation", "seekPrev", "autoSeekDown"};
+        String[] names = up ? new String[]{"seekUp", "searchUp", "nextStation", "seekNext", "autoSeekUp", "seekForward", "next"}
+                : new String[]{"seekDown", "searchDown", "prevStation", "seekPrev", "autoSeekDown", "seekBackward", "prev"};
         for (String n : names) if (call(p, n)) return;
         for (String n : new String[]{"seek", "search", "autoSeek"}) if (call(p, n, up)) return;
         step(up);
@@ -97,18 +153,49 @@ public final class HcnRadio {
     public static void step(boolean up) {
         int[] i = info();
         if (i == null) return;
-        boolean fm = band().toUpperCase(Locale.ROOT).startsWith("FM") || i[0] > 30000;
+        boolean fm = i[0] > 30000;
         int st = fm ? 100 : 9;
         int f = i[0] + (up ? st : -st);
         if (fm) { if (f > 108000) f = 87500; if (f < 87500) f = 108000; }
         tune(f);
     }
 
-    /** Makes sure the tuner plays (some builds need an explicit start). */
-    public static void play() {
+    /** Which package owns the speakers now (e.g. com.hcn.autoradio), or "" if unknown. */
+    public static String source() {
+        try {
+            Class<?> c = Class.forName("android.sourceservice.SourceInfo");
+            Object si = c.getMethod("getInstance").invoke(null);
+            Object r = c.getMethod("getSourcePackage").invoke(si);
+            return r == null ? "" : r.toString();
+        } catch (Throwable t) {
+            return "";
+        }
+    }
+
+    /** Requests the tuner as audio source only when something else plays. */
+    public static void ensure() { if (!active()) play(); }
+
+    /** True when the tuner is the active audio source. */
+    public static boolean active() { return RADIO_PKG.equals(source()); }
+
+    /**
+     * Makes the tuner the active audio source without opening the factory radio app
+     * (the same system call the factory apps use), then starts the tuner.
+     */
+    public static boolean play() {
+        boolean ok = false;
+        try {
+            Class<?> c = Class.forName("android.sourceservice.SourceInfo");
+            Object si = c.getMethod("getInstance").invoke(null);
+            if (si != null) {
+                c.getMethod("onRequestPlayAudio", String.class).invoke(si, RADIO_PKG);
+                ok = true;
+            }
+        } catch (Throwable ignored) {
+        }
         Object p = player();
-        if (p == null) return;
-        for (String n : new String[]{"play", "open", "start", "resume", "powerOn"}) if (call(p, n)) return;
+        if (p != null) for (String n : new String[]{"play", "open", "start", "resume", "powerOn"}) if (call(p, n)) break;
+        return ok;
     }
 
     /** The class's API, for the device report. */

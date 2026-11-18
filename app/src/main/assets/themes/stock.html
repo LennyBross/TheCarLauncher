@@ -306,8 +306,10 @@ car.on(function (s) {
   var ec = eco.feed(s); $('eco').textContent = ec; $('eco').style.color = ec >= 80 ? '#E8D5B0' : ec >= 60 ? '#E0A030' : '#E05040';
   $('avg').innerHTML = (avgS.n ? Math.round(avgS.sum / avgS.n) : '--') + '<small>km/h</small>';
 
-  $('mt').textContent = s.title || 'Çalan bir şey yok';
-  $('ma').textContent = s.artist || '';
+  var tun = !!s.tuner && s.khz;
+  $('mt').textContent = tun ? (s.khz > 30000 ? (s.khz / 1000).toFixed(1).replace('.', ',') + ' MHz' : s.khz + ' kHz') : (s.title || 'Çalan bir şey yok');
+  $('ma').textContent = tun ? 'Radyo · ' + (s.band || 'FM') + (s.stereo ? ' · stereo' : '') : (s.artist || '');
+  $('bar').style.visibility = $('t1').style.visibility = $('t2').style.visibility = tun ? 'hidden' : 'visible';
   $('msrc').textContent = s.srcLabel || '';
   playing = !!s.playing;
   $('playI').innerHTML = playing ? '<path d="M9 5v14M15 5v14" stroke-width="2.4"/>' : '<path d="M8 5v14l11-7z"/>';

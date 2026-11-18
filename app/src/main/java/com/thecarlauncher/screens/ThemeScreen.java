@@ -230,6 +230,11 @@ public class ThemeScreen extends Screen {
         // Whichever source is active (Spotify, YouTube Music, Bluetooth, radio…) drives the one player.
         String src = m.packageName();
         o.put("srcLabel", m.sourceLabel(src));
+        if (com.thecarlauncher.radio.HcnRadio.available() && com.thecarlauncher.radio.HcnRadio.active()) {
+            int[] ri = com.thecarlauncher.radio.HcnRadio.info();
+            o.put("tuner", true);
+            if (ri != null) o.put("khz", ri[0]).put("stereo", ri[1] == 1).put("band", com.thecarlauncher.radio.HcnRadio.band());
+        }
         o.put("srcKind", src == null ? "" : src.equals(MediaHub.BLUETOOTH) ? "bt" : src.equals(MediaHub.RADIO) ? "radio"
                 : src.equals(PKG_SPOTIFY) ? "spotify" : src.equals(PKG_YTMUSIC) ? "ytmusic" : src.equals(PKG_YOUTUBE) ? "youtube"
                 : src.equals(act.getPackageName()) ? "own" : "app");
@@ -406,6 +411,11 @@ public class ThemeScreen extends Screen {
             try {
                 JSONObject o = new JSONObject().put("ok", com.thecarlauncher.radio.HcnRadio.available());
                 if (i != null) o.put("khz", i[0]).put("stereo", i[1] == 1).put("band", com.thecarlauncher.radio.HcnRadio.band());
+                String src = com.thecarlauncher.radio.HcnRadio.source();
+                o.put("source", src).put("active", com.thecarlauncher.radio.HcnRadio.RADIO_PKG.equals(src));
+                org.json.JSONArray pr = new org.json.JSONArray();
+                for (int k : com.thecarlauncher.radio.HcnRadio.presets()) if (k > 0) pr.put(k);
+                o.put("presets", pr);
                 return o.toString();
             } catch (Exception e) {
                 return "{}";
@@ -413,16 +423,20 @@ public class ThemeScreen extends Screen {
         }
 
         @JavascriptInterface
-        public void radioTune(int khz) { com.thecarlauncher.radio.HcnRadio.play(); com.thecarlauncher.radio.HcnRadio.tune(khz); }
+        public void radioTune(int khz) { com.thecarlauncher.radio.HcnRadio.ensure(); com.thecarlauncher.radio.HcnRadio.tune(khz); }
 
         @JavascriptInterface
-        public void radioSeek(boolean up) { com.thecarlauncher.radio.HcnRadio.play(); com.thecarlauncher.radio.HcnRadio.seek(up); }
+        public void radioSeek(boolean up) { com.thecarlauncher.radio.HcnRadio.ensure(); com.thecarlauncher.radio.HcnRadio.seek(up); }
 
         @JavascriptInterface
-        public void radioStep(boolean up) { com.thecarlauncher.radio.HcnRadio.play(); com.thecarlauncher.radio.HcnRadio.step(up); }
+        public void radioStep(boolean up) { com.thecarlauncher.radio.HcnRadio.ensure(); com.thecarlauncher.radio.HcnRadio.step(up); }
 
         @JavascriptInterface
-        public void radioPlay() { com.thecarlauncher.radio.HcnRadio.play(); }
+        public void radioPlay() {
+            // Something else (Spotify…) playing goes quiet first, then the tuner takes the speakers.
+            act.runOnUiThread(new Runnable() { public void run() { try { MediaHub.get(act).onRadioStarting(); } catch (Throwable ignored) { } } });
+            com.thecarlauncher.radio.HcnRadio.play();
+        }
 
         @JavascriptInterface
         public void setOdometer(final double km) {
@@ -439,6 +453,12 @@ public class ThemeScreen extends Screen {
             ui(new Runnable() {
                 public void run() {
                     MediaHub m = MediaHub.get(act);
+                    // The tuner owns the speakers: prev/next seek stations.
+                    if (!"play".equals(what) && com.thecarlauncher.radio.HcnRadio.available() && com.thecarlauncher.radio.HcnRadio.active()) {
+                        com.thecarlauncher.radio.HcnRadio.seek("next".equals(what));
+                        main.postDelayed(new Runnable() { public void run() { push(); } }, 600);
+                        return;
+                    }
                     if ("prev".equals(what)) m.previous();
                     else if ("next".equals(what)) m.next();
                     else m.playPause();
