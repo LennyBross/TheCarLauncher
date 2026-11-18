@@ -132,6 +132,33 @@ public final class DeviceReport {
             r.append("  (").append(e.getClass().getSimpleName()).append(")\n");
         }
 
+        r.append("\n== CataraPatara ==\n");
+        try {
+            for (String pkg : new String[]{CanLive.PKG_CP, CanLive.PKG_BRIDGE}) {
+                String v;
+                try {
+                    android.content.pm.PackageInfo pi = c.getPackageManager().getPackageInfo(pkg, 0);
+                    v = pi.versionName + " (" + pi.versionCode + ")";
+                } catch (Exception e) {
+                    v = "NOT INSTALLED";
+                }
+                r.append("  ").append(pkg).append(": ").append(v).append('\n');
+            }
+            long now = System.currentTimeMillis();
+            r.append("  CAN bridge data: ").append(CanLive.canAt == 0 ? "never" : (now - CanLive.canAt) / 1000 + " s ago")
+                    .append(" l100=").append(CanLive.l100).append(" range=").append(CanLive.range)
+                    .append(" outdoor=").append(CanLive.outdoor).append('\n');
+            r.append("  engine sound: ").append(CanLive.cpAt == 0 ? "never reported" : (now - CanLive.cpAt) / 1000 + " s ago")
+                    .append(" on=").append(CanLive.cpOn).append(" rpm=").append(CanLive.cpRpm).append(" gear=").append(CanLive.cpGear)
+                    .append(" engine=").append(CanLive.cpName).append(" src=").append(CanLive.cpSrc).append('\n');
+            android.media.AudioManager am = (android.media.AudioManager) c.getSystemService(Context.AUDIO_SERVICE);
+            if (am != null) r.append("  volumes: music=").append(am.getStreamVolume(android.media.AudioManager.STREAM_MUSIC)).append('/')
+                    .append(am.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC)).append(" mode=").append(am.getMode())
+                    .append(" musicActive=").append(am.isMusicActive()).append('\n');
+        } catch (Exception e) {
+            r.append("  (").append(e.getClass().getSimpleName()).append(")\n");
+        }
+
         r.append("\n== Media sources seen by the launcher ==\n");
         try {
             com.thecarlauncher.media.MediaHub hub = com.thecarlauncher.media.MediaHub.get(c);
