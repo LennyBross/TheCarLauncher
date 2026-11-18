@@ -1,0 +1,1 @@
+html.custom body{--a:#a18aff;--as:rgba(161,138,255,.16);--bg:#19191c;--fg:#f4f2f8;--card:#222226;--muted:#b0aeba;--track:#34343c}html.custom body.day{--a:#6843cc;--as:rgba(104,67,204,.14);--bg:#e8e8ec;--fg:#25242d;--card:#ededf0;--muted:#64626e;--track:#cccbd3}html.custom button{border-radius:1.7vh}html.custom .card,html.custom .c{border-radius:2.5vh}

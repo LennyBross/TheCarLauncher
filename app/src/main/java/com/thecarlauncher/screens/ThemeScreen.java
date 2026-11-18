@@ -38,12 +38,12 @@ import java.util.Locale;
  */
 public class ThemeScreen extends Screen {
     public static final String P_THEME = "home_theme", P_PREV = "home_theme_prev";
-    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7, STOCK = 8;
+    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7, STOCK = 8, CUSTOM = 9;
     /** The themes offered in Settings (ids into NAMES). */
-    public static final int[] OFFERED = {STOCK, DS4PLUS, PANEL};
+    public static final int[] OFFERED = {STOCK, DS4PLUS, PANEL, CUSTOM};
     public static final String[][] NAMES = {
             {"Klasična", "Classic"}, {"Moderna", "Modern"}, {"Retro", "Retro"}, {"Pilot", "Pilot"}, {"Panel", "Panel"},
-            {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}, {"Stock", "Stock"}};
+            {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}, {"Stock", "Stock"}, {"MYDS Custom", "MYDS Custom"}};
     public static final String PKG_MAPS = "com.google.android.apps.maps", PKG_SPOTIFY = "com.spotify.music",
             PKG_YTMUSIC = "com.google.android.apps.youtube.music", PKG_YOUTUBE = "com.google.android.youtube";
     private static final Locale TR = new Locale("tr", "TR");
@@ -72,7 +72,7 @@ public class ThemeScreen extends Screen {
     public static int current(Context c) {
         int t = Prefs.integer(c, P_THEME, -1);
         // Only DS4+, Panel and Stock are offered now; anything else moves to Stock.
-        if (t != DS4PLUS && t != PANEL && t != STOCK) {
+        if (t != DS4PLUS && t != PANEL && t != STOCK && t != CUSTOM) {
             t = STOCK;
             Prefs.put(c, P_THEME, t);
             Prefs.put(c, ModernScreen.P_MODERN, false);
@@ -88,7 +88,7 @@ public class ThemeScreen extends Screen {
     public static Screen create(LauncherActivity act) {
         int t = current(act);
         if (t == MODERN) return new ModernScreen(act);
-        if (t >= RETRO && t <= STOCK) return new ThemeScreen(act, t);
+        if (t >= RETRO && t <= CUSTOM) return new ThemeScreen(act, t);
         return new MenuScreen(act);
     }
 
@@ -100,6 +100,7 @@ public class ThemeScreen extends Screen {
             case DRIVE: return "drive.html";
             case DS4PLUS: return "ds4plus.html";
             case STOCK: return "stock.html";
+            case CUSTOM: return "custom.html";
             default: return "panel.html";
         }
     }

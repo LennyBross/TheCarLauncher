@@ -63,7 +63,7 @@ var eco = (function () {
     var t = window.Car && Car.theme ? Car.theme() : 0;
     var css = t === 7
       ? "html body,html button,html input{font-family:'Inter',sans-serif !important}html .sg,html .num,html h1,html h2{font-family:'Space Grotesk','Inter',sans-serif !important}html svg text{font-family:'Inter',sans-serif !important}"
-      : (t === 8 || t === 4)
+      : (t === 8 || t === 4 || t === 9)
       ? "html body,html button,html input,html .sg,html .num,html h1,html h2,html svg text{font-family:'Montserrat',sans-serif !important}"
       : '';
     if (css) { var st = document.createElement('style'); st.textContent = css; (document.head || document.documentElement).appendChild(st); }
@@ -80,3 +80,5 @@ var eco = (function () {
     }
   } catch (e) {}
 })();
+
+(function(){try{if(Car.theme()===9){document.documentElement.classList.add('custom');var l=document.createElement('link');l.rel='stylesheet';l.href='custom.css';document.head.appendChild(l);}}catch(e){}})();
