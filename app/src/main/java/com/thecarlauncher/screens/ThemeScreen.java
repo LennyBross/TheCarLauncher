@@ -350,8 +350,12 @@ public class ThemeScreen extends Screen {
                         case "settings": act.show(LauncherActivity.SETTINGS, true); break;
                         case "sound": act.show(LauncherActivity.SOUND, true); break;
                         case "eq": openEq(); break;
-                        case "spotify": openSpotify(); break;
-                        case "ytmusic": openPkg(PKG_YTMUSIC); break;
+                        // tap = play in the background and stay in MYDS; the *App routes open the app itself
+                        case "spotify": MediaHub.get(act).playInBackground(PKG_SPOTIFY); break;
+                        case "ytmusic": MediaHub.get(act).playInBackground(PKG_YTMUSIC); break;
+                        case "spotifyApp": openSpotify(); break;
+                        case "ytmusicApp": openPkg(PKG_YTMUSIC); break;
+                        case "btMusic": MediaHub.get(act).select(MediaHub.BLUETOOTH); break;
                         case "youtube": openPkg(PKG_YOUTUBE); break;
                         case "gmaps": openPkg(PKG_MAPS); break;
                         case "navhome": navTo(Prefs.HOME_ADDR); break;

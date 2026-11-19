@@ -1053,6 +1053,33 @@ public final class MediaHub {
         }
     }
 
+    /**
+     * Starts a music app playing without bringing its screen up (the driver stays in MYDS):
+     * its live session gets play, else a media-button PLAY goes straight to the app.
+     */
+    public void playInBackground(String pkg) {
+        if (pkg == null) return;
+        MediaController mc = controllers.get(pkg);
+        if (mc != null) {
+            select(pkg);
+            try { mc.getTransportControls().play(); } catch (Throwable ignored) { }
+            notifyChanged();
+            return;
+        }
+        if (isRadio()) radio().stop();
+        if (btSelected) leaveCarBluetooth();
+        long t = SystemClock.uptimeMillis();
+        for (int a : new int[]{KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP}) {
+            Intent i = new Intent(Intent.ACTION_MEDIA_BUTTON).setPackage(pkg)
+                    .putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(t, t, a, KeyEvent.KEYCODE_MEDIA_PLAY, 0));
+            try { app.sendBroadcast(i); } catch (Throwable ignored) { }
+        }
+        // its session appears a moment later: make it the active source then
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+            public void run() { if (controllers.get(pkg) != null) { select(pkg); notifyChanged(); } }
+        }, 1500);
+    }
+
     /** Opens the app behind the current source. */
     public void openCurrentApp() {
         if (isRadio()) return;
