@@ -318,7 +318,7 @@ $('play').onclick = function () { call('media', 'play'); };
 $('mt').onclick = $('cover').onclick = function (e) { e.stopPropagation(); $('srcM').classList.toggle('on'); };
 // Music source picker: tap = play in the background (stay in MYDS), ↗ = open the app itself
 var SRCS = [['Spotify', 'spotify', 'spotifyApp', /spotify/i], ['YouTube Music', 'ytmusic', 'ytmusicApp', /youtube/i],
-  ['Bluetooth', 'btMusic', null, /blue|bt/i], ['Radyo', 'radio', null, /radyo|radio|fm/i]];
+  ['Telefon (Bluetooth)', 'btMusic', null, /blue|bt|telefon/i], ['Radyo', 'radio', null, /radyo|radio|fm/i]];
 SRCS.forEach(function (x) {
   var row = document.createElement('div'); row.className = 'it2';
   row.innerHTML = '<button class="key">' + x[0] + '</button>' + (x[2] ? '<button class="key op" aria-label="Uygulamayı aç">↗</button>' : '');

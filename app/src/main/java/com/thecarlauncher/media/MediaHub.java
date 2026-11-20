@@ -168,6 +168,7 @@ public final class MediaHub {
                             if (title == null || !title.equals(oldTitle)) carCounted = 0;
                             else if (carState == 1) carCounted += now - carCountedAt;
                             carCountedAt = now;
+                            if (state == 1 && carState != 1) followPhone();
                             carState = state;
                             carDur = dur;
                             carPos = pos;
@@ -285,7 +286,10 @@ public final class MediaHub {
         MediaController.Callback cb = new MediaController.Callback() {
             @Override
             public void onPlaybackStateChanged(PlaybackState state) {
-                if (state != null && state.getState() == PlaybackState.STATE_PLAYING) setActive(mc);
+                if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
+                    if (bt.isBluetoothPackage(mc.getPackageName())) followPhone();
+                    setActive(mc);
+                }
                 notifyChanged();
             }
 
@@ -472,6 +476,51 @@ public final class MediaHub {
         notifyChanged();
     }
 
+    /** The unit's Bluetooth music app on HCN / AutoChips units (owns the phone's A2DP audio). */
+    static final String HCN_BT_PKG = "com.autochips.bluetooth";
+
+    /**
+     * HCN / AutoChips units switch the speakers with android.sourceservice.SourceInfo (the same
+     * call the unit's own apps use): ask for the Bluetooth music app, then send it PLAY.
+     */
+    private void hcnBluetoothSource(boolean play) {
+        String pkg = HCN_BT_PKG;
+        try { app.getPackageManager().getPackageInfo(pkg, 0); } catch (Exception e) { return; }
+        try {
+            Class<?> c = Class.forName("android.sourceservice.SourceInfo");
+            Object si = c.getMethod("getInstance").invoke(null);
+            if (si != null) c.getMethod("onRequestPlayAudio", String.class).invoke(si, pkg);
+        } catch (Throwable ignored) {
+        }
+        if (!play) return;
+        long t = SystemClock.uptimeMillis();
+        for (int a : new int[]{KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP}) {
+            try {
+                app.sendBroadcast(new Intent(Intent.ACTION_MEDIA_BUTTON).setPackage(pkg)
+                        .putExtra(Intent.EXTRA_KEY_EVENT, new KeyEvent(t, t, a, KeyEvent.KEYCODE_MEDIA_PLAY, 0)));
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    /**
+     * Like Android Auto: whatever the phone starts playing (Spotify, YouTube Music, anything)
+     * becomes MYDS's source and shows on the home screen. Only when the phone itself starts a
+     * song, never on connect (no music starting on its own).
+     */
+    private void followPhone() {
+        if (btSelected || isRadio() || !Prefs.bool(app, "follow_phone", true)) return;
+        MusicService own = MusicService.get();
+        if (own != null && own.isPlaying()) return;
+        btSelected = true;
+        btActivated = true;
+        MediaController mc = btController();
+        if (mc != null) active = mc;
+        Prefs.put(app, Prefs.LAST_SOURCE, BLUETOOTH);
+        hcnBluetoothSource(false);
+        notifyChanged();
+    }
+
     /** Factory radio app (units whose tuner the launcher cannot drive). */
     private void openFactoryRadio() {
         MusicService own = MusicService.get();
@@ -490,6 +539,7 @@ public final class MediaHub {
         btActivated = true;
         active = btController();
         Prefs.put(app, Prefs.LAST_SOURCE, BLUETOOTH);
+        hcnBluetoothSource(true);
         if (carBt()) {
             selectCarBluetooth();
             notifyChanged();
