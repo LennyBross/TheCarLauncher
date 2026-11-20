@@ -558,12 +558,18 @@ function init3D() {
     if (doIntro) fly(REST[0], REST[1], 2800, true);
   }, function () { fallback('load'); });
 
-  var stopped = false, slowSince = 0, lastT = 0;
+  var stopped = false, slowSince = 0, lastT = 0, sleeping = false;
   window.__stop3d = function () { stopped = true; };
+  // MYDS behind another app (Android Auto, Spotify…): stop drawing, free the GPU; resume on return.
+  window.__sleep = function (on) {
+    if (on === sleeping) return;
+    sleeping = on;
+    if (!on && !stopped) { lastT = 0; slowSince = 0; requestAnimationFrame(loop); }
+  };
   window.__pose = function (a, e) { tw = null; az = a; el = e; place(); renderer.render(scene, camera); };
   place();
-  (function loop(now) {
-    if (stopped) return;
+  function loop(now) {
+    if (stopped || sleeping) return;
     if (shown && lastT) {
       var fps = 1000 / Math.max(1, now - lastT);
       if (fps < 8) { if (!slowSince) slowSince = now; else if (now - slowSince > 4000) { fallback('fps'); return; } } else slowSince = 0;
@@ -577,7 +583,8 @@ function init3D() {
     place();
     renderer.render(scene, camera);
     requestAnimationFrame(loop);
-  })(performance.now());
+  }
+  loop(performance.now());
 }
 </script>
 </body>

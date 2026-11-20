@@ -172,6 +172,40 @@ public final class HcnRadio {
         }
     }
 
+    private static long sHandoffAt;
+
+    /**
+     * Full start, the way the unit's own apps get the tuner on the speakers:
+     *  1. ask the source service for the radio (onRequestPlayAudio),
+     *  2. start the radio app's exported tuner service (FMPlugService powers the FM chip),
+     *  3. if the tuner still does not own the speakers, open the radio app for a moment
+     *     (the factory CAN app also starts it this way) and come straight back to MYDS.
+     */
+    public static void start(final android.content.Context c) {
+        play();
+        try {
+            c.startService(new android.content.Intent().setClassName(RADIO_PKG, RADIO_PKG + ".service.FMPlugService"));
+        } catch (Throwable ignored) {
+        }
+        final android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+        h.postDelayed(new Runnable() {
+            public void run() {
+                if (active() || android.os.SystemClock.elapsedRealtime() - sHandoffAt < 60000) return;
+                sHandoffAt = android.os.SystemClock.elapsedRealtime();
+                try {
+                    c.startActivity(new android.content.Intent(android.content.Intent.ACTION_MAIN)
+                            .setClassName(RADIO_PKG, RADIO_PKG + ".RadioMain")
+                            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION));
+                } catch (Throwable t) {
+                    return;
+                }
+                h.postDelayed(new Runnable() {
+                    public void run() { com.thecarlauncher.util.BringBack.toLauncher(c); }
+                }, 1300);
+            }
+        }, 1500);
+    }
+
     /** Requests the tuner as audio source only when something else plays. */
     public static void ensure() { if (!active()) play(); }
 

@@ -292,12 +292,21 @@ public class ThemeScreen extends Screen {
     public void onShow() {
         main.removeCallbacks(tick);
         main.post(tick);
+        if (web != null) {
+            try { web.onResume(); web.resumeTimers(); } catch (Throwable ignored) { }
+            web.evaluateJavascript("window.__sleep&&__sleep(false)", null);
+        }
         if (FuelPrice.shouldRetry(act)) FuelPrice.refresh(act, true, null);
     }
 
     @Override
     public void onHide() {
         main.removeCallbacks(tick);
+        // Behind Android Auto / Spotify: stop the 3D drawing and the page timers (memory, CPU).
+        if (web != null) {
+            web.evaluateJavascript("window.__sleep&&__sleep(true)", null);
+            try { web.onPause(); } catch (Throwable ignored) { }
+        }
     }
 
     @Override
@@ -441,7 +450,7 @@ public class ThemeScreen extends Screen {
         public void radioPlay() {
             // Something else (Spotify…) playing goes quiet first, then the tuner takes the speakers.
             act.runOnUiThread(new Runnable() { public void run() { try { MediaHub.get(act).onRadioStarting(); } catch (Throwable ignored) { } } });
-            com.thecarlauncher.radio.HcnRadio.play();
+            com.thecarlauncher.radio.HcnRadio.start(act);
         }
 
         @JavascriptInterface

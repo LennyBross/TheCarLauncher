@@ -71,6 +71,25 @@ final class Obd {
     }
 
     @SuppressLint("MissingPermission")
+    static final String[] NAMES = {"obd", "elm", "vlink", "v-link", "vgate", "icar", "konnwei", "kw9", "viecar", "obdlink", "carista", "veepeak", "scan"};
+
+    static boolean looksLikeAdapter(String name) {
+        String n = name == null ? "" : name.toLowerCase(Locale.ROOT);
+        for (String k : NAMES) if (n.contains(k)) return true;
+        return false;
+    }
+
+    /** A paired Bluetooth OBD adapter, or null. */
+    static BluetoothDevice pairedAdapter() {
+        try {
+            BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
+            if (a == null || !a.isEnabled()) return null;
+            for (BluetoothDevice d : a.getBondedDevices()) if (looksLikeAdapter(d.getName())) return d;
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
     private void session(String mode, String target) throws Exception {
         InputStream in;
         OutputStream out;
@@ -81,7 +100,7 @@ final class Obd {
             String want = target == null || target.isEmpty() ? null : target.toLowerCase(Locale.ROOT);
             for (BluetoothDevice d : a.getBondedDevices()) {
                 String n = d.getName() == null ? "" : d.getName().toLowerCase(Locale.ROOT);
-                if (want != null ? n.contains(want) : (n.contains("obd") || n.contains("elm") || n.contains("vlink") || n.contains("v-link") || n.contains("vgate"))) { dev = d; break; }
+                if (want != null ? n.contains(want) : looksLikeAdapter(n)) { dev = d; break; }
             }
             if (dev == null) throw new Exception("eşleşmiş OBD adaptörü bulunamadı");
             l.onStatus("OBD: " + dev.getName() + " bağlanıyor…", false);
@@ -107,26 +126,30 @@ final class Obd {
             out = s.getOutputStream();
         }
         if (PSA.equals(proto)) { psaListen(in, out); return; }
-        for (String c : new String[]{"ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATAT2", "ATSP0"}) {
+        for (String c : new String[]{"ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATAT2", "ATSP6"}) {
             cmd(in, out, c, c.equals("ATZ") ? 2500 : 1500);
         }
-        // First request lets the adapter find the protocol (can take a few seconds).
-        cmd(in, out, "0100", 8000);
+        // DS4 / C4 B7 (AEE2010): ISO 15765-4 CAN, 11 bit, 500 kbit/s = protocol 6. Else let the adapter search.
+        String first = cmd(in, out, "0100", 4000);
+        if (!first.contains("41")) {
+            cmd(in, out, "ATSP0", 1500);
+            cmd(in, out, "0100", 8000);
+        }
         l.onStatus("OBD bağlı", true);
         boolean pedalD = true;
         int n = 0;
         while (run) {
-            String r = cmd(in, out, "010C", 1000);
+            String r = cmd(in, out, "010C1", 600);
             int[] b = data(r, 0x0C, 2);
             if (b != null) l.onRpm(((b[0] << 8) | b[1]) / 4f);
             if (n % 2 == 0) {
                 // Accelerator pedal position D (0x49); falls back to throttle position (0x11).
-                int[] p = data(cmd(in, out, pedalD ? "0149" : "0111", 1000), pedalD ? 0x49 : 0x11, 1);
+                int[] p = data(cmd(in, out, pedalD ? "01491" : "01111", 600), pedalD ? 0x49 : 0x11, 1);
                 if (p == null && pedalD) pedalD = false;
                 else if (p != null) l.onPedal(pedalD ? Math.max(0, (p[0] / 2.55f - 14f) / 66f) : p[0] / 255f);
             }
             if (n % 10 == 0) {
-                int[] s = data(cmd(in, out, "010D", 1000), 0x0D, 1);
+                int[] s = data(cmd(in, out, "010D1", 600), 0x0D, 1);
                 if (s != null) l.onSpeed(s[0]);
             }
             n++;

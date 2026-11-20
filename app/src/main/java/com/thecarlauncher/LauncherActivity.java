@@ -180,6 +180,7 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
 
         MediaHub.get(this).connectExternal();
         com.thecarlauncher.util.CanLive.start(this);
+        com.thecarlauncher.util.KeepAlive.start(this);
         // CataraPatara now lives inside MYDS: offer once to remove the old stand-alone APK.
         if (com.thecarlauncher.util.CanLive.standaloneCp(this) && !Prefs.bool(this, "cp_old_asked", false)) {
             Prefs.put(this, "cp_old_asked", true);
@@ -417,6 +418,15 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         if (current >= 0) screens[current].onHide();
         com.thecarlauncher.util.EdgePanel.launcherFront(this, false);
         super.onPause();
+    }
+
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        // Memory is short (Android Auto + music running): let the hidden pages drop their 3D work.
+        if (level >= TRIM_MEMORY_UI_HIDDEN) {
+            for (Screen s : screens) if (s != null && s.isCreated() && s != (current >= 0 ? screens[current] : null)) s.onHide();
+        }
     }
 
     @Override

@@ -40,6 +40,11 @@ public final class EngineSim {
     public void setRev(boolean on) { rev = on; }
 
     /** Real engine rpm from the car, with the car's own limit (to stretch into the sound's range). */
+    /** true: the sound runs at the car's own rpm (same as the rev counter); false: stretched to the profile. */
+    public volatile boolean matchRpm = true;
+    /** GPS speed may drive the virtual gearbox when no real rpm comes in. */
+    public volatile boolean gpsAllowed = false;
+
     public void setRealRpm(float r, float max, long nowMs) {
         realRpm = r;
         realMax = max > 1000 ? max : 4500;
@@ -58,7 +63,7 @@ public final class EngineSim {
     /** Where the current rpm / load come from, for the UI. */
     public String source(long nowMs) {
         boolean r = realRpm >= 0 && nowMs - realAt < 2000, p = pedal >= 0 && nowMs - pedalAt < 2000, c = cons >= 0 && nowMs - consAt < 4000;
-        return r ? (p ? "rpm+pedal" : "rpm") : c ? "fuel" : "gps";
+        return r ? (p ? "rpm+pedal" : "rpm") : c ? "fuel" : gpsAllowed ? "gps" : "wait";
     }
 
     public void start() { crank = 0; off = false; }
@@ -94,12 +99,24 @@ public final class EngineSim {
         }
 
         boolean realFresh = realRpm >= 0 && nowMs - realAt < 2000;
+        boolean consFresh = cons >= 0 && nowMs - consAt < 4000;
         if (realFresh) {
-            // Map the car's range onto the sound's range so a diesel's 4 500 reaches the redline.
-            float k = (red - idle) / Math.max(1, realMax - 800);
-            wantRpm = idle + Math.max(0, realRpm - 800) * k;
+            if (matchRpm) {
+                // Exactly the rev counter: the engine's own rpm, no stretching, no lag.
+                wantRpm = Math.max(idle * .85f, realRpm);
+            } else {
+                // Map the car's range onto the sound's range so a diesel's 4 500 reaches the redline.
+                float k = (red - idle) / Math.max(1, realMax - 800);
+                wantRpm = idle + Math.max(0, realRpm - 800) * k;
+            }
             wantLoad = accel > .4f ? Math.min(1f, .35f + accel / 6f) : accel < -1f ? 0f : .25f;
             gear = speed < 3 ? 0 : gear;
+        } else if (!gpsAllowed && !rev) {
+            // No rpm source and no GPS: the CAN trip computer's fuel flow is the throttle.
+            gear = 0;
+            float f = consFresh ? Math.min(1f, cons / 25f) : 0f;
+            wantRpm = idle + f * (red * .55f - idle);
+            wantLoad = consFresh ? (cons < .2f ? 0f : .15f + .85f * f) : .15f;
         } else if (speed < 4f && target < 4f) {
             gear = 0;
             if (rev) { wantRpm = red * 1.02f; wantLoad = 1f; }
@@ -139,7 +156,7 @@ public final class EngineSim {
             limiterT += dt;
             if (limiterT > .06f) { limiterT = 0; wantLoad = 0; rpm = red * .955f; synth.pop(.35f); }
         }
-        float tau = gear == 0 ? (wantRpm > rpm ? .09f : .35f) : .14f;
+        float tau = realFresh ? .045f : gear == 0 ? (wantRpm > rpm ? .09f : .35f) : .14f;
         rpm += (Math.min(wantRpm, red) - rpm) * Math.min(1f, dt / tau);
         load += (wantLoad - load) * Math.min(1f, dt / .08f);
     }

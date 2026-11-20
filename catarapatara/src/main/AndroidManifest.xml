@@ -24,25 +24,23 @@
             android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen"
             android:hardwareAccelerated="true"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"
-            android:launchMode="singleTask">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:process=":engine"
+            android:launchMode="singleTask" />
+        <!-- No launcher icon: CataraPatara is part of MYDS (an icon of its own would uninstall all of MYDS). -->
 
         <service
             android:name=".EngineService"
             android:exported="false"
+            android:process=":engine"
             android:foregroundServiceType="mediaPlayback|location" />
 
-        <receiver android:name=".ControlReceiver" android:exported="true">
+        <receiver android:name=".ControlReceiver" android:exported="true" android:process=":engine">
             <intent-filter>
                 <action android:name="com.catarapatara.CONTROL" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".BootReceiver" android:exported="true">
+        <receiver android:name=".BootReceiver" android:exported="true" android:process=":engine">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />

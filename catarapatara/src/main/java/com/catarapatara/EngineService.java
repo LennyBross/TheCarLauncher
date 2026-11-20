@@ -156,7 +156,9 @@ public final class EngineService extends Service implements LocationListener, Ob
     private void begin() {
         running = true;
         sim.start();
-        if (hasLocation()) {
+        sim.gpsAllowed = prefs(this).getBoolean("gps", false);
+        sim.matchRpm = prefs(this).getBoolean("matchRpm", true);
+        if (sim.gpsAllowed && hasLocation()) {
             try {
                 LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
                 lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 250, 0, this, Looper.getMainLooper());
@@ -322,9 +324,21 @@ public final class EngineService extends Service implements LocationListener, Ob
         }
     }
 
+    /** GPS is only a fallback the driver switches on; real data comes from OBD / CAN. */
+    void applyGps() {
+        sim.gpsAllowed = prefs(this).getBoolean("gps", false);
+        LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
+        try { lm.removeUpdates(this); } catch (Exception ignored) { }
+        if (running && sim.gpsAllowed && hasLocation()) {
+            try { lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 250, 0, this, Looper.getMainLooper()); } catch (Exception ignored) { }
+        }
+    }
+
     void applyObd() {
         SharedPreferences p = prefs(this);
-        String mode = p.getString("obd", "off");
+        String mode = p.getString("obd", "auto");
+        // "auto": use a paired OBD adapter if there is one (Bluetooth ELM327 in the OBD socket).
+        if ("auto".equals(mode)) mode = Obd.pairedAdapter() != null ? Obd.BT : "off";
         if (obd != null) obd.stop();
         obd = null;
         obdStatus = "";
@@ -568,6 +582,8 @@ public final class EngineService extends Service implements LocationListener, Ob
             main.post(new Runnable() { public void run() { applyEngine(); } });
         }
         if ("obd".equals(key) || "obdTarget".equals(key) || "obdProto".equals(key)) applyObd();
+        if ("matchRpm".equals(key)) sim.matchRpm = prefs(this).getBoolean("matchRpm", true);
+        if ("gps".equals(key)) main.post(new Runnable() { public void run() { applyGps(); } });
         if ("id".equals(key)) foreground();
     }
 }

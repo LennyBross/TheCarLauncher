@@ -32,6 +32,10 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        // Own process (":engine"): WebView needs its own data folder there on newer Android.
+        if (android.os.Build.VERSION.SDK_INT >= 28) {
+            try { android.webkit.WebView.setDataDirectorySuffix("engine"); } catch (Throwable ignored) { }
+        }
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         web = new WebView(this);
@@ -111,9 +115,9 @@ public final class MainActivity extends Activity {
                 return new JSONObject().put("on", s != null && s.playing()).put("id", p.getString("id", EngineService.DEFAULT_ID)).put("ex", p.getInt("ex", 1))
                         .put("vol", p.getInt("vol", 70)).put("bass", p.getInt("bass", 3)).put("pops", p.getBoolean("pops", true))
                         .put("bubble", p.getBoolean("bubble", true)).put("canDraw", Bubble.canDraw(MainActivity.this))
-                        .put("obd", p.getString("obd", "off")).put("obdTarget", p.getString("obdTarget", "")).put("obdProto", p.getString("obdProto", "std"))
+                        .put("obd", p.getString("obd", "auto")).put("gps", p.getBoolean("gps", false)).put("matchRpm", p.getBoolean("matchRpm", true)).put("obdTarget", p.getString("obdTarget", "")).put("obdProto", p.getString("obdProto", "std"))
                         .put("carMax", p.getInt("carMax", 4500)).put("out", p.getString("out", "focus")).put("boot", p.getBoolean("boot", true)).put("duckMusic", p.getBoolean("duckMusic", false))
-                        .put("font", getSharedPreferences("launcher", MODE_PRIVATE).getInt("home_theme", 8) == 7 ? "inter" : "montserrat").put("duckAmt", p.getInt("duckAmt", 40))
+                        .put("font", getSharedPreferences("launcher", MODE_MULTI_PROCESS).getInt("home_theme", 8) == 7 ? "inter" : "montserrat").put("duckAmt", p.getInt("duckAmt", 40))
                         .put("eq", new org.json.JSONArray().put(p.getInt("eq0", 0)).put(p.getInt("eq1", 0)).put(p.getInt("eq2", 0)).put(p.getInt("eq3", 0)).put(p.getInt("eq4", 0))).toString();
             } catch (Exception e) {
                 return "{}";
@@ -135,7 +139,7 @@ public final class MainActivity extends Activity {
             switch (key) {
                 case "id": case "obd": case "obdTarget": case "obdProto": case "out": e.putString(key, value); break;
                 case "ex": case "vol": case "bass": case "carMax": case "duckAmt": case "eq0": case "eq1": case "eq2": case "eq3": case "eq4": e.putInt(key, Integer.parseInt(value)); break;
-                case "pops": case "bubble": case "boot": case "duckMusic": e.putBoolean(key, "1".equals(value)); break;
+                case "pops": case "bubble": case "boot": case "duckMusic": case "gps": case "matchRpm": e.putBoolean(key, "1".equals(value)); break;
                 default: return;
             }
             e.apply();

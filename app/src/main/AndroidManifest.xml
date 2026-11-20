@@ -102,6 +102,8 @@
         <package android:name="com.android.bluetooth" />
     </queries>
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
     <application
         android:allowBackup="true"
         android:hardwareAccelerated="true"
@@ -130,6 +132,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- keeps the launcher process alive behind Android Auto / music (see util/KeepAlive) -->
+        <service
+            android:name=".util.KeepAlive"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="car launcher kept alive behind projection" />
+        </service>
 
         <service
             android:name=".media.MusicService"

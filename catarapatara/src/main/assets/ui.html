@@ -199,12 +199,14 @@ input[type=text]{flex:1;height:5.8vh;border-radius:1.6vh;border:1px solid var(--
   <div class="row"><span>OBD2 adaptörü<small>ELM327 · gerçek devir + gaz pedalı</small></span><div class="seg" id="obd"></div></div>
   <div class="row"><span>Veri yolu<small>OBD2 = soket · PSA CAN = ekran arkası CAN (0x0B6, sadece dinler)</small></span><div class="seg" id="obdProto"></div></div>
   <div class="row"><span>Adaptör adresi<small>Wi-Fi: 192.168.0.10:35000 · BT: cihaz adı</small></span><input type="text" id="obdTarget" placeholder="boş = otomatik"></div>
+  <div class="row"><span>Devir saatiyle birebir<small>açık: ses aracın gerçek devrinde döner · kapalı: motor profiline yayılır</small></span><div style="flex:1"></div><button class="key sw" id="matchRpm"></button></div>
+  <div class="row"><span>GPS yedeği<small>kapalı önerilir · OBD / CAN yokken hızdan sanal vites hesaplar</small></span><div style="flex:1"></div><button class="key sw" id="gps"></button></div>
   <div class="row"><span>Aracın devir sınırı<small>DS4 1.6 e-HDi ≈ 4500</small></span><input type="range" class="h" min="3500" max="7500" step="100" id="carMax" style="flex:1"><b class="sg" id="carMaxT" style="width:8vh;text-align:right"></b></div>
   <h2>SİSTEM</h2>
   <div class="row"><span>Ses kanalı<small>ses gelmezse diğerlerini dene</small></span><div class="seg" id="out"></div></div>
   <div class="row"><span>Yüzen egzoz düğmesi<small>Android Auto açıkken: dokun aç/kapat · basılı tut uygulama</small></span><div style="flex:1"></div><button class="key tbtn" id="allow" style="display:none;height:5.6vh">İzin ver</button><button class="key sw" id="bubble"></button></div>
   <div class="row"><span>Araç açılınca hazırla</span><div style="flex:1"></div><button class="key sw" id="boot"></button></div>
-  <div class="row" style="display:block;font-size:1.6vh;color:var(--muted);line-height:1.5">Veri önceliği: OBD2 / PSA CAN (gerçek devir) → CANBUS anlık yakıt → GPS hızı. Telefon görüşmesinde ses kendiliğinden susar.</div>
+  <div class="row" style="display:block;font-size:1.6vh;color:var(--muted);line-height:1.5">Ekranın CAN kutusu (Raise PSA) devir ve gaz pedalı göndermiyor; yalnızca anlık yakıt, menzil ve dış sıcaklık veriyor. Devir saatiyle birebir ses için OBD soketine takılan bir Bluetooth ELM327 adaptörü gerekir: telefonla değil ünitenin Bluetooth'uyla bir kez eşleştir, CataraPatara kendiliğinden bağlanır. Adaptör yokken ses anlık yakıt akışını izler. Telefon görüşmesinde ses kendiliğinden susar.</div>
 </section>
 </div>
 
@@ -237,7 +239,7 @@ $('rack').appendChild(add);
 function seg(id, text, fn) { var b = document.createElement('button'); b.className = 'key'; b.textContent = text; b.onclick = fn; $(id).appendChild(b); }
 ['Stok', 'Spor', 'Yarış'].forEach(function (n, i) { seg('ex', n, function () { cfg.ex = i; set('ex', i); paint(); }); });
 [['media', 'Medya'], ['focus', 'Medya + öncelik'], ['nav', 'Navigasyon']].forEach(function (o) { seg('out', o[1], function () { cfg.out = o[0]; set('out', o[0]); paint(); }); });
-[['off', 'Yok'], ['wifi', 'Wi-Fi'], ['bt', 'Bluetooth']].forEach(function (o) { seg('obd', o[1], function () { cfg.obd = o[0]; set('obd', o[0]); paint(); }); });
+[['auto', 'Otomatik'], ['bt', 'Bluetooth'], ['wifi', 'Wi-Fi'], ['off', 'Yok']].forEach(function (o) { seg('obd', o[1], function () { cfg.obd = o[0]; set('obd', o[0]); paint(); }); });
 [['std', 'OBD2'], ['psa', 'PSA CAN']].forEach(function (o) { seg('obdProto', o[1], function () { cfg.obdProto = o[0]; set('obdProto', o[0]); paint(); }); });
 
 // ---- cabin EQ ----
@@ -253,7 +255,7 @@ range('bass', 'bass', function (v) { return '+' + v; });
 range('carMax', 'carMax', function (v) { return v; });
 range('duckAmt', 'duckAmt', function (v) { return '−' + v + '%'; });
 function toggle(id) { $(id).onclick = function () { cfg[id] = !cfg[id]; set(id, cfg[id] ? 1 : 0); paint(); }; }
-toggle('pops'); toggle('bubble'); toggle('boot'); toggle('duckMusic');
+toggle('pops'); toggle('bubble'); toggle('boot'); toggle('duckMusic'); toggle('gps'); toggle('matchRpm');
 $('obdTarget').onchange = function () { cfg.obdTarget = this.value.trim(); set('obdTarget', cfg.obdTarget); };
 $('allow').onclick = function () { if (has) CP.allowOverlay(); };
 $('hide').onclick = function () { if (has) CP.close(); };
@@ -270,7 +272,7 @@ function paint() {
   var l = $('rack').children;
   for (var i = 0; i < l.length; i++) l[i].classList.toggle('on', l[i].getAttribute('data-id') === cfg.id);
   onOff('ex', [0, 1, 2], cfg.ex); onOff('out', ['media', 'focus', 'nav'], cfg.out || 'focus');
-  onOff('obd', ['off', 'wifi', 'bt'], cfg.obd || 'off'); onOff('obdProto', ['std', 'psa'], cfg.obdProto || 'std');
+  onOff('obd', ['auto', 'bt', 'wifi', 'off'], cfg.obd || 'auto'); onOff('obdProto', ['std', 'psa'], cfg.obdProto || 'std');
   $('exPill').textContent = ['STOK', 'SPOR', 'YARIŞ'][cfg.ex || 0];
   $('ign').classList.toggle('on', !!cfg.on); $('ignT').textContent = cfg.on ? 'Çalışıyor · Durdur' : 'Motoru çalıştır';
   $('orbit').classList.toggle('on', !!cfg.on);
@@ -281,7 +283,7 @@ function paint() {
   $('duckAmt').value = cfg.duckAmt || 40; $('duckAmtT').textContent = '−' + (cfg.duckAmt || 40) + '%';
   $('duckRow').style.opacity = cfg.duckMusic ? 1 : .35;
   $('obdTarget').value = cfg.obdTarget || '';
-  ['pops', 'bubble', 'boot', 'duckMusic'].forEach(function (k) { $(k).classList.toggle('on', !!cfg[k]); });
+  ['pops', 'bubble', 'boot', 'duckMusic', 'gps', 'matchRpm'].forEach(function (k) { $(k).classList.toggle('on', !!cfg[k]); });
   $('allow').style.display = cfg.bubble && !cfg.canDraw ? 'inline-block' : 'none';
   var p = PROFILES.filter(function (x) { return x.id === cfg.id; })[0] || PROFILES[0] || { name: '', red: 6500 };
   $('pname').textContent = p.name; red = p.red || 6500;
@@ -307,7 +309,7 @@ function drawViz(spec, on) {
     cx.fillRect(i * bw + bw * .18, H - h, bw * .64, h);
   }
 }
-var SRC = { gps: 'GPS', fuel: 'CAN YAKIT + GPS', rpm: 'GERÇEK DEVİR', 'rpm+pedal': 'DEVİR + PEDAL' };
+var SRC = { gps: 'GPS', fuel: 'CAN YAKIT AKIŞI', rpm: 'GERÇEK DEVİR', 'rpm+pedal': 'GERÇEK DEVİR + PEDAL', wait: 'OBD BEKLENİYOR' };
 function tick() {
   var v = J(has ? CP.live() : '{}', {});
   var r = cfg.on ? (v.rpm || 0) : 0;
