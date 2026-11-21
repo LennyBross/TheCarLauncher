@@ -21,17 +21,73 @@ import java.util.UUID;
  * (engine rpm, vehicle speed, fuel counter). Frame layout from PSA-RE
  * (github.com/prototux/PSA-RE, Apache-2.0): buses/AEE2010.full/LS.INFO-DIV/0B6.yml.
  */
-final class Obd {
-    interface Listener {
+public final class Obd {
+    public interface Listener {
         void onRpm(float rpm);
         void onPedal(float pedal01);
         void onSpeed(float kmh);
         void onStatus(String text, boolean ok);
+        /** Any other live value (key → value in display units, see SLOW). */
+        void onPid(String key, float value);
+        /** Stored fault codes ("P0401,P2463"), empty when none. */
+        void onDtc(String codes);
     }
 
-    static final String WIFI = "wifi", BT = "bt";
+    /**
+     * Slower values, one per round so rpm stays fast: {pid, key}. Decoded in value(). Only PIDs the
+     * engine reports as supported (0100/0120/0140/0160 bitmaps) are asked. Tuned for the DS4 1.6
+     * e-HDi (Bosch EDC17, diesel): rail pressure, boost (MAP − baro), EGR, MAF, temperatures.
+     */
+    static final int[][] SLOW_PIDS = {{0x05}, {0x0B}, {0x23}, {0x10}, {0x04}, {0x0F}, {0x42}, {0x2C}, {0x2D}, {0x2F}, {0x5C},
+            {0x46}, {0x33}, {0x1F}, {0x01}, {0x5E}, {0x0E}, {0x11}, {0x06}, {0x07}, {0x31}, {0x21}, {0x30}, {0x7C}};
+
+    /** Decodes a mode 01 answer to the value in display units; NaN if unknown. key out[0]. */
+    static float value(int pid, int[] b, String[] key) {
+        switch (pid) {
+            case 0x05: key[0] = "cool"; return b[0] - 40;
+            case 0x0B: key[0] = "map"; return b[0];
+            case 0x23: key[0] = "rail"; return ((b[0] << 8) | b[1]) * 10f / 1000f;      // MPa
+            case 0x10: key[0] = "maf"; return ((b[0] << 8) | b[1]) / 100f;              // g/s
+            case 0x04: key[0] = "load"; return b[0] / 2.55f;
+            case 0x0F: key[0] = "iat"; return b[0] - 40;
+            case 0x42: key[0] = "volt"; return ((b[0] << 8) | b[1]) / 1000f;
+            case 0x2C: key[0] = "egr"; return b[0] / 2.55f;
+            case 0x2D: key[0] = "egrErr"; return b[0] / 1.28f - 100f;
+            case 0x2F: key[0] = "fuelPct"; return b[0] / 2.55f;
+            case 0x5C: key[0] = "oil"; return b[0] - 40;
+            case 0x46: key[0] = "amb"; return b[0] - 40;
+            case 0x33: key[0] = "baro"; return b[0];
+            case 0x1F: key[0] = "run"; return (b[0] << 8) | b[1];                        // s
+            case 0x01: key[0] = "dtcN"; return b[0] & 0x7F;                               // (+ MIL below)
+            case 0x5E: key[0] = "lph"; return ((b[0] << 8) | b[1]) / 20f;
+            case 0x0E: key[0] = "timing"; return b[0] / 2f - 64f;
+            case 0x11: key[0] = "thr"; return b[0] / 2.55f;
+            case 0x06: key[0] = "stft"; return b[0] / 1.28f - 100f;
+            case 0x07: key[0] = "ltft"; return b[0] / 1.28f - 100f;
+            case 0x31: key[0] = "clrKm"; return (b[0] << 8) | b[1];
+            case 0x21: key[0] = "milKm"; return (b[0] << 8) | b[1];
+            case 0x30: key[0] = "warm"; return b[0];
+            case 0x7C: key[0] = "dpfT"; return ((b[0] << 8) | b[1]) / 10f - 40f;         // DPF temperature
+            default: return Float.NaN;
+        }
+    }
+
+    static int len(int pid) {
+        switch (pid) {
+            case 0x23: case 0x10: case 0x42: case 0x1F: case 0x5E: case 0x31: case 0x21: case 0x7C: return 2;
+            case 0x01: return 4;
+            default: return 1;
+        }
+    }
+
+    private volatile boolean wantDtc = true;
+
+    /** Ask the stored fault codes again (mode 03) on the next round. */
+    public void readDtc() { wantDtc = true; }
+
+    public static final String WIFI = "wifi", BT = "bt";
     /** proto: "std" = OBD-II mode 01 requests, "psa" = passive listen to 0x0B6 on the PSA 125k bus. */
-    static final String STD = "std", PSA = "psa";
+    public static final String STD = "std", PSA = "psa";
     private volatile String proto = STD;
     private static final UUID SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
@@ -40,10 +96,10 @@ final class Obd {
     private Thread thread;
     private volatile Object socket;
 
-    Obd(Listener l) { this.l = l; }
+    public Obd(Listener l) { this.l = l; }
 
     /** mode: "wifi" (host:port, default 192.168.0.10:35000) or "bt" (paired device name contains target, default OBD/ELM/Vlink). */
-    synchronized void start(final String mode, final String target, String proto) {
+    public synchronized void start(final String mode, final String target, String proto) {
         stop();
         this.proto = PSA.equals(proto) ? PSA : STD;
         run = true;
@@ -63,7 +119,7 @@ final class Obd {
         thread.start();
     }
 
-    synchronized void stop() {
+    public synchronized void stop() {
         run = false;
         close();
         if (thread != null) thread.interrupt();
@@ -80,7 +136,7 @@ final class Obd {
     }
 
     /** A paired Bluetooth OBD adapter, or null. */
-    static BluetoothDevice pairedAdapter() {
+    public static BluetoothDevice pairedAdapter() {
         try {
             BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
             if (a == null || !a.isEnabled()) return null;
@@ -136,8 +192,25 @@ final class Obd {
             cmd(in, out, "0100", 8000);
         }
         l.onStatus("OBD bağlı", true);
+        // Which PIDs does this engine answer? (bitmaps 01-20, 21-40, 41-60, 61-80)
+        boolean[] sup = new boolean[0x81];
+        for (int base = 0; base <= 0x60; base += 0x20) {
+            int[] m = data(cmd(in, out, String.format(Locale.US, "01%02X", base), 1500), base, 4);
+            if (m == null) break;
+            long bits = ((long) m[0] << 24) | (m[1] << 16) | (m[2] << 8) | m[3];
+            for (int k = 0; k < 32; k++) if ((bits & (1L << (31 - k))) != 0) sup[base + 1 + k] = true;
+            if ((bits & 1) == 0) break;
+        }
+        int[] slow = new int[SLOW_PIDS.length];
+        int ns = 0;
+        for (int[] sp : SLOW_PIDS) if (sup[sp[0]]) slow[ns++] = sp[0];
+        if (ns == 0) for (int[] sp : SLOW_PIDS) slow[ns++] = sp[0]; // no bitmap: try them all, drop the silent ones
+        int[] miss = new int[0x81];
+        l.onPid("pids", ns);
         boolean pedalD = true;
-        int n = 0;
+        int n = 0, si = 0;
+        long voltAt = 0, dtcAt = 0;
+        String[] key = new String[1];
         while (run) {
             String r = cmd(in, out, "010C1", 600);
             int[] b = data(r, 0x0C, 2);
@@ -148,9 +221,36 @@ final class Obd {
                 if (p == null && pedalD) pedalD = false;
                 else if (p != null) l.onPedal(pedalD ? Math.max(0, (p[0] / 2.55f - 14f) / 66f) : p[0] / 255f);
             }
-            if (n % 10 == 0) {
+            if (n % 5 == 0) {
                 int[] s = data(cmd(in, out, "010D1", 600), 0x0D, 1);
                 if (s != null) l.onSpeed(s[0]);
+            }
+            // one slower value per round
+            if (ns > 0 && n % 2 == 1) {
+                for (int tries = 0; tries < ns; tries++) {
+                    int pid = slow[si % ns];
+                    si++;
+                    if (miss[pid] >= 3) continue;
+                    int ln = len(pid);
+                    int[] v = data(cmd(in, out, String.format(Locale.US, "01%02X1", pid), 700), pid, ln);
+                    if (v == null) { miss[pid]++; break; }
+                    miss[pid] = 0;
+                    float f = value(pid, v, key);
+                    if (!Float.isNaN(f)) l.onPid(key[0], f);
+                    if (pid == 0x01) l.onPid("mil", (v[0] & 0x80) != 0 ? 1 : 0);
+                    break;
+                }
+            }
+            long now = System.currentTimeMillis();
+            if (now - voltAt > 5000) {
+                voltAt = now;
+                String rv = cmd(in, out, "ATRV", 600).replaceAll("[^0-9.]", "");
+                try { if (!rv.isEmpty()) l.onPid("batt", Float.parseFloat(rv)); } catch (Exception ignored) { }
+            }
+            if (wantDtc || now - dtcAt > 120000) {
+                wantDtc = false;
+                dtcAt = now;
+                l.onDtc(codes(cmd(in, out, "03", 2500)));
             }
             n++;
         }
@@ -210,6 +310,34 @@ final class Obd {
             lastT = now;
             if (!ok) { ok = true; l.onStatus("PSA CAN bağlı", true); }
         }
+    }
+
+    /** Mode 03 answer → "P0401,P2463" (handles single and multi-frame CAN answers). */
+    static String codes(String r) {
+        if (r == null) return "";
+        StringBuilder hex = new StringBuilder();
+        for (String line : r.split("[\\r\\n]+")) {
+            String t = line.trim().toUpperCase(Locale.ROOT);
+            if (t.isEmpty() || t.contains("NO DATA") || t.contains("SEARCH")) continue;
+            if (t.matches("^[0-9A-F]:.*")) t = t.substring(2);
+            else if (t.matches("^[0-9A-F]{3}$")) continue; // multi-frame byte count
+            hex.append(t.replaceAll("[^0-9A-F]", ""));
+        }
+        String h = hex.toString();
+        int i = h.indexOf("43");
+        if (i < 0) return "";
+        h = h.substring(i + 2);
+        if ((h.length() / 2) % 2 == 1) h = h.substring(2); // CAN: first byte = number of codes
+        StringBuilder out = new StringBuilder();
+        for (int k = 0; k + 4 <= h.length(); k += 4) {
+            int a = Integer.parseInt(h.substring(k, k + 2), 16), b = Integer.parseInt(h.substring(k + 2, k + 4), 16);
+            if (a == 0 && b == 0) continue;
+            String code = "PCBU".charAt((a >> 6) & 3) + Integer.toString((a >> 4) & 3) + Integer.toHexString(a & 15).toUpperCase(Locale.ROOT)
+                    + String.format(Locale.US, "%02X", b);
+            if (out.length() > 0) out.append(',');
+            out.append(code);
+        }
+        return out.toString();
     }
 
     private static int[] data(String r, int pid, int len) {

@@ -34,6 +34,7 @@ public class KeepAlive extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        try { ObdHub.start(this); } catch (Throwable ignored) { }
         try {
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             Notification.Builder b;

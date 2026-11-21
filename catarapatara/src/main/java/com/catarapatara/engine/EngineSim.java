@@ -24,7 +24,7 @@ public final class EngineSim {
     private long realAt;
     private float limiterT;
     private float crank = -1;  // >= 0 while starting
-    private boolean off;
+    private boolean off, stopped;
     private EngineSynth synth;
 
     public EngineSim(EngineSynth s) {
@@ -124,6 +124,14 @@ public final class EngineSim {
         }
         if (manualGear > 0 && nowMs - manualAt > 20000) manualGear = 0;
         boolean realFresh = realRpm >= 0 && nowMs - realAt < 2000;
+        // Stop & Start (e-HDi): the real engine stops at the lights → silence; it restarts → a quick start.
+        if (realFresh && realRpm < 250) {
+            stopped = true;
+            rpm += (0 - rpm) * Math.min(1f, dt / .25f);
+            load = 0;
+            return;
+        }
+        if (stopped && realFresh) { stopped = false; crank = .5f; return; }
         boolean consFresh = cons >= 0 && nowMs - consAt < 4000;
         if (realFresh) {
             if (matchRpm) {

@@ -195,11 +195,32 @@ public class ThemeScreen extends Screen {
         o.put("dimLevel", NightDim.level(act));
 
         LocationTracker t = LocationTracker.get(act);
-        if (!t.hasPermission()) o.put("gps", "perm");
+        com.thecarlauncher.util.ObdHub ob = com.thecarlauncher.util.ObdHub.get();
+        float obdKmh = ob == null ? -1 : ob.speed();
+        if (obdKmh >= 0) {           // the car's own speed beats GPS
+            o.put("gps", "ok");
+            o.put("speed", Math.round(obdKmh));
+        } else if (!t.hasPermission()) o.put("gps", "perm");
         else if (!t.hasFix()) o.put("gps", "search");
         else {
             o.put("gps", "ok");
             o.put("speed", Math.round(t.speed(act)));
+        }
+        if (ob != null) {
+            JSONObject oj = ob.json();
+            o.put("obd", oj);
+            JSONObject v = oj.optJSONObject("v");
+            if (v != null) {
+                if (v.has("rpm")) o.put("rpm", v.optInt("rpm"));
+                if (v.has("cool")) o.put("coolant", v.optDouble("cool"));
+                if (v.has("batt")) o.put("batt", v.optDouble("batt"));
+                // boost: manifold pressure above the outside air (bar)
+                if (v.has("map")) o.put("boost", Math.max(0, (v.optDouble("map") - v.optDouble("baro", 101)) / 100.0));
+                if (v.has("fuelPct")) {   // the real tank sensor beats the fill-up estimate
+                    o.put("fuelLeft", v.optDouble("fuelPct") / 100.0 * CarData.get(act).tank());
+                }
+                if (v.has("amb")) o.put("outdoorObd", v.optDouble("amb"));
+            }
         }
 
         double price = FuelPrice.perLitre(act), l100 = FuelCost.litresPer100(act);
@@ -371,6 +392,9 @@ public class ThemeScreen extends Screen {
                         case "themehome": load(page()); break;
                         // the Sürüş pages are replaced by the minimal screen (one tap, deep dimming)
                         case "minimal": case "drive": load("minimal.html"); break;
+                        case "obd": load("obd.html"); break;
+                        case "obdDtc": { com.thecarlauncher.util.ObdHub h = com.thecarlauncher.util.ObdHub.get(); if (h != null) h.readDtc(); break; }
+                        case "obdSetup": com.thecarlauncher.util.CanLive.openCp(act); break;
                         case "engine":
                             com.thecarlauncher.util.CanLive.openCp(act);
                             break;

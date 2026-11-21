@@ -629,6 +629,7 @@ function init3D() {
   }
   loop(performance.now());
 }
+try { $('pl').style.cursor = 'pointer'; $('pl').addEventListener('click', function () { call('open', 'obd'); }); } catch (e) {}
 </script>
 </body>
 </html>

@@ -42,6 +42,7 @@ public final class EngineSynth {
         final float rasp;       // turbulence amount
         final float gain;
         final float turbo, whine, cam; // turbo, supercharger whine, cam change-over rpm (0 = none)
+        float knock;            // diesel combustion clatter (0 = petrol)
 
         Profile(String id, String name, String sub, float[] fire, int[] bank, float[] runner, float[] amp, float idle, float redline,
                 boolean merge, float pipe, float tail, float chamber, float blow, float lope, float[] block, float plenum, float intake,
@@ -51,6 +52,8 @@ public final class EngineSynth {
             this.blow = blow; this.lope = lope; this.block = block; this.plenum = plenum; this.intake = intake; this.rasp = rasp;
             this.gain = gain; this.turbo = turbo; this.whine = whine; this.cam = cam;
         }
+
+        Profile knock(float k) { knock = k; return this; }
 
         public String id() { return id; }
         public String name() { return name; }
@@ -82,6 +85,13 @@ public final class EngineSynth {
     private static float[] f(float... v) { return v; }
 
     public static final Profile[] PROFILES = {
+            // The car itself: DS4 1.6 e-HDi (DV6C, Bosch EDC17): four-cylinder diesel, 1-3-4-2, turbo,
+            // catalyst + particle filter (heavily damped exhaust), combustion clatter, 4 800 rpm.
+            new Profile("ds4d", "DS4 1.6 e-HDi", "Kendi motorum · dizel turbo", even(4), new int[]{0, 0, 0, 0}, f(.62f, .66f, .6f, .64f), f(1f, .95f, .98f, .94f), 800, 4800,
+                    true, 2.4f, .7f, .4f, 1.6f, .03f, f(420, 1250, 2900), 180, .6f, .35f, 1.5f, .9f, 0, 0).knock(1f),
+            // Same engine, the way people like to hear it: straight pipe, no particle filter.
+            new Profile("ds4ds", "DS4 e-HDi Spor", "Kendi motorum · açık egzoz", even(4), new int[]{0, 1, 1, 0}, f(.5f, .54f, .5f, .52f), f(1f, .95f, .98f, .94f), 800, 5000,
+                    true, 1.5f, .45f, .26f, 1.25f, .04f, f(420, 1250, 2900), 200, .65f, .8f, 1.6f, 1f, 0, 0).knock(.6f),
             // Cross-plane V8, true dual exhaust: each bank gets its pulses unevenly (L R R L R L L R)
             // which is the burble. Long headers, big cylinders.
             new Profile("v8us", "Amerikan V8", "Çapraz krank · gurlayan", even(8), new int[]{0, 1, 1, 0, 1, 0, 0, 1},
@@ -177,7 +187,8 @@ public final class EngineSynth {
     private float popEnv, popLevel, popTone;
     private float bovEnv, flutter;
     private float turboPh, whinePh, boost, starterPh, lastLoad;
-    private float inEnv;
+    private float inEnv, knockEnv;
+    private final Biquad[] knockM = {new Biquad(), new Biquad(), new Biquad()};
 
     public EngineSynth(float sampleRate) {
         sr = sampleRate;
@@ -230,6 +241,7 @@ public final class EngineSynth {
         rasp.bandpass(sr, 1900 + exhaust * 500, .7f);
         rasp2.bandpass(sr, 4200, 1.1f);
         bovRes.bandpass(sr, 2600, 1.4f);
+        knockM[0].bandpass(sr, 1650, 6f); knockM[1].bandpass(sr, 2950, 8f); knockM[2].bandpass(sr, 4300, 5f);
         cabin.lowpass(sr, 4500, .7f);
     }
 
@@ -289,6 +301,7 @@ public final class EngineSynth {
                         }
                         cyc[c] = p.amp[c] * fuel * Math.max(.2f, var);
                         blockEx += cyc[c];
+                        if (p.knock > 0 && ld >= .04f) knockEnv = Math.max(knockEnv, p.knock * (.55f + .45f * ld) * (.8f + .4f * rnd.nextFloat()));
                     }
                     if (pa < EVO && a >= EVO) pc[c] = cyc[c];
                     if (pa < EVC && a >= EVC) click += 1f;
@@ -373,6 +386,13 @@ public final class EngineSynth {
             // ---- engine block: combustion knock-on and valvetrain
             float ex = blockEx * (.5f + ld) + click * .05f * rn * rn;
             y += (blockM[0].run(ex) * .7f + blockM[1].run(ex) * .45f + blockM[2].run(ex + click * .05f * rn) * .3f) * .5f;
+
+            // ---- diesel clatter: the sharp pressure rise of compression ignition rings the block
+            if (knockEnv > .001f) {
+                float kn = noise() * knockEnv;
+                y += (knockM[0].run(kn) * 1.1f + knockM[1].run(kn) * .9f + knockM[2].run(kn) * .5f) * 1.1f;
+                knockEnv *= .965f;
+            }
 
             // ---- turbo: whistle with boost, blow-off and flutter when the throttle shuts on boost
             if (p.turbo > 0) {

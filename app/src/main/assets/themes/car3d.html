@@ -78,6 +78,7 @@ body.t-panel .sg,body.t-panel .tile b{font-family:'Share Tech Mono',monospace;fo
 <button class="key chip ik" style="flex:1;height:8.4vh" id="edit" aria-label="Düzenle"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
 <button class="key chip ik" style="flex:1;height:8.4vh" id="logs" aria-label="Bakım ve yakıt"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg></button>
 <button class="key chip ik" style="flex:1;height:8.4vh;color:var(--a)" id="engine" aria-label="Motor sesi"><svg viewBox="0 0 24 24"><path d="M3 15h4l2-3h6l2 3h4"/><path d="M8 12V9h8v3"/><path d="M10 9V6h4v3"/><circle cx="6.5" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/></svg></button>
+<button class="key chip ik" style="flex:1;height:8.4vh" id="obdK" aria-label="Motor verileri"><svg viewBox="0 0 24 24"><path d="M5 18a8 8 0 1 1 14 0"/><path d="M12 13l4-4"/><circle cx="12" cy="13.5" r="1.2"/></svg></button>
 </div>
 </div>
 </div>
@@ -428,6 +429,7 @@ function startSprites() {
   (function enter() { if (n0-- <= 0) { markView(1); if (spinOn) idle = setTimeout(auto, 1500); return; } show(cur + 1); anim = setTimeout(enter, 45); })();
 }
 
+try { $('obdK').onclick = function () { call('open', 'obd'); }; } catch (e) {}
 </script>
 </body>
 </html>

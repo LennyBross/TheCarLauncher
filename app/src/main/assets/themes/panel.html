@@ -215,7 +215,8 @@ car.on(function (s) {
   $('spdV').textContent = v === null ? '---' : pad(v, 3);
   cpOn = s.cp ? !!s.cpOn : null;
   $('k-engine').classList.toggle('on', !!s.cpOn);
-  if (s.cpOn && s.cpRpm) { tach(s.cpRpm / (s.cpRed || 6500), true); $('rpmT').textContent = s.cpRpm + ' D/D' + (s.cpGear ? '  ·  ' + s.cpGear : ''); }
+  if (s.rpm) { tach(s.rpm / 5000, true); $('rpmT').textContent = s.rpm + ' D/D' + (s.coolant !== undefined ? '  ·  ' + Math.round(s.coolant) + '°C' : ''); }
+  else if (s.cpOn && s.cpRpm) { tach(s.cpRpm / (s.cpRed || 6500), true); $('rpmT').textContent = s.cpRpm + ' D/D' + (s.cpGear ? '  ·  ' + s.cpGear : ''); }
   else { tach(v === null ? 0 : v / 200, false); $('rpmT').textContent = ''; }
   // fuel bar graph, range, consumption, trip
   var tank = s.tank || 60, left = s.fuelLeft, f = left !== undefined ? left / tank : s.range ? Math.min(1, s.range / 900) : 0, n = Math.round(f * 20);
@@ -232,6 +233,7 @@ car.on(function (s) {
   $('playI').innerHTML = s.playing ? '<path d="M8 5v14M16 5v14" stroke-width="2.4"/>' : '<path d="M8 5v14l11-7z"/>';
   [].forEach.call($('eq').children, function (e, k) { e.style.height = (s.playing || tun ? 15 + Math.random() * 80 * (1 - k / 20) : 6) + '%'; });
 });
+$('left').style.cursor = 'pointer'; $('left').addEventListener('click', function () { call('open', 'obd'); });
 </script>
 </body>
 </html>

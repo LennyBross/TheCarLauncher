@@ -39,7 +39,7 @@ import org.json.JSONObject;
  * following the car: OBD rpm + pedal when an adapter is connected, CANBUS consumption when the
  * unit shares it, otherwise GPS speed. Mixed under the music, muted in phone calls.
  */
-public final class EngineService extends Service implements LocationListener, Obd.Listener {
+public final class EngineService extends Service implements LocationListener {
     static final String ACTION_STOP = "com.catarapatara.STOP", ACTION_TOGGLE = "com.catarapatara.TOGGLE";
     /** Other apps (e.g. MYDS launcher) can feed car data: extras rpm, rpmMax, pedal (0..1), l100, speed. */
     static final String ACTION_DATA = "com.catarapatara.DATA";
@@ -94,6 +94,7 @@ public final class EngineService extends Service implements LocationListener, Ob
             if (i.hasExtra("pedal")) sim.setPedal(i.getFloatExtra("pedal", 0), now);
             if (i.hasExtra("l100")) sim.setConsumption(i.getFloatExtra("l100", 0), now);
             if (i.hasExtra("speed")) { obdKmh = i.getFloatExtra("speed", 0); obdKmhAt = now; }
+            if (i.hasExtra("obdStatus")) obdStatus = i.getStringExtra("obdStatus");
         }
     };
 
@@ -189,8 +190,6 @@ public final class EngineService extends Service implements LocationListener, Ob
         publish(false, System.currentTimeMillis());
         try { ((LocationManager) getSystemService(LOCATION_SERVICE)).removeUpdates(this); } catch (Exception ignored) { }
         try { unregisterReceiver(data); } catch (Exception ignored) { }
-        if (obd != null) obd.stop();
-        obd = null;
     }
 
     boolean playing() { return running; }
@@ -334,18 +333,12 @@ public final class EngineService extends Service implements LocationListener, Ob
         }
     }
 
+    /**
+     * The OBD adapter is read by MYDS itself (ObdHub, always on, also for the engine-data screens);
+     * it sends rpm, pedal and speed here. This only tells it the settings changed.
+     */
     void applyObd() {
-        SharedPreferences p = prefs(this);
-        String mode = p.getString("obd", "auto");
-        // "auto": use a paired OBD adapter if there is one (Bluetooth ELM327 in the OBD socket).
-        if ("auto".equals(mode)) mode = Obd.pairedAdapter() != null ? Obd.BT : "off";
-        if (obd != null) obd.stop();
-        obd = null;
-        obdStatus = "";
-        if (Obd.WIFI.equals(mode) || Obd.BT.equals(mode)) {
-            obd = new Obd(this);
-            obd.start(mode, p.getString("obdTarget", ""), p.getString("obdProto", Obd.STD));
-        }
+        try { sendBroadcast(new Intent("com.thecarlauncher.OBD_APPLY").setPackage(getPackageName())); } catch (Exception ignored) { }
     }
 
     String name() {
@@ -410,10 +403,6 @@ public final class EngineService extends Service implements LocationListener, Ob
     @Override public void onProviderEnabled(String p) { }
     @Override public void onProviderDisabled(String p) { }
 
-    @Override public void onRpm(float rpm) { sim.setRealRpm(rpm, prefs(this).getInt("carMax", 4500), System.currentTimeMillis()); }
-    @Override public void onPedal(float p) { sim.setPedal(p, System.currentTimeMillis()); }
-    @Override public void onSpeed(float kmh) { obdKmh = kmh; obdKmhAt = System.currentTimeMillis(); }
-    @Override public void onStatus(String t, boolean ok) { obdStatus = t; }
 
     // ---- Audio --------------------------------------------------------------------------------------
 
