@@ -259,6 +259,8 @@ public final class SoundPacks {
         LoopEngine e = new LoopEngine(layer(d, ly, "on_low", outRate), layer(d, ly, "off_low", outRate),
                 layer(d, ly, "on_high", outRate), layer(d, ly, "off_high", outRate), layer(d, ly, "limiter", outRate),
                 from, to, (float) j.optDouble("pitchFactor", .2), red);
+        e.ratioPitch = "ratio".equals(j.optString("pitch"));
+        e.start = layer(d, ly, "start", outRate);
         return new Loaded(e, idle, red, j.optString("name", "Ses paketi"), j.optString("sub", "4 döngü"));
     }
 

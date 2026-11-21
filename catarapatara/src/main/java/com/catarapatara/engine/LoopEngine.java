@@ -21,11 +21,13 @@ public final class LoopEngine implements PackEngine {
         final short[] pcm;
         final float srcPerOut;   // source samples per output sample at pitch 1
         final float rpm, volume;
+        final int srcRate;
         double pos;
         float gain;              // smoothed
 
         public Layer(short[] pcm, int sampleRate, int outRate, float rpm, float volume) {
             this.pcm = pcm;
+            this.srcRate = sampleRate;
             this.srcPerOut = sampleRate / (float) outRate;
             this.rpm = rpm;
             this.volume = volume;
@@ -35,6 +37,35 @@ public final class LoopEngine implements PackEngine {
     private final Layer onLow, offLow, onHigh, offHigh, limiter;
     private final float fadeFrom, fadeTo, pitchFactor, redline;
     private float load = 0;
+    /** "ratio": playback speed = rpm / loop rpm (a single real loop then follows the engine exactly). */
+    public boolean ratioPitch;
+    /** Optional recorded start-up (cranking + catch), played once instead of the synthetic starter. */
+    public Layer start;
+    private double startPos = -1;
+
+    public boolean hasStart() { return start != null; }
+
+    public void triggerStart() { if (start != null) startPos = 0; }
+
+    public boolean starting() { return startPos >= 0; }
+
+    /** Plays the start recording; its last 0.4 s cross-fades into the running loops. */
+    public void renderStart(float[] out, int off, int len, float rpm, float load) {
+        Layer s = start;
+        int n = s.pcm.length;
+        double tailFrom = n - 0.4 * s.srcRate;
+        float mixIn = (float) Math.max(0, Math.min(1, (startPos - tailFrom) / (0.4 * s.srcRate)));
+        if (mixIn > 0) render(out, off, len, rpm, load); else for (int i = 0; i < len; i++) out[off + i] = 0;
+        for (int i = 0; i < len; i++) {
+            int a = (int) startPos;
+            if (a >= n - 1) { startPos = -1; return; }
+            float f = (float) (startPos - a);
+            float v = (s.pcm[a] + (s.pcm[a + 1] - s.pcm[a]) * f) / 32768f * s.volume;
+            float k = (float) Math.max(0, Math.min(1, (startPos - tailFrom) / (0.4 * s.srcRate)));
+            out[off + i] = out[off + i] * k + v * (1 - k);
+            startPos += s.srcPerOut;
+        }
+    }
 
     public LoopEngine(Layer onLow, Layer offLow, Layer onHigh, Layer offHigh, Layer limiter,
                       float fadeFrom, float fadeTo, float pitchFactor, float redline) {
@@ -86,7 +117,8 @@ public final class LoopEngine implements PackEngine {
             l.pos = (l.pos + len * l.srcPerOut) % l.pcm.length;
             return;
         }
-        double rate = l.srcPerOut * (rpm < 0 ? 1 : Math.pow(2, (rpm - l.rpm) * pitchFactor / 1200.0));
+        double rate = l.srcPerOut * (rpm < 0 ? 1 : ratioPitch ? Math.max(.45, Math.min(3.2, rpm / l.rpm))
+                : Math.pow(2, (rpm - l.rpm) * pitchFactor / 1200.0));
         short[] p = l.pcm;
         int n = p.length;
         double pos = l.pos;

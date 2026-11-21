@@ -29,6 +29,7 @@ import android.os.Process;
 
 import com.catarapatara.engine.EngineSim;
 import com.catarapatara.engine.EngineSynth;
+import com.catarapatara.engine.LoopEngine;
 import com.catarapatara.engine.SoundPacks;
 
 import org.json.JSONArray;
@@ -40,6 +41,7 @@ import org.json.JSONObject;
  * unit shares it, otherwise GPS speed. Mixed under the music, muted in phone calls.
  */
 public final class EngineService extends Service implements LocationListener {
+    private boolean startPlayed;
     static final String ACTION_STOP = "com.catarapatara.STOP", ACTION_TOGGLE = "com.catarapatara.TOGGLE";
     /** Other apps (e.g. MYDS launcher) can feed car data: extras rpm, rpmMax, pedal (0..1), l100, speed. */
     static final String ACTION_DATA = "com.catarapatara.DATA";
@@ -512,7 +514,13 @@ public final class EngineService extends Service implements LocationListener {
                 synchronized (synth) {
                     sim.step(dt, now);
                     SoundPacks.Loaded lp = pack;
-                    if (lp != null && sim.starter() <= 0 && sim.rpm > 250) {
+                    LoopEngine le = lp != null && lp.engine instanceof LoopEngine && ((LoopEngine) lp.engine).hasStart() ? (LoopEngine) lp.engine : null;
+                    // A pack with a recorded start-up: play it (once per start) instead of the synthetic starter.
+                    if (le != null && sim.starter() > 0 && !startPlayed) { startPlayed = true; le.triggerStart(); }
+                    if (sim.starter() <= 0 && sim.rpm < 100) startPlayed = false;
+                    if (le != null && le.starting()) {
+                        le.renderStart(buf, 0, BLOCK, Math.max(sim.rpm, 300), sim.load);
+                    } else if (lp != null && sim.starter() <= 0 && sim.rpm > 250) {
                         lp.engine.render(buf, 0, BLOCK, sim.rpm, sim.load);
                         if (pops) synth.renderPops(buf, 0, BLOCK, sim.rpm, sim.load, popLevel);
                     } else {

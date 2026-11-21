@@ -69,3 +69,9 @@ Zip içinde `pack.json` ve 16-bit WAV dosyaları (mono ya da stereo):
 - `crossfade`: düşük ↔ yüksek döngü geçişinin devir aralığı. Gaz pedalı on ↔ off karışımını belirler.
 - Sadece `on_low` zorunlu; eksik katmanların yerine diğerleri kullanılır.
 - Sadece kendi kaydın ya da açık lisanslı sesler. Oyunlardan çıkarılmış ses bankaları (ör. dosya adında `{GUID}` olanlar) kullanılamaz.
+
+### Ek alanlar (4.46+)
+
+- `"pitch": "ratio"` — döngü, gerçek devirle birebir hızlanır (çalma hızı = devir / döngü devri). Tek bir gerçek kayıttan yapılan
+  paketlerde OBD devriyle en doğru eşleşmeyi verir. Yazılmazsa `pitchFactor` ile sent hesabı kullanılır.
+- `"layers": { "start": { "file": "start.wav" } }` — marş + motorun yakalaması, bir kez çalar; son 0,4 sn'de döngülere geçer.
