@@ -208,10 +208,17 @@ public final class RemoteSupport {
         new Thread(new Runnable() {
             public void run() {
                 long end = System.currentTimeMillis() + 15 * 60000;   // open for 15 minutes
+                ServerSocket ss = setupSock;
                 try {
-                    setupSock.setSoTimeout(5000);
-                    while (System.currentTimeMillis() < end) {
-                        try (Socket s = setupSock.accept()) { serveSetup(app, s); } catch (java.net.SocketTimeoutException ignored) { }
+                    ss.setSoTimeout(5000);
+                    while (System.currentTimeMillis() < end && !ss.isClosed()) {
+                        final Socket s;
+                        try { s = ss.accept(); } catch (java.net.SocketTimeoutException t) { continue; } catch (Throwable t) { break; }
+                        // each request on its own thread; a bad one never stops the page
+                        new Thread(new Runnable() { public void run() {
+                            try { serveSetup(app, s); } catch (Throwable ignored) { }
+                            try { s.close(); } catch (Throwable ignored) { }
+                        } }, "remote-setup-req").start();
                     }
                 } catch (Throwable ignored) {
                 } finally {
@@ -232,7 +239,7 @@ public final class RemoteSupport {
         InputStream in = s.getInputStream();
         BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
         String first = r.readLine();
-        if (first == null) return;
+        if (first == null || first.isEmpty()) return;
         int len = 0;
         String h;
         while ((h = r.readLine()) != null && !h.isEmpty()) if (h.toLowerCase(Locale.ROOT).startsWith("content-length:")) len = Integer.parseInt(h.substring(15).trim());
@@ -270,6 +277,18 @@ public final class RemoteSupport {
         o.write(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: " + b.length + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.UTF_8));
         o.write(b);
         o.flush();
+    }
+
+    /** Token typed on the unit itself (fallback when the phone page cannot be reached). */
+    public static String saveToken(Context c, String token, String repo) {
+        token = token == null ? "" : token.trim().replaceAll("\\s", "");
+        if (!token.startsWith("github_pat_") && !token.startsWith("ghp_")) return "Anahtar github_pat_ ile başlamalı";
+        Prefs.put(c, P_TOKEN, token);
+        if (repo != null && repo.trim().matches("[\\w.-]+/[\\w.-]+")) Prefs.put(c, P_REPO, repo.trim());
+        Prefs.put(c, P_ISSUE, 0);
+        Prefs.put(c, P_LAST, 0L);
+        setOn(c, true);
+        return "Kaydedildi";
     }
 
     // ---- Commands

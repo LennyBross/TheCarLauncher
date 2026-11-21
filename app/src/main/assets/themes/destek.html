@@ -58,6 +58,11 @@ ol{margin:0;padding-left:3vh}ol li{font-size:2.1vh;line-height:1.6;color:var(--m
       </div>
     </div>
   </div>
+  <div class="card">
+    <div class="big" style="margin-bottom:1vh">Ya da anahtarı buraya yaz</div>
+    <div class="row"><input id="tok" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…" style="flex:1;height:7vh;border-radius:1.6vh;border:none;background:var(--chip);color:var(--fg);font-size:2.4vh;padding:0 2vh;font-family:monospace;box-shadow:inset 0 0 0 1px var(--line)"><button class="key btn" id="save">Kaydet</button></div>
+    <div class="mut" id="saveMsg" style="margin-top:1vh"></div>
+  </div>
 </div>
 <script src="common.js"></script>
 <script>
@@ -65,6 +70,7 @@ var TH = call('theme') || 8;
 document.body.classList.add(TH === 7 ? 't-ds4' : TH === 4 ? 't-panel' : 't-stock');
 $('back').onclick = function () { call('remoteSetup', false); call('open', 'obd'); };
 $('open').onclick = function () { call('remoteSetup', true); };
+$('save').onclick = function () { $('saveMsg').textContent = call('remoteToken', $('tok').value) || ''; };
 var r = {};
 $('on').onclick = function () { call('remoteOn', !r.on); setTimeout(tick, 200); };
 function tick() {

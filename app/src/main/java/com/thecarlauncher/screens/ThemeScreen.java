@@ -686,6 +686,9 @@ public class ThemeScreen extends Screen {
         }
 
         @JavascriptInterface
+        public String remoteToken(String t) { return com.thecarlauncher.util.RemoteSupport.saveToken(act, t, null); }
+
+        @JavascriptInterface
         public void remoteOn(boolean on) { com.thecarlauncher.util.RemoteSupport.setOn(act, on); }
 
         @JavascriptInterface
