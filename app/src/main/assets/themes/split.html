@@ -70,7 +70,6 @@ body.t-panel .ctl button.pp{background:transparent;color:var(--a);box-shadow:ins
       <div id="tText"></div>
       <div id="tEta"></div>
     </div>
-    <i id="phoneDot" aria-label="Telefon"></i>
   </div>
 
   <div class="card" id="music">
@@ -120,7 +119,6 @@ var artId = -1, navId = -1;
 function clock(s) { return s.time || ''; }
 car.on(function (s) {
   document.body.classList.toggle('day', s.night === false);
-  $('phoneDot').classList.toggle('on', !!(s.phone && s.phone.on));
   // next turn from the phone's Google Maps, else speed and time
   var n = s.pnav;
   if (n) {

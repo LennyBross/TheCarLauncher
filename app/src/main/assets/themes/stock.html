@@ -396,7 +396,7 @@ car.on(function (s) {
   $('clock').textContent = s.time || '--:--';
   var out = s.outdoor !== undefined;
   // Real engine rpm from the ECU (via the phone): shown only while it is fresh.
-  var brg = s.link && (s.link.wifi || s.link.addr || s.link.manual);
+  var brg = s.obd && !!(s.obd.target || s.obd.mode === 'ble');
   $('rpmD').textContent = s.rpm ? s.rpm + ' d/d' : brg ? '— d/d' : '';
   $('temp').textContent = out ? Math.round(s.outdoor) + '°C' : (s.temp !== undefined ? s.temp + '°C' : '--°C');
   $('ecoB').style.left = ($('temp').offsetWidth + 56) + 'px';

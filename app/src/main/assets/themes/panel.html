@@ -216,7 +216,7 @@ car.on(function (s) {
   cpOn = s.cp ? !!s.cpOn : null;
   $('k-engine').classList.toggle('on', !!s.cpOn);
   if (s.rpm) { tach(s.rpm / 5000, true); $('rpmT').textContent = s.rpm + ' D/D' + (s.coolant !== undefined ? '  ·  ' + Math.round(s.coolant) + '°C' : ''); }
-  else if (s.link && (s.link.wifi || s.link.addr || s.link.manual)) { tach(0, false); $('rpmT').textContent = '— D/D' + (s.link.wifi ? '' : '  ·  TELEFON YOK'); }
+  else if (s.obd && !!(s.obd.target || s.obd.mode === 'ble')) { tach(0, false); $('rpmT').textContent = '— D/D'; }
   else if (s.cpOn && s.cpRpm) { tach(s.cpRpm / (s.cpRed || 6500), true); $('rpmT').textContent = s.cpRpm + ' D/D' + (s.cpGear ? '  ·  ' + s.cpGear : ''); }
   else { tach(v === null ? 0 : v / 200, false); $('rpmT').textContent = ''; }
   // fuel bar graph, range, consumption, trip

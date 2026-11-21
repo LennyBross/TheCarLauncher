@@ -174,7 +174,7 @@ car.on(function (s) {
   var on = !!s.cpOn;
   st.classList.toggle('on', on);
   // The real rpm (ECU via the phone) wins; with the bridge set up but silent, show nothing rather than a guess.
-  var bridge = s.link && (s.link.wifi || s.link.addr || s.link.manual);
+  var bridge = s.obd && !!(s.obd.target || s.obd.mode === 'ble');
   var rpmNow = s.rpm ? s.rpm : bridge ? 0 : (on ? s.cpRpm : 0);
   var red = s.rpm ? 5000 : (s.cpRed || 6500), rr = rpmNow ? Math.min(1, rpmNow / red) : 0;
   $('stArc').setAttribute('stroke-dasharray', (rr * 216.8).toFixed(1) + ' 400');
