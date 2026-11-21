@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta id="stockcss">
+<title>Uzaktan destek</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* Remote support: on/off, the phone set-up page (URL + PIN) and the link state. */
+:root{--bg:#07080a;--card:#141518;--chip:#1d1e22;--fg:#EEEAE2;--mut:#8f8a80;--a:#E8D5B0;--ok:#7CD992;--line:rgba(255,255,255,.1);--r:2.6vh}
+body{background:var(--bg);color:var(--fg);font-family:'Montserrat',sans-serif;overflow:hidden}
+body.t-ds4{--bg:#0B0E13;--card:#161B23;--chip:#1E252F;--fg:#F3F5F7;--mut:#A3ADBA;--a:#5CC8B0;font-family:'Inter',sans-serif}
+body.t-panel{--bg:#030608;--card:transparent;--chip:#0b1519;--fg:var(--pv,#56F2FF);--mut:var(--pv2,#2a8f98);--a:var(--pv,#56F2FF);--line:rgba(var(--pvr,86,242,255),.25);--r:1.2vh;font-family:'Share Tech Mono',monospace}
+svg.ic{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.w{position:fixed;inset:0;padding:2.4vh 3vh;display:flex;flex-direction:column;gap:2vh}
+.top{display:flex;align-items:center;gap:1.6vh}
+.rb{width:7vh;height:7vh;border-radius:50%;border:none;background:var(--chip);color:var(--fg);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--line)}
+.rb svg{width:3.6vh;height:3.6vh}
+h1{font-size:3.4vh;flex:1;font-weight:600}
+.card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);padding:2.4vh 3vh}
+.row{display:flex;align-items:center;gap:2vh}
+.dot{width:2vh;height:2vh;border-radius:50%;background:var(--mut)}
+.dot.on{background:var(--ok);box-shadow:0 0 1.4vh var(--ok)}
+.big{font-size:3vh;font-weight:600}
+.mut{font-size:2.1vh;color:var(--mut);line-height:1.5}
+.sw{width:11vh;height:6vh;border-radius:3vh;border:none;background:var(--chip);position:relative;box-shadow:inset 0 0 0 1px var(--line)}
+.sw::after{content:'';position:absolute;top:.7vh;left:.7vh;width:4.6vh;height:4.6vh;border-radius:50%;background:var(--mut);transition:left .15s}
+.sw.on{background:var(--a)}.sw.on::after{left:5.7vh;background:#111}
+.btn{height:7vh;padding:0 4vh;border-radius:3.5vh;border:none;background:var(--a);color:#111;font-size:2.4vh;font-family:inherit;font-weight:600}
+.code{font-size:5vh;font-weight:600;letter-spacing:.6vh;color:var(--a)}
+ol{margin:0;padding-left:3vh}ol li{font-size:2.1vh;line-height:1.6;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="top">
+    <button class="key rb" id="back" aria-label="Geri"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <svg class="ic" style="width:4.4vh;height:4.4vh;color:var(--a)" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>
+    <h1>Uzaktan destek</h1>
+    <button class="key sw" id="on" aria-label="Aç / kapat"></button>
+  </div>
+  <div class="card row"><i class="dot" id="dot"></i><div style="flex:1"><div class="big" id="st">—</div><div class="mut" id="sub"></div></div></div>
+  <div class="card" id="setup">
+    <div class="row" style="align-items:flex-start;gap:4vh">
+      <div style="flex:1">
+        <div class="big" style="margin-bottom:1vh">Telefondan anahtar gir</div>
+        <ol>
+          <li>Telefonun erişim noktası açık, bu ekran ona bağlı olsun.</li>
+          <li>"Sayfayı aç"a bas; telefonda aşağıdaki adresi aç.</li>
+          <li>PIN'i ve GitHub anahtarını yapıştır, Kaydet.</li>
+        </ol>
+      </div>
+      <div style="text-align:right">
+        <div class="mut">Adres</div><div class="big" id="url">—</div>
+        <div class="mut" style="margin-top:1vh">PIN</div><div class="code" id="pin">····</div>
+        <button class="key btn" id="open" style="margin-top:1.6vh">Sayfayı aç</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="common.js"></script>
+<script>
+var TH = call('theme') || 8;
+document.body.classList.add(TH === 7 ? 't-ds4' : TH === 4 ? 't-panel' : 't-stock');
+$('back').onclick = function () { call('remoteSetup', false); call('open', 'obd'); };
+$('open').onclick = function () { call('remoteSetup', true); };
+var r = {};
+$('on').onclick = function () { call('remoteOn', !r.on); setTimeout(tick, 200); };
+function tick() {
+  try { r = JSON.parse(call('remote') || '{}'); } catch (e) { r = {}; }
+  $('on').classList.toggle('on', !!r.on);
+  var live = r.on && r.lastOk >= 0 && r.lastOk < 30;
+  $('dot').classList.toggle('on', live);
+  $('st').textContent = !r.configured ? 'Anahtar girilmedi' : !r.on ? 'Kapalı' : r.status || '…';
+  $('sub').textContent = (r.repo || '') + (r.lastOk >= 0 ? ' · son bağlantı ' + r.lastOk + ' sn önce' : '');
+  $('url').textContent = r.url || '—';
+  $('pin').textContent = r.url ? r.pin : '····';
+  $('open').textContent = r.url ? 'Açık (15 dk)' : 'Sayfayı aç';
+  setTimeout(tick, 1000);
+}
+tick();
+</script>
+</body>
+</html>

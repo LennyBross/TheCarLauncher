@@ -473,6 +473,7 @@ public class ThemeScreen extends Screen {
                         // the Sürüş pages are replaced by the minimal screen (one tap, deep dimming)
                         case "minimal": case "drive": load("minimal.html"); break;
                         case "obd": load("obd.html"); break;
+                        case "remote": load("destek.html"); break;
                         case "obdDtc": { com.thecarlauncher.util.ObdHub h = com.thecarlauncher.util.ObdHub.get(); if (h != null) h.readDtc(); break; }
                         case "obdSetup": com.thecarlauncher.util.CanLive.openCp(act); break;
                         case "engine":
@@ -670,6 +671,25 @@ public class ThemeScreen extends Screen {
         /** OBD adapter mode from the Motor screen: "ble" (direct) or "auto". */
         @JavascriptInterface
         public void obdMode(String m) { com.thecarlauncher.util.ObdHub h = com.thecarlauncher.util.ObdHub.get(); if (h != null) h.setMode("ble".equals(m) ? "ble" : "auto"); }
+
+        /** Remote support (GitHub issue channel): state for the page. */
+        @JavascriptInterface
+        public String remote() {
+            try {
+                return new JSONObject().put("on", com.thecarlauncher.util.RemoteSupport.on(act))
+                        .put("configured", com.thecarlauncher.util.RemoteSupport.configured(act))
+                        .put("repo", com.thecarlauncher.util.RemoteSupport.repo(act))
+                        .put("status", com.thecarlauncher.util.RemoteSupport.status)
+                        .put("lastOk", com.thecarlauncher.util.RemoteSupport.lastOkAt == 0 ? -1 : (System.currentTimeMillis() - com.thecarlauncher.util.RemoteSupport.lastOkAt) / 1000)
+                        .put("url", com.thecarlauncher.util.RemoteSupport.setupUrl).put("pin", com.thecarlauncher.util.RemoteSupport.setupPin).toString();
+            } catch (Exception e) { return "{}"; }
+        }
+
+        @JavascriptInterface
+        public void remoteOn(boolean on) { com.thecarlauncher.util.RemoteSupport.setOn(act, on); }
+
+        @JavascriptInterface
+        public void remoteSetup(boolean open) { if (open) com.thecarlauncher.util.RemoteSupport.openSetup(act); else com.thecarlauncher.util.RemoteSupport.closeSetup(); }
 
         /** Adapter search on the unit (classic + BLE, unpaired too). */
         @JavascriptInterface

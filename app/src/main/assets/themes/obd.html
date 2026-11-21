@@ -81,6 +81,7 @@ body.day.t-stock .card{background:#fff}
     <span class="n" style="font-size:3vh">1.6 e-HDi</span>
     <div class="sp"></div>
     <button class="key chip" id="mil" aria-label="Arıza kodları"><svg class="ic" viewBox="0 0 24 24"><path d="M4 10h2V8h3V6h6v2h2l2 3h2v5h-2l-2 3H9l-2-3H4z"/></svg><span id="milT">—</span></button>
+    <button class="key chip" id="cRem" aria-label="Uzaktan destek"><svg class="ic" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg><span>Destek</span></button>
     <button class="key chip" id="cAdp" aria-label="Adaptör"><svg class="ic" viewBox="0 0 24 24"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg><span>Adaptör</span></button>
     <span class="chip" id="st"><i></i><span id="stT">ECU</span></span>
   </div>
@@ -205,6 +206,7 @@ function showCodes(list) {
 }
 
 $('back').onclick = function () { call('open', 'themehome'); };
+$('cRem').onclick = function () { call('open', 'remote'); };
 // Adapter search on the unit itself (like Car Scanner: unpaired devices too, classic or BLE).
 $('cAdp').onclick = function () { $('adpM').style.display = 'flex'; $('adpPin').value = (car.s.obd && car.s.obd.pin) || '1234'; if (!(car.s.obd && car.s.obd.devs && car.s.obd.devs.length)) call('obdScan'); };
 $('adpX').onclick = function () { $('adpM').style.display = 'none'; };
