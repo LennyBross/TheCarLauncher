@@ -83,6 +83,17 @@ var eco = (function () {
   } catch (e) {}
 })();
 
+// DS4+: every page takes the noir look (grained black, frosted glass, white light).
+(function () {
+  try {
+    if (window.Car && Car.theme && Car.theme() === 7 && !document.getElementById('noircss')) {
+      document.documentElement.classList.add('noir');
+      var l = document.createElement('link'); l.id = 'noircss'; l.rel = 'stylesheet'; l.href = 'noir.css';
+      (document.head || document.documentElement).appendChild(l);
+    }
+  } catch (e) {}
+})();
+
 // Panel 80: the display colour the driver picked (VFD cyan, amber, phosphor green, ...), on every page.
 var PANEL_COLORS = [['#56F2FF', 'Camgöbeği'], ['#FFB347', 'Amber'], ['#7CFF6B', 'Fosfor yeşili'], ['#FF4FD8', 'Magenta'], ['#FF4A3D', 'Kırmızı'], ['#E8F1FF', 'Buz beyazı']];
 function panelLook(hex) {

@@ -228,7 +228,7 @@ var rim = new THREE.DirectionalLight(0x9fe7d6, 0.8); rim.position.set(-5, 3, -4)
 
 var ground = new THREE.Mesh(new THREE.CircleGeometry(6, 64), new THREE.ShadowMaterial({ opacity: 0.45 }));
 ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
-var ring = new THREE.Mesh(new THREE.RingGeometry(2.75, 2.8, 96), new THREE.MeshBasicMaterial({ color: 0x5CC8B0, transparent: true, opacity: 0.35 }));
+var ring = new THREE.Mesh(new THREE.RingGeometry(2.75, 2.8, 96), new THREE.MeshBasicMaterial({ color: document.documentElement.classList.contains('noir') ? 0xffffff : 0x5CC8B0, transparent: true, opacity: 0.35 }));
 ring.rotation.x = -Math.PI / 2; ring.position.y = 0.005; scene.add(ring);
 
 var bodyMats = [], model = null;

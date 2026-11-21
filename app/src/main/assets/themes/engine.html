@@ -137,7 +137,7 @@ function tick() {
   shown += (r - shown) * .5;
   var f = Math.max(0.001, Math.min(1, shown / max));
   $('arc').setAttribute('d', arcPath(0, f, 150));
-  $('arc').setAttribute('stroke', shown >= red * .97 ? '#FF5A3C' : '#5CC8B0');
+  $('arc').setAttribute('stroke', shown >= red * .97 ? '#FF5A3C' : (document.documentElement.classList.contains('noir') ? '#FFFFFF' : '#5CC8B0'));
   $('rpm').textContent = running || r > 50 ? Math.round(shown / 10) * 10 : 0;
   $('gear').textContent = gear > 0 ? gear : 'N';
   $('kmh').textContent = kmh;
