@@ -54,6 +54,7 @@ button{background:none;border:none;padding:0;color:inherit}
 .row b small{font-size:21px;font-weight:500;margin-left:6px;letter-spacing:0}
 .row span{display:block;font-size:17px;color:#CFCAC1;margin-top:4px}
 .row+.row::before{content:'';position:absolute;left:-10px;right:-60px;top:-6px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.16) 25%,rgba(255,255,255,.04))}
+#consL{max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #r1{top:82px}#r2{top:162px}#r3{top:242px}
 
 /* media */
@@ -395,7 +396,10 @@ car.on(function (s) {
   $('range').innerHTML = (s.range ? Math.round(s.range) : '--') + '<small>km</small>';
   var avgOK = s.avgL100 > 0, c = avgOK ? s.avgL100 : (s.inst !== undefined ? s.inst : s.l100);
   $('cons').innerHTML = num(c, 1) + '<small>L/100 km</small>';
-  $('consL').textContent = avgOK || s.inst === undefined ? 'Ortalama Tüketim' : 'Anlık Tüketim';
+  var diag = c === undefined && s.canDiag;
+  $('consL').textContent = diag ? s.canDiag : avgOK || s.inst === undefined ? 'Ortalama Tüketim' : 'Anlık Tüketim';
+  $('consL').style.color = diag ? '#F0A050' : '';
+  $('r2').onclick = diag ? function () { call('open', 'canFix'); } : null;
   var v = s.gps === 'ok' ? (s.speed || 0) : 0;
   setSpeed(v);
   if (lastTrip !== null && s.tripKm !== undefined && s.tripKm < lastTrip - 0.5) avgS = { n: 0, sum: 0 };   // new trip

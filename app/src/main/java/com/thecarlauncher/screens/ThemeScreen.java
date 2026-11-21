@@ -252,6 +252,7 @@ public class ThemeScreen extends Screen {
         boolean cp = com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_CP);
         o.put("cp", cp);
         o.put("canBridge", com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_BRIDGE));
+        o.put("canDiag", canDiag());
         if (cp) {
             boolean fresh = com.thecarlauncher.util.CanLive.cpFresh();
             o.put("cpOn", fresh && com.thecarlauncher.util.CanLive.cpOn);
@@ -354,6 +355,11 @@ public class ThemeScreen extends Screen {
                             com.thecarlauncher.util.CanLive.openCp(act);
                             break;
                         case "cpInstall": com.thecarlauncher.util.CanLive.openCp(act); break;
+                        case "canFix":
+                            if (!com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_BRIDGE))
+                                com.thecarlauncher.util.Updater.installCompanionNow(act, com.thecarlauncher.util.CanLive.PKG_BRIDGE);
+                            else openPkg(com.thecarlauncher.util.CanLive.PKG_BRIDGE);
+                            break;
                         case "cpToggle": com.thecarlauncher.util.CanLive.cpCommand(act, "toggle"); push(); break;
                         case "canbridge": openPkg(com.thecarlauncher.util.CanLive.PKG_BRIDGE); break;
                         case "settings": act.show(LauncherActivity.SETTINGS, true); break;
@@ -503,7 +509,23 @@ public class ThemeScreen extends Screen {
         @JavascriptInterface
         public int theme() { return theme; }
 
-        /** The current cover as a small JPEG data URL ("" when there is none). */
+        /**
+     * Why no trip-computer data shows, in plain words (null when it flows). The chain is:
+     * Raise CAN box → factory CAN app (logs every frame) → CataraPatara CAN bridge (reads the log)
+     * → MYDS.
+     */
+    String canDiag() {
+        if (com.thecarlauncher.util.CanLive.canFresh()) return null;
+        if (!com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_BRIDGE)) return "CAN köprüsü yüklü değil · dokun, kur";
+        if (System.currentTimeMillis() - com.thecarlauncher.util.CanLive.bridgeAt > 10000) return "CAN köprüsü çalışmıyor · dokun, aç";
+        if (com.thecarlauncher.util.CanLive.bridgeLines == 0) return "Köprü sistem kaydını okuyamıyor";
+        if (com.thecarlauncher.util.CanLive.bridgeRev == 0) return "Fabrika CAN uygulaması veri yazmıyor";
+        if (com.thecarlauncher.util.CanLive.bridgeFrames == 0) return "CAN kutusundan kare gelmiyor";
+        String t = com.thecarlauncher.util.CanLive.bridgeTypes;
+        return "Kutu yakıt verisi göndermiyor" + (t == null || t.isEmpty() ? "" : " · gelen: " + t);
+    }
+
+    /** The current cover as a small JPEG data URL ("" when there is none). */
         @JavascriptInterface
         public String mediaArt() {
             try {
