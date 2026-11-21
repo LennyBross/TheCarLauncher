@@ -71,6 +71,7 @@ body.day .db i{background:linear-gradient(160deg,#1a1a1a,#000) !important}
 #clock{font-family:'Inter',sans-serif !important;font-weight:200 !important;letter-spacing:-.2vh !important}
 #temp,#pct{font-family:'Inter',sans-serif !important;font-weight:300 !important}
 .c .sg{font-weight:600}
+.tv{display:flex;flex-direction:column;gap:.3vh}.tv b{font-family:'Inter',sans-serif;font-size:4.2vh;font-weight:300;line-height:1;letter-spacing:-.1vh;white-space:nowrap}.tv span{font-size:1.75vh;color:var(--muted);letter-spacing:.05vh}
 .sg{letter-spacing:-.05vh}
 </style>
 </head>
@@ -80,8 +81,13 @@ body.day .db i{background:linear-gradient(160deg,#1a1a1a,#000) !important}
 
 <!-- Left half: time, light, day/night, CataraPatara start -->
 <div class="half">
-<div class="c" style="padding:2.78vh 3.33vh;display:flex;flex-direction:column">
-<span class="sg" style="font-size:9.44vh;line-height:1;letter-spacing:-.3vh" id="clock">--:--</span><span style="font-size:2.5vh;color:var(--muted)" id="date"></span>
+<div class="c" style="padding:2.5vh 3.33vh;display:flex;align-items:center;gap:2.5vh">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column"><span class="sg" style="font-size:9.44vh;line-height:1;letter-spacing:-.3vh" id="clock">--:--</span><span style="font-size:2.5vh;color:var(--muted)" id="date"></span></div>
+<div style="width:1px;align-self:stretch;margin:.8vh 0;background:var(--sep)"></div>
+<div style="display:flex;align-items:center;gap:1.4vh">
+<svg style="width:6.11vh;height:6.11vh;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H8a5 5 0 1 1 1-9.9A6 6 0 0 1 20 11a4 4 0 0 1-2.5 8z"/></svg>
+<div style="display:flex;flex-direction:column;min-width:0"><span class="sg" style="font-size:6.2vh;line-height:1" id="temp">—</span><span style="font-size:1.81vh;color:var(--muted);white-space:nowrap" id="tempLab">Hava durumu</span></div>
+</div>
 </div>
 <div class="c" style="flex:1;min-height:0;padding:2.5vh 3.33vh;display:flex;gap:3.33vh;align-items:center">
 <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2.22vh">
@@ -98,20 +104,16 @@ body.day .db i{background:linear-gradient(160deg,#1a1a1a,#000) !important}
 
 <!-- Right half: weather, fuel, the car -->
 <div class="half">
-<div style="display:flex;gap:2.22vh">
-<div class="c" style="flex:0 0 36%;padding:2.5vh 2.78vh;display:flex;align-items:center;gap:1.67vh">
-<svg style="width:6.11vh;height:6.11vh;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H8a5 5 0 1 1 1-9.9A6 6 0 0 1 20 11a4 4 0 0 1-2.5 8z"/></svg>
-<div style="display:flex;flex-direction:column;min-width:0"><span class="sg" style="font-size:4.72vh;line-height:1" id="temp">—</span><span style="font-size:1.81vh;color:var(--muted);white-space:nowrap" id="tempLab">Hava durumu</span></div>
-</div>
-<div class="c" style="flex:1;min-width:0;padding:2.22vh 2.78vh;display:flex;flex-direction:column;gap:1.25vh">
-<div style="display:flex;align-items:center;gap:1.39vh"><svg id="fuelIcon" style="width:3.61vh;height:3.61vh;color:var(--a)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17"/><line x1="2" y1="22" x2="15" y2="22"/><line x1="6" y1="8" x2="11" y2="8"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg><span style="font-size:2.08vh;color:var(--muted);flex:1">Yakıt</span><span class="sg" style="font-size:3.33vh;color:var(--a)" id="pct">—</span></div>
-<div style="height:1.39vh;border-radius:.7vh;background:var(--track);overflow:hidden"><div id="bar" style="height:100%;width:0;background:var(--a);transition:width .4s"></div></div>
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1vh">
-<div style="display:flex;flex-direction:column"><span style="font-size:2.5vh;font-weight:600" id="liters">— L</span><span style="font-size:1.67vh;color:var(--muted)">Depoda</span></div>
-<div style="display:flex;flex-direction:column"><span style="font-size:2.5vh;font-weight:600" id="cons">—</span><span style="font-size:1.67vh;color:var(--muted)" id="consLab">L/100 km</span></div>
-<div style="display:flex;flex-direction:column"><span style="font-size:2.5vh;font-weight:600" id="price">—</span><span style="font-size:1.67vh;color:var(--muted)">₺ / litre</span></div>
-<div style="display:flex;flex-direction:column"><span style="font-size:2.5vh;font-weight:600" id="eco">—</span><span style="font-size:1.67vh;color:var(--muted)">Eko puan</span></div>
-</div>
+<div class="c" style="padding:2.6vh 3.2vh;display:flex;flex-direction:column;gap:1.8vh">
+<div style="display:flex;align-items:center;gap:1.39vh"><svg id="fuelIcon" style="width:4.6vh;height:4.6vh;color:var(--a)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17"/><line x1="2" y1="22" x2="15" y2="22"/><line x1="6" y1="8" x2="11" y2="8"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg><span style="font-size:2.5vh;color:var(--muted);flex:1">Seyir</span><span class="sg" style="font-size:5.4vh;font-weight:300 !important;color:var(--a)" id="pct">—</span></div>
+<div style="height:1.9vh;border-radius:1vh;background:var(--track);overflow:hidden"><div id="bar" style="height:100%;width:0;background:var(--a);transition:width .4s"></div></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2vh 1.6vh">
+<div class="tv"><b id="rng">—</b><span>Menzil km</span></div>
+<div class="tv"><b id="liters">— L</b><span>Depoda</span></div>
+<div class="tv"><b id="cons">—</b><span id="consLab">L/100 km</span></div>
+<div class="tv"><b id="trp">—</b><span>Yol km</span></div>
+<div class="tv"><b id="price">—</b><span>₺ / litre</span></div>
+<div class="tv"><b id="eco">—</b><span>Eko puan</span></div>
 </div>
 </div>
 <button id="carBox" class="key" aria-label="Aracım">
@@ -199,6 +201,8 @@ car.on(function (s) {
   $('pct').textContent = pct === null ? '—' : '%' + pct; $('pct').style.color = col;
   $('bar').style.width = (pct || 0) + '%'; $('bar').style.background = col;
   $('fuelIcon').style.color = col;
+  $('rng').textContent = s.range ? Math.round(s.range) : '—';
+  $('trp').textContent = s.tripKm !== undefined ? num(s.tripKm, 1) : '—';
   $('liters').textContent = s.fuelLeft !== undefined ? num(s.fuelLeft, 1) + ' L' : '— L';
   var live = s.inst !== undefined;
   $('cons').textContent = num(live ? s.inst : s.l100, 1);
