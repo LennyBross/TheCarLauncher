@@ -98,6 +98,9 @@ public final class Obd {
 
     public Obd(Listener l) { this.l = l; }
 
+    /** For BLE adapters (GATT needs a context). */
+    static volatile android.content.Context ctx;
+
     /** mode: "wifi" (host:port, default 192.168.0.10:35000) or "bt" (paired device name contains target, default OBD/ELM/Vlink). */
     public synchronized void start(final String mode, final String target, String proto) {
         stop();
@@ -160,11 +163,35 @@ public final class Obd {
             }
             if (dev == null) throw new Exception("eşleşmiş OBD adaptörü bulunamadı");
             l.onStatus("OBD: " + dev.getName() + " bağlanıyor…", false);
-            BluetoothSocket s = dev.createInsecureRfcommSocketToServiceRecord(SPP);
-            socket = s;
-            s.connect();
-            in = s.getInputStream();
-            out = s.getOutputStream();
+            a.cancelDiscovery();
+            Object[] io = null;
+            Exception last = null;
+            // Classic serial first (unless it is a BLE-only adapter), three ways, then BLE.
+            if (dev.getType() != BluetoothDevice.DEVICE_TYPE_LE) {
+                for (int k = 0; k < 3 && io == null && run; k++) {
+                    try {
+                        BluetoothSocket s = k == 0 ? dev.createInsecureRfcommSocketToServiceRecord(SPP)
+                                : k == 1 ? dev.createRfcommSocketToServiceRecord(SPP)
+                                : (BluetoothSocket) dev.getClass().getMethod("createRfcommSocket", int.class).invoke(dev, 1);
+                        socket = s;
+                        s.connect();
+                        io = new Object[]{s.getInputStream(), s.getOutputStream()};
+                    } catch (Exception e) {
+                        last = e;
+                        close();
+                    }
+                }
+            }
+            if (io == null && ctx != null && dev.getType() != BluetoothDevice.DEVICE_TYPE_CLASSIC) {
+                l.onStatus("OBD: " + dev.getName() + " (BLE) bağlanıyor…", false);
+                BleSerial b = new BleSerial();
+                socket = b;
+                b.connect(ctx, dev);
+                io = new Object[]{b.in, b.out};
+            }
+            if (io == null) throw new Exception("adaptöre bağlanılamadı (başka bir OBD uygulaması bağlı olabilir)" + (last == null ? "" : ""));
+            in = (InputStream) io[0];
+            out = (OutputStream) io[1];
         } else {
             String host = "192.168.0.10";
             int port = 35000;
@@ -379,6 +406,7 @@ public final class Obd {
         try {
             if (s instanceof Socket) ((Socket) s).close();
             if (s instanceof BluetoothSocket) ((BluetoothSocket) s).close();
+            if (s instanceof BleSerial) ((BleSerial) s).close();
         } catch (Exception ignored) {
         }
     }

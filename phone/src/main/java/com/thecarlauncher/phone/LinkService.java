@@ -103,6 +103,7 @@ public final class LinkService extends Service implements LocationListener, Obd.
         obdOk = false;
         if (!prefs(this).getBoolean("obd", true)) return;
         if (Obd.pairedAdapter() == null && prefs(this).getString("obdName", "").isEmpty()) { obdStatus = "OBD adaptörü eşleşmemiş"; return; }
+        Obd.ctx = getApplicationContext();
         obd = new Obd(this);
         obd.start(Obd.BT, prefs(this).getString("obdName", ""), Obd.STD);
     }
