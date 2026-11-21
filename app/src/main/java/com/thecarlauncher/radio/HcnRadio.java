@@ -65,6 +65,36 @@ public final class HcnRadio {
         }
     }
 
+    /**
+     * RDS from the firmware's RadioInfo: [station name (PS), radio text (RT)], "" when absent.
+     * Field names differ between firmwares, so every String field is looked at by name.
+     */
+    public static String[] rds() {
+        String ps = "", rt = "";
+        Object p = player();
+        if (p == null) return new String[]{ps, rt};
+        try {
+            Object ri = sCls.getMethod("getRadioInfo").invoke(p);
+            if (ri == null) return new String[]{ps, rt};
+            for (Class<?> c = ri.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+                for (java.lang.reflect.Field f : c.getDeclaredFields()) {
+                    Object v;
+                    try { f.setAccessible(true); v = f.get(ri); } catch (Throwable t) { continue; }
+                    if (!(v instanceof String) && !(v instanceof byte[]) && !(v instanceof char[])) continue;
+                    String txt = v instanceof String ? (String) v : v instanceof char[] ? new String((char[]) v) : new String((byte[]) v, "ISO-8859-9");
+                    txt = txt.replace('\u0000', ' ').trim();
+                    if (txt.isEmpty()) continue;
+                    String n = f.getName().toLowerCase(Locale.ROOT);
+                    if (n.contains("uiband") || n.contains("band")) continue;
+                    if (rt.isEmpty() && (n.contains("rt") || n.contains("text") || n.contains("radiotext"))) rt = txt;
+                    else if (ps.isEmpty() && (n.contains("ps") || n.contains("name") || n.contains("station") || n.contains("rds"))) ps = txt;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return new String[]{ps, rt};
+    }
+
     public static String band() {
         Object p = player();
         if (p == null) return "";

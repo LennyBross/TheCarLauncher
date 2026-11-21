@@ -112,7 +112,7 @@ var IC = {
 .forEach(function (a) {
   var b = document.createElement('button'); b.className = 'key db';
   b.innerHTML = '<i style="background:' + a[2] + '"><svg viewBox="0 0 24 24" fill="none" stroke="' + (a[4] || '#fff') + '" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + IC[a[1]] + '</svg></i><span>' + a[0] + '</span>';
-  b.onclick = function () { if (a[3] === 'drive') location.href = 'ds4plus-drive.html'; else if (a[3]) call('open', a[3]); };
+  b.onclick = function () { if (a[3]) call('open', a[3]); };
   $('dock').appendChild(b);
 });
 $('carBox').onclick = function () { call('open', 'vehicle'); };

@@ -50,9 +50,10 @@ button{background:none;border:none;padding:0;color:inherit}
 #pr .ph::after{left:-230px;right:-40px;background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.22) 70%,transparent)}
 .row{position:absolute;left:26px;width:310px;height:76px;display:flex;align-items:center;gap:18px}
 .row svg{width:42px;height:42px;flex-shrink:0;color:#E4DFD6}
-.row b{font-size:36px;font-weight:600;font-style:italic;letter-spacing:-.5px;line-height:1}
+.row b{font-size:42px;font-weight:600;font-style:italic;letter-spacing:-.5px;line-height:1}
 .row b small{font-size:21px;font-weight:500;margin-left:6px;letter-spacing:0}
-.row span{display:block;font-size:17px;color:#CFCAC1;margin-top:4px}
+.row span{display:none;font-size:14px;color:#CFCAC1;margin-top:4px}
+.row span.diag{display:block}
 .row+.row::before{content:'';position:absolute;left:-10px;right:-60px;top:-6px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.16) 25%,rgba(255,255,255,.04))}
 #consL{max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #r1{top:82px}#r2{top:162px}#r3{top:242px}
@@ -136,6 +137,14 @@ button{background:none;border:none;padding:0;color:inherit}
 #srcM .it2>button.on{background:linear-gradient(180deg,#f3e6cc,#cdb58b);color:#111}
 #srcM .it2 .op{width:54px;height:54px;border-radius:12px;color:#A8A39A;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);font-size:20px}
 #srcM .hint{font-size:12px;color:#8f8a80;padding:4px 6px 0}
+#radioC{left:calc(450px + var(--dx));top:190px;width:380px;height:240px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;pointer-events:auto}
+#radioC.on{display:flex}
+#radioC img{width:84px;height:84px;border-radius:14px;object-fit:contain;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.6);display:none}
+#rcF{font-size:66px;font-weight:600;font-style:italic;letter-spacing:-1px;line-height:1;color:#F2EEE6}
+#rcF small{font-size:20px;margin-left:6px;color:#A8A39A;letter-spacing:0}
+#rcN{font-size:22px;font-style:italic;font-weight:600;color:#E8D5B0;max-width:330px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rcT{font-size:15px;color:#A8A39A;max-width:330px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#car.hide,#dots.hide{visibility:hidden}
 </style>
 </head>
 <body>
@@ -154,7 +163,7 @@ button{background:none;border:none;padding:0;color:inherit}
 <div id="rail" class="ab">
  <button id="pw" style="top:104px" title="CataraPatara"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></button>
  <button data-go="themehome" style="top:181px"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/></svg></button>
- <button id="back" style="top:258px"><svg class="ic" viewBox="0 0 24 24"><path d="M8 4 4 8l4 4"/><path d="M4 8h10a6 6 0 0 1 0 12H9"/></svg></button>
+ <button id="back" data-go="minimal" style="top:258px" aria-label="Sade ekran"><svg class="ic" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
  <button data-go="srcPick" style="top:335px"><svg class="ic" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg></button>
  <button data-go="nav" style="top:412px"><svg class="ic" viewBox="0 0 24 24"><path d="M21 3 3 10.5l7.5 3L14 21z"/></svg></button>
  <button data-go="phone" style="top:489px"><svg class="ic" viewBox="0 0 24 24"><path d="M5 3h3.5l1.8 4.5-2.3 1.4a11 11 0 0 0 7.1 7.1l1.4-2.3L21 15.5V19a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg></button>
@@ -163,7 +172,7 @@ button{background:none;border:none;padding:0;color:inherit}
 
 <div id="hdr" class="ab">
  <div id="temp" class="ab it">--°C</div>
- <div id="tempL" class="ab it">Dış sıcaklık</div>
+ <div id="tempL" class="ab it" style="display:none"></div>
  <div id="ecoB" class="ab it">EKO <b id="eco">--</b></div>
  <img id="logo" class="ab" src="ds-logo.png" alt="DS">
  <div id="stat" class="ab">
@@ -179,9 +188,9 @@ button{background:none;border:none;padding:0;color:inherit}
 <!-- Sürüş bilgileri -->
 <div id="pl" class="ab pan">
  <div class="ph">Sürüş Bilgileri</div>
- <div id="r1" class="row"><svg class="ic" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12"/><path d="M6.5 7h5v4h-5z"/><path d="M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg><div><b id="range">--<small>km</small></b><span>Menzil</span></div></div>
- <div id="r2" class="row"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><path d="M4 20 20 4"/></svg><div><b id="cons">--<small>L/100 km</small></b><span id="consL">Ortalama Tüketim</span></div></div>
- <div id="r3" class="row"><svg class="ic" viewBox="0 0 24 24"><path d="M3.5 17a9 9 0 1 1 17 0"/><path d="m12 13 4-4"/><circle cx="12" cy="13.5" r="1.2"/><path d="M6.5 13.5h1M12 7.5v1M16.5 13.5h1"/></svg><div><b id="avg">--<small>km/h</small></b><span>Ortalama Hız</span></div></div>
+ <div id="r1" class="row"><svg class="ic" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12"/><path d="M6.5 7h5v4h-5z"/><path d="M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg><div><b id="range">--<small>km</small></b><span></span></div></div>
+ <div id="r2" class="row"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><path d="M4 20 20 4"/></svg><div><b id="cons">--<small>L/100 km</small></b><span id="consL"></span></div></div>
+ <div id="r3" class="row"><svg class="ic" viewBox="0 0 24 24"><path d="M3.5 17a9 9 0 1 1 17 0"/><path d="m12 13 4-4"/><circle cx="12" cy="13.5" r="1.2"/><path d="M6.5 13.5h1M12 7.5v1M16.5 13.5h1"/></svg><div><b id="avg">--<small>km/h</small></b><span></span></div></div>
 </div>
 
 <!-- Medya -->
@@ -227,6 +236,7 @@ button{background:none;border:none;padding:0;color:inherit}
 </svg>
 <div id="car" class="ab"><canvas id="c"></canvas><img id="spin" alt=""></div>
 <div id="load" class="ab">3D YÜKLENİYOR</div>
+<div id="radioC" class="ab"><img id="rcL" alt=""><div id="rcF"></div><div id="rcN"></div><div id="rcT"></div></div>
 <div id="dots" class="ab"><button data-v="0" class="on"></button><button data-v="1"></button><button data-v="2"></button></div>
 
 <!-- bottom buttons -->
@@ -287,8 +297,7 @@ var IC = {
   car: '<path d="M3 15v-3l2.2-4.5A2 2 0 0 1 7 6.5h10a2 2 0 0 1 1.8 1L21 12v3"/><path d="M2.5 12h19"/><rect x="2.5" y="12" width="19" height="5" rx="1.5"/><path d="M5 17v2M19 17v2"/><circle cx="6.5" cy="14.5" r=".8"/><circle cx="17.5" cy="14.5" r=".8"/>',
   set: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.6M12 18.9v2.6M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12h2.6M18.9 12h2.6M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/><circle cx="12" cy="12" r="6.5"/>'
 };
-var BTN = [['Navigasyon', 'nav', 'nav'], ['Müzik', 'music', 'srcPick'], ['Telefon', 'phone', 'phone'], ['Android Auto', 'aa', 'aa'],
-  ['CarPlay', 'cp', 'carplay'], ['Araç', 'car', 'vehicle'], ['Ayarlar', 'set', 'settings']];
+var BTN = [['Navigasyon', 'nav', 'nav'], ['Müzik', 'music', 'srcPick'], ['Android Auto', 'aa', 'aa'], ['Ayarlar', 'set', 'settings']];
 var hasMaps = false;
 window.fitLabels = fitLabels;
 function fitLabels() {
@@ -310,7 +319,7 @@ function go(w) {
   call('open', w);
 }
 document.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { go(b.getAttribute('data-go')); }; });
-$('back').onclick = function () { if (history.length > 1) history.back(); };
+$('clock').onclick = function () { call('open', 'minimal'); };
 $('radioB').onclick = function () { call('open', 'radio'); };
 $('eqB').onclick = function () { call('open', 'eq'); };
 $('prev').onclick = function () { call('media', 'prev'); };
@@ -386,9 +395,7 @@ car.on(function (s) {
   $('clock').textContent = s.time || '--:--';
   var out = s.outdoor !== undefined;
   $('temp').textContent = out ? Math.round(s.outdoor) + '°C' : (s.temp !== undefined ? s.temp + '°C' : '--°C');
-  $('tempL').textContent = out ? 'Dış sıcaklık' : 'Hava';
-  $('tempL').style.left = ($('temp').offsetWidth + 50) + 'px';
-  $('ecoB').style.left = ($('temp').offsetWidth + 66 + $('tempL').offsetWidth) + 'px';
+  $('ecoB').style.left = ($('temp').offsetWidth + 56) + 'px';
   $('bt').style.opacity = s.bt ? 1 : 0.3;
   $('net').style.opacity = s.net ? 1 : 0.3;
   $('netT').textContent = s.net === 'wifi' ? 'Wi-Fi' : s.net ? '4G' : '—';
@@ -397,7 +404,8 @@ car.on(function (s) {
   var avgOK = s.avgL100 > 0, c = avgOK ? s.avgL100 : (s.inst !== undefined ? s.inst : s.l100);
   $('cons').innerHTML = num(c, 1) + '<small>L/100 km</small>';
   var diag = c === undefined && s.canDiag;
-  $('consL').textContent = diag ? s.canDiag : avgOK || s.inst === undefined ? 'Ortalama Tüketim' : 'Anlık Tüketim';
+  $('consL').textContent = diag ? s.canDiag : '';
+  $('consL').classList.toggle('diag', !!diag);
   $('consL').style.color = diag ? '#F0A050' : '';
   $('r2').onclick = diag ? function () { call('open', 'canFix'); } : null;
   var v = s.gps === 'ok' ? (s.speed || 0) : 0;
@@ -423,8 +431,39 @@ car.on(function (s) {
     $('cover').src = u || ''; $('cover').style.visibility = u ? 'visible' : 'hidden'; $('noart').style.display = u ? 'none' : 'flex';
   }
   $('b0').classList.toggle('hi', !!s.navActive);
+  // Radio on: the dial's centre shows the station instead of the car
+  $('radioC').classList.toggle('on', !!tun);
+  $('car').classList.toggle('hide', !!tun); $('dots').classList.toggle('hide', !!tun);
+  if (tun) {
+    var mhz = s.khz > 30000 ? (s.khz / 1000).toFixed(1).replace('.', ',') : String(s.khz);
+    $('rcF').innerHTML = mhz + '<small>' + (s.khz > 30000 ? 'MHz' : 'kHz') + '</small>';
+    $('rcN').textContent = s.rdsPs || (s.band || 'FM') + (s.stereo ? ' · STEREO' : '');
+    $('rcT').textContent = s.rdsRt || '';
+    stationLogo(s.rdsPs);
+  }
   hasCp = !!s.cp; $('pw').classList.toggle('on', !!s.cpOn);
 });
+
+// Station logo from the RDS name (radio-browser.info, open station database), cached per name.
+var logoFor = null;
+function stationLogo(ps) {
+  ps = (ps || '').trim();
+  if (ps === logoFor) return;
+  logoFor = ps; $('rcL').style.display = 'none';
+  if (!ps || ps.length < 2) return;
+  var key = 'logo.' + ps, c = store(key);
+  if (c) { if (c !== '-') { $('rcL').src = c; $('rcL').style.display = 'block'; } return; }
+  try {
+    fetch('https://de1.api.radio-browser.info/json/stations/search?countrycode=TR&limit=5&hidebroken=true&order=clickcount&reverse=true&name=' + encodeURIComponent(ps))
+      .then(function (r) { return r.json(); })
+      .then(function (a) {
+        var u = '';
+        for (var i = 0; i < a.length && !u; i++) if (a[i].favicon) u = a[i].favicon;
+        store(key, u || '-');
+        if (u && logoFor === ps) { $('rcL').src = u; $('rcL').style.display = 'block'; }
+      }).catch(function () {});
+  } catch (e) {}
+}
 
 // ---- The car: real 3D (three.js) with a photo-spin fallback --------------------------------------
 var VIEWS = [[45, 16], [90, 10], [135, 16]], view = 0, REST = VIEWS[0];

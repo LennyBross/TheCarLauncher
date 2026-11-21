@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta id="stockcss">
+<title>Sade ekran</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* Minimal driving screen: the few numbers that matter, as dark as the driver wants.
+   Takes the home theme's look: Stock (champagne, italic), DS4+ (teal, Inter), Panel (amber, digital). */
+:root{--bg:#000;--fg:#ECEAE6;--mut:#7d7a74;--a:#E8D5B0;--chip:rgba(255,255,255,.08);--line:rgba(255,255,255,.14)}
+body{background:var(--bg);color:var(--fg);font-family:'Montserrat',sans-serif;overflow:hidden;user-select:none;transition:background .4s,color .4s}
+body.t-ds4{--a:#5CC8B0;font-family:'Inter',sans-serif}
+body.t-panel{--a:#FFB347;--fg:#FFD08A;--mut:#8a6a3c}
+body.day{--bg:#F4F2EE;--fg:#16171A;--mut:#6c6860;--chip:rgba(0,0,0,.06);--line:rgba(0,0,0,.12)}
+body.day.t-ds4{--a:#1F8F78}body.day.t-panel{--a:#B0641A;--fg:#3a2a12}
+.c{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh}
+#clock{font-size:30vh;font-weight:600;line-height:.9;letter-spacing:-1vh;font-variant-numeric:tabular-nums}
+body.t-stock #clock,body.t-stock .big{font-style:italic}
+body.t-ds4 #clock,body.t-ds4 .big{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700}
+body.t-panel #clock,body.t-panel .big{font-family:'Share Tech Mono',monospace;font-weight:400;letter-spacing:0;text-shadow:0 0 2vh rgba(255,170,60,.45)}
+.row{display:flex;gap:7vw;align-items:baseline}
+.big{font-size:8.5vh;font-weight:600;font-variant-numeric:tabular-nums}
+.big small{font-size:3vh;color:var(--mut);margin-left:.6vh;font-weight:500}
+.row svg{width:3.6vh;height:3.6vh;color:var(--mut);margin-right:1.2vh;vertical-align:-.3vh}
+#song{font-size:3vh;color:var(--mut);max-width:80vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+svg.ic{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* controls: appear on tap, fade after a few seconds */
+#ctl{position:fixed;left:50%;bottom:4vh;transform:translateX(-50%);display:flex;gap:1.6vh;padding:1.6vh;border-radius:5vh;background:var(--chip);box-shadow:inset 0 0 0 1px var(--line);
+  opacity:0;pointer-events:none;transition:opacity .3s}
+#ctl.on{opacity:1;pointer-events:auto}
+#ctl button{width:10vh;height:10vh;border-radius:50%;border:none;background:var(--chip);color:var(--fg);display:flex;align-items:center;justify-content:center}
+#ctl button svg{width:5vh;height:5vh}
+#ctl button.hot{background:var(--a);color:#111}
+#lvl{display:flex;gap:.7vh;align-items:flex-end;padding:0 1vh}
+#lvl i{display:block;width:1.2vh;border-radius:.6vh;background:var(--line)}
+#lvl i.on{background:var(--a)}
+#dim{position:fixed;inset:0;background:#000;pointer-events:none;opacity:0;transition:opacity .4s}
+</style>
+</head>
+<body>
+<div class="c" id="main">
+  <div id="clock">--:--</div>
+  <div class="row">
+    <span class="big"><svg class="ic" viewBox="0 0 24 24"><path d="M3.5 17a9 9 0 1 1 17 0"/><path d="m12 13 4-4"/></svg><b id="spd">--</b><small>km/h</small></span>
+    <span class="big"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v11"/><circle cx="12" cy="17" r="3.5"/></svg><b id="tmp">--</b><small>°C</small></span>
+    <span class="big"><svg class="ic" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12"/><path d="M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg><b id="rng">--</b><small>km</small></span>
+  </div>
+  <div id="song"></div>
+</div>
+<div id="dim"></div>
+<div id="ctl">
+  <button class="key" id="home" aria-label="Ana ekran"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/></svg></button>
+  <button class="key" id="dn" aria-label="Kıs"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M5 12h14" opacity=".4"/></svg></button>
+  <div id="lvl"></div>
+  <button class="key" id="up" aria-label="Aç"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+  <button class="key" id="min" aria-label="En kısık"><svg class="ic" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/><path d="M3 21h18" stroke-dasharray="2 3"/></svg></button>
+  <button class="key" id="dn2" aria-label="Gece / gündüz"><svg class="ic" viewBox="0 0 24 24" id="dnI"></svg></button>
+</div>
+<script src="common.js"></script>
+<script>
+var TH = +(call('theme') || 8);
+document.body.classList.add(TH === 7 ? 't-ds4' : TH === 4 ? 't-panel' : 't-stock');
+// 11 steps; below the screen's own minimum a black veil darkens further (unlit roads)
+var BRI = [1, 2, 4, 7, 11, 17, 26, 38, 52, 72, 100], VEIL = [.78, .55, .3, .12, 0, 0, 0, 0, 0, 0, 0];
+var lvl = +(store('min.lvl') || 4), day = false;
+for (var i = 0; i < BRI.length; i++) { var b = document.createElement('i'); b.style.height = (1.5 + i * .55) + 'vh'; $('lvl').appendChild(b); }
+function apply(send) {
+  lvl = Math.max(0, Math.min(10, lvl)); store('min.lvl', String(lvl));
+  [].forEach.call($('lvl').children, function (e, k) { e.classList.toggle('on', k <= lvl); });
+  $('dim').style.opacity = day ? 0 : VEIL[lvl];
+  if (send) call('setBrightness', day ? Math.max(60, BRI[lvl]) : BRI[lvl]);
+  $('dnI').innerHTML = day ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>' : '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>';
+  document.body.classList.toggle('day', day);
+}
+var hideT = null;
+function show() { $('ctl').classList.add('on'); clearTimeout(hideT); hideT = setTimeout(function () { $('ctl').classList.remove('on'); }, 4500); }
+$('main').onclick = show;
+$('dim').onclick = show;
+$('up').onclick = function () { lvl++; apply(true); show(); };
+$('dn').onclick = function () { lvl--; apply(true); show(); };
+$('min').onclick = function () { lvl = 0; day = false; call('setNight', true); apply(true); show(); };
+$('dn2').onclick = function () { day = !day; call('setNight', !day); if (day && lvl < 7) lvl = 8; apply(true); show(); };
+$('home').onclick = function () { call('open', 'themehome'); };
+car.on(function (s) {
+  $('clock').textContent = s.time || '--:--';
+  $('spd').textContent = s.gps === 'ok' ? Math.round(s.speed || 0) : '--';
+  $('tmp').textContent = s.outdoor !== undefined ? Math.round(s.outdoor) : s.temp !== undefined ? s.temp : '--';
+  $('rng').textContent = s.range ? Math.round(s.range) : '--';
+  var tun = s.tuner && s.khz;
+  $('song').textContent = tun ? ((s.khz / 1000).toFixed(1).replace('.', ',') + ' MHz' + (s.rdsPs ? ' · ' + s.rdsPs : '')) : s.title ? (s.title + (s.artist ? ' · ' + s.artist : '')) : '';
+});
+day = call('dayMode') === 2;
+apply(false);
+show();
+</script>
+</body>
+</html>

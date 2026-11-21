@@ -108,7 +108,7 @@ car.on(function (s) { if (TH !== 8) document.body.classList.toggle('day', s.nigh
 
 var favs = [];
 try { favs = JSON.parse(store('radio.favs') || '[]') || []; } catch (e) { favs = []; }
-var cur = 0, presets = [];
+var cur = 0, presets = [], curPs = '';
 function mhz(k) { return k > 30000 ? (k / 1000).toFixed(1).replace('.', ',') : String(k); }
 function unit(k) { return k > 30000 ? 'MHz' : 'kHz'; }
 function grid(box, list, cls, onHold) {
@@ -173,7 +173,7 @@ function drawArc() {
   g += '<circle cx="' + CX + '" cy="' + CY + '" r="' + (RR - 42) + '" fill="url(#face)" stroke="url(#rim)" stroke-width="3"/>';
   var n1 = pt(angF(f), RR - 2), n2 = pt(angF(f), RR + 24);
   g += '<line x1="' + n1[0] + '" y1="' + n1[1] + '" x2="' + n2[0] + '" y2="' + n2[1] + '" stroke="#ff4a3f" stroke-width="5" stroke-linecap="round"/>';
-  g += '<text x="' + CX + '" y="' + (CY - 62) + '" text-anchor="middle" font-family="Montserrat" font-style="italic" font-size="20" letter-spacing="5" fill="#E9E5DC">RADYO</text>';
+  g += '<text x="' + CX + '" y="' + (CY - 62) + '" text-anchor="middle" font-family="Montserrat" font-style="italic" font-size="20" letter-spacing="5" fill="#E9E5DC">' + (curPs ? curPs.replace(/[<&]/g, '') : 'RADYO') + '</text>';
   g += '<text x="' + CX + '" y="' + (CY + 24) + '" text-anchor="middle" font-family="Montserrat" font-style="italic" font-weight="600" font-size="80" fill="#F2EEE6">' + (cur ? mhz(cur) : '--,-') + '</text>';
   g += '<text x="' + CX + '" y="' + (CY + 62) + '" text-anchor="middle" font-family="Montserrat" font-style="italic" font-size="22" fill="#A8A39A">' + unit(cur || 98000) + ($('band').textContent ? ' · ' + $('band').textContent : '') + '</text>';
   $('arc').innerHTML = g;
@@ -201,7 +201,9 @@ function paint() {
 var srcOk = true;
 function poll() {
   var info = {}; try { info = JSON.parse(R('radioInfo') || '{}'); } catch (e) {}
-  $('hint').textContent = info.ok ? '' : 'Bu ünitede tuner bulunamadı.';
+  var ps = info.ps || '', rt = info.rt || '';
+  $('hint').textContent = info.ok ? (ps + (rt ? ' · ' + rt : '')) : 'Bu ünitede tuner bulunamadı.';
+  if (ps !== curPs) { curPs = ps; if (TH === 8) drawArc(); }
   if (info.khz && info.khz !== cur) { cur = info.khz; paint(); }
   $('stereo').style.display = info.stereo ? 'inline' : 'none';
   var b = info.band || 'FM'; if ($('band').textContent !== b) { $('band').textContent = b; if (TH === 8) drawArc(); }

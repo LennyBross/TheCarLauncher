@@ -106,7 +106,7 @@ public class ThemeScreen extends Screen {
 
     /** Loads this theme's driving-mode page (edge panel button). */
     public void openDrive() {
-        load(theme == DS4PLUS ? "ds4plus-drive.html" : "drive.html");
+        load("minimal.html");
     }
 
     /** Reloads whatever page is showing (after a sound pack import). */
@@ -234,6 +234,8 @@ public class ThemeScreen extends Screen {
             int[] ri = com.thecarlauncher.radio.HcnRadio.info();
             o.put("tuner", true);
             if (ri != null) o.put("khz", ri[0]).put("stereo", ri[1] == 1).put("band", com.thecarlauncher.radio.HcnRadio.band());
+            String[] rd = com.thecarlauncher.radio.HcnRadio.rds();
+            o.put("rdsPs", rd[0]).put("rdsRt", rd[1]);
         }
         o.put("srcKind", src == null ? "" : src.equals(MediaHub.BLUETOOTH) ? "bt" : src.equals(MediaHub.RADIO) ? "radio"
                 : src.equals(PKG_SPOTIFY) ? "spotify" : src.equals(PKG_YTMUSIC) ? "ytmusic" : src.equals(PKG_YOUTUBE) ? "youtube"
@@ -367,6 +369,8 @@ public class ThemeScreen extends Screen {
                         case "vehicle": load("car3d.html"); break;
                         case "vehicleNative": act.show(LauncherActivity.VEHICLE, true); break;
                         case "themehome": load(page()); break;
+                        // the Sürüş pages are replaced by the minimal screen (one tap, deep dimming)
+                        case "minimal": case "drive": load("minimal.html"); break;
                         case "engine":
                             com.thecarlauncher.util.CanLive.openCp(act);
                             break;
@@ -450,6 +454,8 @@ public class ThemeScreen extends Screen {
                 if (i != null) o.put("khz", i[0]).put("stereo", i[1] == 1).put("band", com.thecarlauncher.radio.HcnRadio.band());
                 String src = com.thecarlauncher.radio.HcnRadio.source();
                 o.put("source", src).put("active", com.thecarlauncher.radio.HcnRadio.RADIO_PKG.equals(src));
+                String[] rd = com.thecarlauncher.radio.HcnRadio.rds();
+                o.put("ps", rd[0]).put("rt", rd[1]);
                 org.json.JSONArray pr = new org.json.JSONArray();
                 for (int k : com.thecarlauncher.radio.HcnRadio.presets()) if (k > 0) pr.put(k);
                 o.put("presets", pr);
