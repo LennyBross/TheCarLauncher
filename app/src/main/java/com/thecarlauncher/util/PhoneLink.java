@@ -94,7 +94,7 @@ public final class PhoneLink {
 
     public static boolean connected() {
         PhoneLink p = sInstance;
-        return p != null && p.cur != null && System.currentTimeMillis() - seenAt < 8000;
+        return p != null && p.cur != null && System.currentTimeMillis() - seenAt < 3500;
     }
 
     /** The phone has something to show in the player (playing now, or paused in the last 15 min). */
@@ -189,7 +189,8 @@ public final class PhoneLink {
     }
 
     public static final int PHONE_PORT = 47322;
-    public static volatile String dialStatus = "";
+    public static final String P_ADDR = "phone_addr";
+    public static volatile String dialStatus = "", dialAddr = "";
 
     /**
      * The unit on the phone's hotspot: the phone is the gateway and listens on 47322, so MYDS
@@ -201,17 +202,31 @@ public final class PhoneLink {
             try { Thread.sleep(4000); } catch (InterruptedException e) { return; }
             if (connected()) continue;
             try {
-                android.net.wifi.WifiManager wm = (android.net.wifi.WifiManager) app.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                int g = wm == null || !wm.isWifiEnabled() ? 0 : wm.getDhcpInfo().gateway;
-                if (g == 0) { dialStatus = "Wi-Fi yok"; continue; }
-                String ip = (g & 255) + "." + ((g >> 8) & 255) + "." + ((g >> 16) & 255) + "." + ((g >> 24) & 255);
+                // An address typed in MyDS wins; else the Wi-Fi gateway (= the phone's hotspot).
+                String ip = null;
+                int port = PHONE_PORT;
+                String manual = Prefs.str(app, P_ADDR, "").trim();
+                if (!manual.isEmpty()) {
+                    String[] hp = manual.split(":");
+                    ip = hp[0].trim();
+                    if (hp.length > 1) try { port = Integer.parseInt(hp[1].trim()); } catch (Exception ignored) { }
+                } else {
+                    android.net.wifi.WifiManager wm = (android.net.wifi.WifiManager) app.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                    int g = wm == null || !wm.isWifiEnabled() ? 0 : wm.getDhcpInfo().gateway;
+                    if (g != 0) ip = (g & 255) + "." + ((g >> 8) & 255) + "." + ((g >> 16) & 255) + "." + ((g >> 24) & 255);
+                }
+                if (ip == null || ip.isEmpty()) { dialStatus = "Wi-Fi'ye bağlı değil"; dialAddr = ""; continue; }
+                dialAddr = ip + ":" + port;
+                dialStatus = "Aranıyor: " + dialAddr;
                 Socket s = new Socket();
-                s.connect(new java.net.InetSocketAddress(ip, PHONE_PORT), 2500);
+                s.connect(new java.net.InetSocketAddress(ip, port), 2500);
                 s.setTcpNoDelay(true);
-                dialStatus = "Telefon: " + ip;
+                s.setSoTimeout(5000); // the phone sends every second; silence = Wi-Fi gone
+                seenAt = System.currentTimeMillis();
+                dialStatus = "Bağlı: " + dialAddr;
                 serve(new Session(s, "wifi", ""), true);
             } catch (Throwable e) {
-                dialStatus = "Telefon bulunamadı";
+                dialStatus = "Telefon bulunamadı: " + dialAddr;
             }
         }
     }

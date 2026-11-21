@@ -91,7 +91,7 @@ public final class ObdHub implements Obd.Listener {
     /** Values from the ELM327 that the phone (MYDS Telefon) reads and passes on. */
     public void fromPhone(JSONObject o) {
         phoneAt = System.currentTimeMillis();
-        if (o.has("st")) { onStatus(o.optString("st") + " · telefon", o.optBoolean("ok")); return; }
+        if (o.has("st")) { onStatus(o.optString("st"), o.optBoolean("ok")); return; }
         if (o.has("dtc")) { onDtc(o.optString("dtc")); return; }
         String k = o.optString("k");
         float v = (float) o.optDouble("v", Double.NaN);
@@ -133,9 +133,14 @@ public final class ObdHub implements Obd.Listener {
 
     // ---- for the screens ----
 
-    public boolean connected() { return ok && System.currentTimeMillis() - rpmAt < 4000; }
+    public boolean connected() { return ok && System.currentTimeMillis() - rpmAt < 2000; }
 
-    public float rpm() { return System.currentTimeMillis() - rpmAt < 3000 ? rpm : -1; }
+    /** Engine rpm if it came from the ECU in the last 2 s, else -1 (never an old value as live). */
+    public float rpm() { return System.currentTimeMillis() - rpmAt < 2000 ? rpm : -1; }
+
+    public long rpmAge() { return rpmAt == 0 ? -1 : System.currentTimeMillis() - rpmAt; }
+
+    public String status() { return status; }
 
     public float speed() { return System.currentTimeMillis() - speedAt < 4000 ? speed : -1; }
 

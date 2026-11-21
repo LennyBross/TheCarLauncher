@@ -98,6 +98,37 @@ public final class Obd {
 
     public Obd(Listener l) { this.l = l; }
 
+    /** Bridge mode: only mode 01 PID 0C (engine rpm) is ever sent to the ECU. */
+    volatile boolean rpmOnly = true;
+
+    /**
+     * Engine rpm only: "010C" (read-only, standard OBD-II). Protocol 6 (ISO 15765-4 CAN 11/500,
+     * the DS4's) first, else the adapter's automatic search. Reports when the ECU stops answering
+     * (ignition off) and carries on by itself when it answers again.
+     */
+    private void rpmLoop(InputStream in, OutputStream out) throws Exception {
+        int[] b = data(cmd(in, out, "010C", 4000), 0x0C, 2);
+        if (b == null) {
+            cmd(in, out, "ATSP0", 1500);
+            b = data(cmd(in, out, "010C", 10000), 0x0C, 2);
+        }
+        int miss = b == null ? 5 : 0;
+        if (b != null) { l.onStatus("ECU bağlı", true); l.onRpm(((b[0] << 8) | b[1]) / 4f); }
+        else l.onStatus("ECU yanıt vermiyor (kontak açık mı?)", false);
+        while (run) {
+            String r = cmd(in, out, "010C1", 800);
+            b = data(r, 0x0C, 2);
+            if (b != null) {
+                if (miss >= 5) l.onStatus("ECU bağlı", true);
+                miss = 0;
+                l.onRpm(((b[0] << 8) | b[1]) / 4f);
+            } else if (++miss == 5) {
+                l.onStatus("ECU yanıt vermiyor (kontak açık mı?)", false);
+            }
+            if (miss >= 5) Thread.sleep(700); // ignition off: ask slowly until it answers again
+        }
+    }
+
     /** For BLE adapters (GATT needs a context). */
     static volatile android.content.Context ctx;
 
@@ -212,6 +243,7 @@ public final class Obd {
         for (String c : new String[]{"ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATAT2", "ATSP6"}) {
             cmd(in, out, c, c.equals("ATZ") ? 2500 : 1500);
         }
+        if (rpmOnly) { rpmLoop(in, out); return; }
         // DS4 / C4 B7 (AEE2010): ISO 15765-4 CAN, 11 bit, 500 kbit/s = protocol 6. Else let the adapter search.
         String first = cmd(in, out, "0100", 4000);
         if (!first.contains("41")) {

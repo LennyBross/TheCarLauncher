@@ -331,6 +331,13 @@ public class ThemeScreen extends Screen {
             o.put("pos", com.thecarlauncher.util.PhoneLink.position() / 1000).put("dur", com.thecarlauncher.util.PhoneLink.dur / 1000).put("artId", com.thecarlauncher.util.PhoneLink.artId);
             o.put("srcLabel", com.thecarlauncher.util.PhoneLink.app_.isEmpty() ? "Telefon" : com.thecarlauncher.util.PhoneLink.app_).put("srcKind", "phone");
         }
+ // Phone bridge: Wi-Fi link and ECU freshness, shown separately.
+        com.thecarlauncher.util.ObdHub obh = com.thecarlauncher.util.ObdHub.get();
+        o.put("link", new JSONObject().put("wifi", com.thecarlauncher.util.PhoneLink.connected())
+                .put("wifiSt", com.thecarlauncher.util.PhoneLink.dialStatus).put("addr", com.thecarlauncher.util.PhoneLink.dialAddr)
+                .put("manual", Prefs.str(act, com.thecarlauncher.util.PhoneLink.P_ADDR, ""))
+                .put("ecu", obh != null && obh.rpm() >= 0).put("ecuSt", obh == null ? "" : obh.status())
+                .put("ecuAge", obh == null ? -1 : obh.rpmAge()));
         JSONObject ph = new JSONObject().put("on", com.thecarlauncher.util.PhoneLink.connected()).put("name", com.thecarlauncher.util.PhoneLink.phoneName).put("via", com.thecarlauncher.util.PhoneLink.via);
         o.put("phone", ph);
         if (com.thecarlauncher.util.PhoneLink.navActive()) o.put("pnav", new JSONObject().put("dist", com.thecarlauncher.util.PhoneLink.navDist).put("text", com.thecarlauncher.util.PhoneLink.navText)
@@ -659,6 +666,10 @@ public class ThemeScreen extends Screen {
                 return "data:image/jpeg;base64," + android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP);
             } catch (Throwable t) { return ""; }
         }
+
+        /** The phone's address typed by the driver ("" = find it by itself). */
+        @JavascriptInterface
+        public void phoneAddr(String a) { Prefs.put(act, com.thecarlauncher.util.PhoneLink.P_ADDR, a == null ? "" : a.trim()); }
 
         /** Google Maps' turn arrow from the phone, as a PNG data URL. */
         @JavascriptInterface

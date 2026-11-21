@@ -75,11 +75,32 @@ input[type=text]{width:90px;height:42px;border-radius:12px;border:none;backgroun
 <body>
 <div class="top">
   <svg class="ic" style="width:30px;height:30px;color:var(--a)" viewBox="0 0 24 24"><path d="M7 5h5a7 7 0 0 1 0 14H7z"/><path d="M5 21h14"/></svg>
-  <h1>MYDS</h1>
-  <i class="dot" id="dot"></i>
+  <h1>MYDS Köprü</h1>
 </div>
-<div id="st">—</div>
 
+<div class="card" id="bridge">
+  <div style="text-align:center;padding:6px 0 10px">
+    <div class="d" id="rpm" style="font-size:72px;line-height:1">—</div>
+    <div style="font-size:14px;color:var(--mut);margin-top:4px">d/d · motor devri</div>
+  </div>
+  <div class="row"><i class="dot" id="dEcu"></i><span><b style="font-weight:600">ECU</b><br><small id="tEcu" style="color:var(--mut)">—</small></span></div>
+  <div class="row"><i class="dot" id="dWifi"></i><span><b style="font-weight:600">MyDS (Wi-Fi)</b><br><small id="tWifi" style="color:var(--mut)">—</small></span></div>
+  <div class="row" style="border-top:1px solid var(--line);margin-top:4px"><span><small style="color:var(--mut)">MyDS'e girilecek adres</small><br><b class="d" id="addr" style="font-size:18px">—</b></span></div>
+  <div class="row"><span><small style="color:var(--mut)">Adaptör</small><br><b id="adp">seçilmedi</b></span><button class="btn ghost" id="chg">Seç</button></div>
+  <div id="obdDevs" style="display:none"></div>
+  <button class="btn" id="go" style="width:100%;margin-top:10px">Köprüyü başlat</button>
+</div>
+
+<div class="grp">KURULUM</div>
+<div class="card">
+  <div class="step"><i>1</i><p><b>Önce Car Scanner'ı ayır:</b> Car Scanner'da bağlantıyı kes ve uygulamayı tamamen kapat (son uygulamalardan kaydır). Adaptör aynı anda tek uygulamaya bağlanır.</p></div>
+  <div class="step"><i>2</i><p>Telefonun Bluetooth'unda <b>OBDII</b> eşleşmiş olsun (şifre 1234). Yukarıdan "Seç" ile <b>OBDII</b>'yi seç.</p></div>
+  <div class="step"><i>3</i><p><b>Mobil Erişim Noktası</b>'nı aç, araç ekranını bu ağa bağla. İnternet gerekmez.</p></div>
+  <div class="step"><i>4</i><p><b>Köprüyü başlat</b>'a bas. MyDS telefonu kendisi bulur. Bulamazsa MyDS'te Motor ekranı → Telefon adresi'ne yukarıdaki adresi yaz.</p></div>
+  <div class="step"><i id="s5">5</i><p>İsteğe bağlı: müzik ve harita için bildirim erişimi.<br><button class="btn ghost" style="margin-top:8px" onclick="P.notifAccess()">Bildirim erişimi</button></p></div>
+</div>
+
+<div class="grp">UZAKTAN KUMANDA</div>
 <div id="remote">
   <div class="card" style="margin-top:14px">
     <div class="np">
@@ -99,12 +120,6 @@ input[type=text]{width:90px;height:42px;border-radius:12px;border:none;backgroun
   <div class="grp">MOTOR</div>
   <div class="card gs" id="gs"></div>
 
-  <div class="grp">OBD (ELM327 TELEFONDAN)</div>
-  <div class="card">
-    <div class="row"><span id="obdSt">—</span><button class="sw on" id="obdOn"></button></div>
-    <div id="obdDevs" style="font-size:13px;color:var(--mut)">Adaptör seç:</div>
-  </div>
-
   <div class="grp">TEMA VE IŞIK</div>
   <div class="card">
     <div class="seg" id="themes"></div>
@@ -118,12 +133,6 @@ input[type=text]{width:90px;height:42px;border-radius:12px;border:none;backgroun
   </div>
 </div>
 
-<div class="grp">KURULUM</div>
-<div class="card" id="setup">
-  <div class="step"><i id="s1">1</i><p>Telefon ünitenin Bluetooth'una bağlı olsun. Aşağıdan aracı seç.<span id="devs"></span></p></div>
-  <div class="step"><i id="s2">2</i><p>Bildirim erişimini aç: Spotify, YouTube Music ve Google Maps'in tarifi araca gider.<br><button class="btn ghost" style="margin-top:8px" onclick="P.notifAccess()">Bildirim erişimi</button></p></div>
-  <div class="step"><i id="s3">3</i><p>Wi-Fi (isteğe bağlı, daha hızlı): ünite ile telefon aynı ağdaysa kendiliğinden geçer. Kod Bluetooth'tan gelir; elle: <input type="text" id="code" maxlength="4" inputmode="numeric"></p></div>
-</div>
 
 <script>
 function $(id) { return document.getElementById(id); }
@@ -158,17 +167,6 @@ $('bri').onchange = function () { P.open('bright:' + this.value); };
 var aar = localStorage.getItem('aar') !== '0';
 $('aaret').classList.toggle('on', aar);
 $('aaret').onclick = function () { aar = !aar; localStorage.setItem('aar', aar ? '1' : '0'); this.classList.toggle('on', aar); P.pref('aa_return', aar); };
-$('code').onchange = function () { P.setCode(this.value); };
-
-function devices(sel) {
-  var l = J(P.devices()); if (!l.length) { $('devs').innerHTML = '<br><small>Eşleşmiş cihaz yok.</small>'; return; }
-  $('devs').innerHTML = '';
-  l.forEach(function (d) {
-    var b = document.createElement('button'); b.className = 'dev' + (d.name === sel ? ' on' : ''); b.textContent = d.name;
-    b.onclick = function () { P.pick(d.addr, d.name); devices(d.name); };
-    $('devs').appendChild(b);
-  });
-}
 var GS = [['rpm', 'd/d', '<path d="M5 18a8 8 0 1 1 14 0"/><path d="M12 13l4-4"/>'], ['cool', '°C', '<path d="M12 3v10"/><circle cx="12" cy="16" r="3"/>'],
   ['boost', 'bar', '<circle cx="12" cy="12" r="7"/><path d="M12 12l3-3"/>'], ['batt', 'V', '<rect x="3" y="7" width="18" height="12" rx="2"/><path d="M7 7V5M17 7V5"/>']];
 GS.forEach(function (g) {
@@ -177,33 +175,34 @@ GS.forEach(function (g) {
   $('gs').appendChild(d);
 });
 
+var theme = 0, devsShown = false, running = true;
 function obdDevices(sel) {
-  var l = J(P.devices()), box = $('obdDevs'); box.innerHTML = 'Adaptör seç:';
+  var l = J(P.devices()), box = $('obdDevs'); box.innerHTML = '';
+  if (!l.length) box.innerHTML = '<p style="font-size:13px;color:var(--mut);padding:8px 0">Eşleşmiş cihaz yok. Önce Bluetooth ayarlarından OBDII ile eşleştir (1234).</p>';
   l.forEach(function (d) {
     var b = document.createElement('button'); b.className = 'dev' + (d.name === sel ? ' on' : ''); b.textContent = d.name;
-    b.onclick = function () { P.pickObd(d.name); obdDevices(d.name); };
+    b.onclick = function () { P.pickObd(d.name); box.style.display = 'none'; };
     box.appendChild(b);
   });
 }
-var obdOn = true;
-$('obdOn').onclick = function () { obdOn = !obdOn; this.classList.toggle('on', obdOn); P.setObd(obdOn); };
-var shownDevs = false, theme = 0;
+$('chg').onclick = function () { var b = $('obdDevs'); if (b.style.display === 'none') { obdDevices($('adp').textContent); b.style.display = 'block'; } else b.style.display = 'none'; };
+$('go').onclick = function () { running = !running; P.setObd(running); };
 function tick() {
   var s = J(P.state()), c = s.car || {};
-  $('dot').classList.toggle('on', !!s.connected);
-  $('st').textContent = s.connected ? (s.unit || 'Araç') + ' · ' + s.via : s.status || 'Bağlı değil';
-  if (!shownDevs) { shownDevs = true; devices(s.unit); obdDevices(''); obdOn = s.obd !== false; $('obdOn').classList.toggle('on', obdOn); }
-  $('obdSt').textContent = !obdOn ? 'Kapalı' : s.obdOk ? 'Bağlı · ' + (s.obdRpm >= 0 ? s.obdRpm + ' d/d' : '') : (s.obdSt || 'Bekleniyor…');
-  $('s1').className = s.connected ? 'ok' : ''; $('s1').textContent = s.connected ? '✓' : '1';
-  $('s2').className = s.notif ? 'ok' : ''; $('s2').textContent = s.notif ? '✓' : '2';
-  $('s3').className = s.via === 'Wi-Fi' ? 'ok' : ''; $('s3').textContent = s.via === 'Wi-Fi' ? '✓' : '3';
-  if (document.activeElement !== $('code') && s.code) $('code').value = s.code;
-  $('remote').style.opacity = s.connected ? 1 : .45;
+  running = s.obd !== false;
+  $('go').textContent = running ? 'Köprüyü durdur' : 'Köprüyü başlat';
+  $('go').className = running ? 'btn ghost' : 'btn';
+  $('adp').textContent = s.obdName || 'seçilmedi';
+  $('rpm').textContent = s.ecuLive && s.obdRpm >= 0 ? s.obdRpm : '—';
+  $('dEcu').classList.toggle('on', !!s.ecuLive);
+  $('tEcu').textContent = !running ? 'Köprü durdu' : s.ecuLive ? 'Canlı veri geliyor' : (s.obdSt || 'Adaptöre bağlanıyor…');
+  $('dWifi').classList.toggle('on', !!s.unitLive);
+  $('tWifi').textContent = s.unitLive ? 'Bağlı · ' + (s.peer || '') : 'Bekleniyor (araç ekranı erişim noktasına bağlı mı?)';
+  $('addr').textContent = s.addrs || 'Erişim noktası kapalı';
+  $('s5').className = s.notif ? 'ok' : ''; $('s5').textContent = s.notif ? '✓' : '5';
+  $('remote').style.opacity = s.unitLive ? 1 : .45;
   var th = c.theme || 0;
-  if (th !== theme) {
-    theme = th;
-    document.body.className = th === 7 ? 't-ds4' : th === 4 ? 't-panel' : 't-stock';
-  }
+  if (th !== theme) { theme = th; document.body.className = th === 7 ? 't-ds4' : th === 4 ? 't-panel' : 't-stock'; }
   if (th === 4) {
     var r = document.documentElement.style;
     r.setProperty('--pv', c.panelHue || '#56F2FF'); r.setProperty('--pv2', '#2a8f98'); r.setProperty('--pvr', '86,242,255');

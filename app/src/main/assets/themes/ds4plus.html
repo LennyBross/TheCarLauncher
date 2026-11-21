@@ -173,9 +173,12 @@ car.on(function (s) {
   hasCp = !!s.cp;
   var on = !!s.cpOn;
   st.classList.toggle('on', on);
-  var red = s.cpRed || 6500, rr = on && s.cpRpm ? Math.min(1, s.cpRpm / red) : 0;
+  // The real rpm (ECU via the phone) wins; with the bridge set up but silent, show nothing rather than a guess.
+  var bridge = s.link && (s.link.wifi || s.link.addr || s.link.manual);
+  var rpmNow = s.rpm ? s.rpm : bridge ? 0 : (on ? s.cpRpm : 0);
+  var red = s.rpm ? 5000 : (s.cpRed || 6500), rr = rpmNow ? Math.min(1, rpmNow / red) : 0;
   $('stArc').setAttribute('stroke-dasharray', (rr * 216.8).toFixed(1) + ' 400');
-  $('stRpm').textContent = on && s.cpRpm ? s.cpRpm : '';
+  $('stRpm').textContent = rpmNow ? rpmNow : (bridge ? '—' : '');
   $('cpInfo').textContent = !hasCp ? 'Kurmak için dokun' : on ? (s.cpName || 'Motor') + (s.cpRpm ? ' · ' + s.cpRpm + ' d/d' : '') : 'Motor sesi kapalı';
 });
 try { var fc = $('fuelIcon').closest('.c'); fc.style.cursor = 'pointer'; fc.addEventListener('click', function () { call('open', 'obd'); }); } catch (e) {}

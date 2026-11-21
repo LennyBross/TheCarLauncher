@@ -73,6 +73,44 @@ public final class LinkService extends Service implements LocationListener, Obd.
 
     static boolean connected() { return sInstance != null && sInstance.out != null; }
 
+    // ---- bridge status for the phone screen
+    static volatile long rpmAt, unitSeenAt;
+    static volatile String peer = "";
+
+    /** MyDS on the hotspot sent something in the last 3.5 s. */
+    static boolean unitLive() { return connected() && System.currentTimeMillis() - unitSeenAt < 3500; }
+
+    /** A fresh rpm from the ECU (last 1.5 s). */
+    static boolean ecuLive() { return System.currentTimeMillis() - rpmAt < 1500; }
+
+    /** This phone's local addresses (hotspot / Wi-Fi), for typing into MyDS if it does not find the phone. */
+    static String addresses() {
+        StringBuilder b = new StringBuilder();
+        try {
+            for (java.net.NetworkInterface ni : java.util.Collections.list(java.net.NetworkInterface.getNetworkInterfaces())) {
+                if (!ni.isUp() || ni.isLoopback()) continue;
+                String n = ni.getName();
+                if (n.startsWith("rmnet") || n.startsWith("ccmni") || n.startsWith("dummy") || n.startsWith("tun")) continue;
+                for (java.net.InetAddress a : java.util.Collections.list(ni.getInetAddresses())) {
+                    if (a instanceof java.net.Inet4Address && a.isSiteLocalAddress()) {
+                        if (b.length() > 0) b.append("  ");
+                        b.append(a.getHostAddress()).append(':').append(PHONE_PORT);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return b.toString();
+    }
+
+    private final Runnable beat = new Runnable() {
+        public void run() {
+            main.postDelayed(this, 1000);
+            if (out == null) return;
+            try { send(new JSONObject().put("t", "ping").put("ecu", ecuLive())); } catch (Exception ignored) { }
+        }
+    };
+
     @Override
     public IBinder onBind(Intent i) { return null; }
 
@@ -83,6 +121,7 @@ public final class LinkService extends Service implements LocationListener, Obd.
         foreground();
         run = true;
         new Thread(new Runnable() { public void run() { loop(); } }, "link").start();
+        main.postDelayed(beat, 1000);
         new Thread(new Runnable() { public void run() { listen(); } }, "link-in").start();
         discover();
         startLocation();
@@ -101,10 +140,11 @@ public final class LinkService extends Service implements LocationListener, Obd.
         obd = null;
         obdStatus = "";
         obdOk = false;
-        if (!prefs(this).getBoolean("obd", true)) return;
+        if (!prefs(this).getBoolean("obd", true)) { obdStatus = "Köprü durduruldu"; return; }
         if (Obd.pairedAdapter() == null && prefs(this).getString("obdName", "").isEmpty()) { obdStatus = "OBD adaptörü eşleşmemiş"; return; }
         Obd.ctx = getApplicationContext();
         obd = new Obd(this);
+        obd.rpmOnly = true;
         obd.start(Obd.BT, prefs(this).getString("obdName", ""), Obd.STD);
     }
 
@@ -116,6 +156,7 @@ public final class LinkService extends Service implements LocationListener, Obd.
 
     @Override public void onRpm(float r) {
         obdRpm = r;
+        rpmAt = System.currentTimeMillis();
         long now = System.currentTimeMillis();
         if (now - rpmSentAt < 60) return;
         rpmSentAt = now;
@@ -139,6 +180,7 @@ public final class LinkService extends Service implements LocationListener, Obd.
     @Override
     public void onDestroy() {
         run = false;
+        main.removeCallbacks(beat);
         close();
         try { if (disco != null) ((NsdManager) getSystemService(NSD_SERVICE)).stopServiceDiscovery(disco); } catch (Exception ignored) { }
         try { ((LocationManager) getSystemService(LOCATION_SERVICE)).removeUpdates(this); } catch (Exception ignored) { }
@@ -184,6 +226,8 @@ public final class LinkService extends Service implements LocationListener, Obd.
                 while (run) {
                     Socket s = ss.accept();
                     s.setTcpNoDelay(true);
+                    s.setSoTimeout(5000); // MyDS sends every second; silence = Wi-Fi gone
+                    peer = s.getInetAddress() == null ? "" : s.getInetAddress().getHostAddress();
                     inbound = true;
                     close();
                     sock = s;
@@ -197,6 +241,7 @@ public final class LinkService extends Service implements LocationListener, Obd.
                     } catch (Throwable ignored) {
                     } finally {
                         inbound = false;
+                        peer = "";
                         close();
                     }
                 }
@@ -208,7 +253,8 @@ public final class LinkService extends Service implements LocationListener, Obd.
 
     private void loop() {
         while (run) {
-            if (inbound) { sleep(2000); continue; }
+            // The old Bluetooth / discovery route only when a unit was chosen for it.
+            if (inbound || prefs(this).getString("unit", "").isEmpty()) { sleep(2000); continue; }
             try {
                 if (wifiHost != null && prefs(this).getString("code", "").length() == 4) session(true);
                 else session(false);
@@ -261,6 +307,7 @@ public final class LinkService extends Service implements LocationListener, Obd.
         BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8), 65536);
         String line;
         while (run && (line = r.readLine()) != null) {
+            unitSeenAt = System.currentTimeMillis();
             JSONObject o;
             try { o = new JSONObject(line); } catch (Exception e) { continue; }
             switch (o.optString("t")) {

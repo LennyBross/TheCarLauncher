@@ -230,6 +230,7 @@ button{background:none;border:none;padding:0;color:inherit}
  <ellipse cx="230" cy="352" rx="120" ry="16" fill="rgba(255,255,255,.04)"/>
  <text x="230" y="118" text-anchor="middle" font-family="Montserrat" font-style="italic" font-weight="500" font-size="25" letter-spacing="5" fill="#E9E5DC">MY DS</text>
  <text x="230" y="380" text-anchor="middle" font-family="Montserrat" font-style="italic" font-weight="600" font-size="38" letter-spacing="2" fill="#F2EEE6">DS4</text>
+ <text id="rpmD" x="230" y="148" text-anchor="middle" font-family="Montserrat" font-style="italic" font-weight="600" font-size="20" letter-spacing="1" fill="#E8D5B0"></text>
  <text id="kmh" x="0" y="0" font-family="Montserrat" font-size="13" fill="#D8D3CA" text-anchor="middle">km/h</text>
  <g id="needle"><path d="M227.5 6 L232.5 6 L231.5 62 L228.5 62 Z" fill="url(#nd)"/><path d="M228.3 8 L231.7 8 L231 50 L229 50 Z" fill="#ff8b7e" opacity=".7"/></g>
  <text id="spd" x="230" y="160" text-anchor="middle" font-family="Montserrat" font-style="italic" font-weight="600" font-size="20" fill="#cfc9be" opacity=".0">0</text>
@@ -394,6 +395,9 @@ car.on(function (s) {
   hasMaps = !!s.hasMaps;
   $('clock').textContent = s.time || '--:--';
   var out = s.outdoor !== undefined;
+  // Real engine rpm from the ECU (via the phone): shown only while it is fresh.
+  var brg = s.link && (s.link.wifi || s.link.addr || s.link.manual);
+  $('rpmD').textContent = s.rpm ? s.rpm + ' d/d' : brg ? '— d/d' : '';
   $('temp').textContent = out ? Math.round(s.outdoor) + '°C' : (s.temp !== undefined ? s.temp + '°C' : '--°C');
   $('ecoB').style.left = ($('temp').offsetWidth + 56) + 'px';
   $('bt').style.opacity = s.bt ? 1 : 0.3;

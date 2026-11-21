@@ -81,7 +81,8 @@ body.day.t-stock .card{background:#fff}
     <span class="n" style="font-size:3vh">1.6 e-HDi</span>
     <div class="sp"></div>
     <button class="key chip" id="mil" aria-label="Arıza kodları"><svg class="ic" viewBox="0 0 24 24"><path d="M4 10h2V8h3V6h6v2h2l2 3h2v5h-2l-2 3H9l-2-3H4z"/></svg><span id="milT">—</span></button>
-    <span class="chip" id="st"><i></i><span id="stT">OBD</span></span>
+    <button class="key chip" id="cWifi" aria-label="Telefon bağlantısı"><i></i><svg class="ic" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg><span id="tWifi">Telefon</span></button>
+    <span class="chip" id="st"><i></i><span id="stT">ECU</span></span>
   </div>
 
   <div class="card g" id="gRpm"><svg class="arc" viewBox="0 0 100 100"></svg><div class="in">
@@ -100,9 +101,16 @@ body.day.t-stock .card{background:#fff}
 
 <div id="none">
   <svg class="ic big" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="10" rx="2"/><path d="M7 16v3h10v-3M8 9h8M8 12h5"/><path d="M19 2l-2 2M5 2l2 2"/></svg>
-  <b id="noneT">OBD adaptörü yok</b>
-  <p id="noneP">ELM327'yi direksiyonun altındaki OBD soketine tak, kontağı aç. Ünitenin Bluetooth ayarlarından eşleştir (şifre 1234 ya da 0000). MYDS kendisi bağlanır.</p>
-  <button class="key" id="setup">OBD ayarları</button>
+  <b id="noneT">Telefon köprüsü bekleniyor</b>
+  <p id="noneP">Adaptörü telefon okur: S26'da MYDS Köprü'yü başlat, mobil erişim noktasını aç ve bu ekranı o ağa bağla. MYDS telefonu kendisi bulur; bulamazsa adresi gir.</p>
+  <button class="key" id="setup">Telefon adresi</button>
+</div>
+
+<div id="addrM" style="position:fixed;right:2.4vh;top:11vh;z-index:6;display:none;flex-direction:column;gap:1.6vh;width:66vh;padding:2.4vh" class="card">
+  <span style="font-size:2.2vh">Telefon adresi <small style="color:var(--mut)">(MYDS Köprü'de yazan)</small></span>
+  <input id="addrI" type="text" placeholder="boş = kendisi bulur (ör. 192.168.43.1:47322)" style="height:7vh;border-radius:1.6vh;border:none;background:var(--chip);color:var(--fg);font-size:2.6vh;padding:0 2vh;font-family:inherit;box-shadow:inset 0 0 0 1px var(--line)">
+  <span id="addrS" style="font-size:1.9vh;color:var(--mut)"></span>
+  <div style="display:flex;gap:1.6vh"><button class="key chip" id="addrAuto" style="flex:1;justify-content:center">Otomatik</button><button class="key chip" id="addrOk" style="flex:1;justify-content:center;background:var(--a);color:#111">Kaydet</button></div>
 </div>
 
 <div id="sheet">
@@ -192,7 +200,10 @@ function showCodes(list) {
 }
 
 $('back').onclick = function () { call('open', 'themehome'); };
-$('setup').onclick = function () { call('open', 'obdSetup'); };
+$('cWifi').onclick = function (e) { e.stopPropagation(); var m = $('addrM'), on = m.style.display !== 'flex'; m.style.display = on ? 'flex' : 'none'; if (on) $('addrI').value = (car.s.link && car.s.link.manual) || ''; };
+$('addrOk').onclick = function () { call('phoneAddr', $('addrI').value); $('addrM').style.display = 'none'; };
+$('addrAuto').onclick = function () { $('addrI').value = ''; call('phoneAddr', ''); $('addrM').style.display = 'none'; };
+$('setup').onclick = function (e) { $('cWifi').onclick(e); };
 $('mil').onclick = function () { $('sheet').classList.add('on'); };
 $('close').onclick = function () { $('sheet').classList.remove('on'); };
 $('reread').onclick = function () { call('open', 'obdDtc'); $('codes').style.opacity = .4; setTimeout(function () { $('codes').style.opacity = 1; }, 3000); };
@@ -201,9 +212,15 @@ var seenAt = {}, okSince = 0;
 car.on(function (s) {
   document.body.classList.toggle('day', s.night === false);
   var o = s.obd || {}, v = o.v || {}, ok = !!o.ok;
-  $('st').classList.toggle('ok', ok);
-  $('stT').textContent = ok ? 'OBD' : (o.st || 'OBD').replace(/^OBD:?\s*/, '') || 'OBD';
-  var none = !o.on && !ok;
+  var ln = s.link || {}, ecuLive = v.rpm !== undefined;
+  // Two separate lights: the Wi-Fi link to the phone, and fresh data from the ECU.
+  $('cWifi').classList.toggle('ok', !!ln.wifi);
+  $('tWifi').textContent = ln.wifi ? 'Telefon' : 'Telefon yok';
+  $('st').classList.toggle('ok', ecuLive);
+  $('stT').textContent = ecuLive ? 'ECU canlı' : ln.wifi ? (o.st || 'ECU bekleniyor').replace(/^OBD:?\s*/, '') : 'ECU —';
+  $('addrS').textContent = (ln.wifi ? 'Bağlı · ' : '') + (ln.wifiSt || '');
+  var bridge = !!(ln.wifi || ln.addr || ln.manual);
+  var none = !o.on && !ok && !bridge;
   $('none').classList.toggle('on', none);
   $('main').style.visibility = none ? 'hidden' : 'visible';
   if (!o.on && o.st) { $('noneT').textContent = 'OBD bağlanamadı'; }

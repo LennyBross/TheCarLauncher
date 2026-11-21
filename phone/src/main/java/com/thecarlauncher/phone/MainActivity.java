@@ -39,11 +39,11 @@ public final class MainActivity extends Activity {
         web.addJavascriptInterface(new Bridge(), "P");
         web.loadUrl("file:///android_asset/phone.html");
         setContentView(web);
-        askPermissions();
-        if (!LinkService.prefs(this).getString("unit", "").isEmpty()) LinkService.start(this);
+        if (askPermissions()) LinkService.start(this);
     }
 
-    private void askPermissions() {
+    /** true when everything is granted already (then the bridge may start right away). */
+    private boolean askPermissions() {
         List<String> want = new ArrayList<>();
         want.add(Manifest.permission.ACCESS_FINE_LOCATION);
         if (Build.VERSION.SDK_INT >= 31) want.add(Manifest.permission.BLUETOOTH_CONNECT);
@@ -51,11 +51,13 @@ public final class MainActivity extends Activity {
         List<String> miss = new ArrayList<>();
         for (String p : want) if (checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED) miss.add(p);
         if (!miss.isEmpty()) requestPermissions(miss.toArray(new String[0]), 1);
+        return miss.isEmpty();
     }
 
     @Override
     public void onRequestPermissionsResult(int rc, String[] p, int[] r) {
-        if (!LinkService.prefs(this).getString("unit", "").isEmpty()) {
+        boolean bt = Build.VERSION.SDK_INT < 31 || checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+        if (bt) {
             stopService(new Intent(this, LinkService.class));
             LinkService.start(this);
         }
@@ -70,6 +72,9 @@ public final class MainActivity extends Activity {
                 o.put("notif", MediaWatch.enabled(MainActivity.this));
                 o.put("unit", LinkService.prefs(MainActivity.this).getString("unitName", ""));
                 o.put("code", LinkService.prefs(MainActivity.this).getString("code", ""));
+                o.put("unitLive", LinkService.unitLive()).put("peer", LinkService.peer).put("ecuLive", LinkService.ecuLive())
+                        .put("addrs", LinkService.addresses()).put("obdName", LinkService.prefs(MainActivity.this).getString("obdName", ""))
+                        .put("svc", LinkService.sInstance != null);
                 o.put("obd", LinkService.prefs(MainActivity.this).getBoolean("obd", true)).put("obdSt", LinkService.obdStatus).put("obdOk", LinkService.obdOk)
                         .put("obdRpm", Math.round(LinkService.obdRpm));
                 JSONObject u = LinkService.unitState;
