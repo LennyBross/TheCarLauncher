@@ -37,3 +37,35 @@ sound.wav      (16 bit PCM, mono ya da stereo, herhangi bir örnekleme hızı)
 - Her bankta en az birkaç nokta olmalı; ne kadar sık (ör. her 25–100 ms) o kadar akıcı.
 - Uygulama istenen devre en yakın noktalardan kısa taneler alıp perdesini kaydırarak harmanlar.
 - Dosya adı paketin kimliğidir: aynı adla yeniden yüklenen zip eskisinin yerine geçer.
+
+## Yeni format: 4 döngü paketi (`"type": "loops"`)
+
+Teknik: [markeasting/engine-audio](https://github.com/markeasting/engine-audio) (MIT) — CataraPatara'da Java'ya yeniden yazıldı
+(`catarapatara/.../engine/LoopEngine.java`). OBD'den gelen gerçek devir ve gaz pedalıyla en doğal sonucu veren format budur.
+
+Zip içinde `pack.json` ve 16-bit WAV dosyaları (mono ya da stereo):
+
+```json
+{
+  "type": "loops",
+  "name": "Örnek V8",
+  "sub": "4 döngü",
+  "idle": 850,
+  "redline": 6500,
+  "pitchFactor": 0.2,
+  "crossfade": [3000, 6500],
+  "layers": {
+    "on_low":   { "file": "on_low.wav",   "rpm": 1000, "volume": 0.5 },
+    "off_low":  { "file": "off_low.wav",  "rpm": 1000, "volume": 0.5 },
+    "on_high":  { "file": "on_high.wav",  "rpm": 5000, "volume": 0.5 },
+    "off_high": { "file": "off_high.wav", "rpm": 5000, "volume": 0.5 },
+    "limiter":  { "file": "limiter.wav",  "rpm": 0,    "volume": 0.4 }
+  }
+}
+```
+
+- `on_*` gazda (yük altında), `off_*` gaz kesikken kaydedilmiş, **sabit devirde, sorunsuz döngü yapan** kısa kayıtlar (1–4 sn).
+- `rpm`: döngünün kaydedildiği devir. Ses, aracın devrine `cents = (devir − rpm) × pitchFactor` kadar perdelenir.
+- `crossfade`: düşük ↔ yüksek döngü geçişinin devir aralığı. Gaz pedalı on ↔ off karışımını belirler.
+- Sadece `on_low` zorunlu; eksik katmanların yerine diğerleri kullanılır.
+- Sadece kendi kaydın ya da açık lisanslı sesler. Oyunlardan çıkarılmış ses bankaları (ör. dosya adında `{GUID}` olanlar) kullanılamaz.

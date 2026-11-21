@@ -189,7 +189,11 @@ public final class SoundPacks {
                 }
             }
             JSONObject j = new JSONObject(read(new File(tmp, "pack.json")));
-            if (!new File(tmp, j.optString("file", "sound.wav")).isFile()) throw new java.io.IOException("no audio");
+            if ("loops".equals(j.optString("type"))) {
+                JSONObject ly = j.optJSONObject("layers");
+                JSONObject first = ly == null ? null : ly.optJSONObject("on_low");
+                if (first == null || !new File(tmp, first.optString("file")).isFile()) throw new java.io.IOException("no on_low loop");
+            } else if (!new File(tmp, j.optString("file", "sound.wav")).isFile()) throw new java.io.IOException("no audio");
             String name = j.optString("name", "Ses paketi");
             String id = forcedId != null ? forcedId : name.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
             if (id.isEmpty()) id = "pack" + System.currentTimeMillis();
@@ -208,6 +212,7 @@ public final class SoundPacks {
         try {
             File d = new File(root(c), id.substring(5));
             JSONObject j = new JSONObject(read(new File(d, "pack.json")));
+            if ("loops".equals(j.optString("type"))) return loadLoops(d, j, outRate);
             File wav = new File(d, j.optString("file", "sound.wav"));
             int[] sr = new int[1];
             short[] pcm = readWav(wav, sr);
@@ -224,10 +229,36 @@ public final class SoundPacks {
     }
 
     public static final class Loaded {
-        public final GrainEngine engine;
+        public final PackEngine engine;
         public final float idle, redline;
         public final String name, sub;
-        Loaded(GrainEngine e, float i, float r, String n, String s) { engine = e; idle = i; redline = r; name = n; sub = s; }
+        Loaded(PackEngine e, float i, float r, String n, String s) { engine = e; idle = i; redline = r; name = n; sub = s; }
+    }
+
+    /**
+     * Four-loop pack (markeasting/engine-audio style):
+     * {"type":"loops","name":…,"idle":850,"redline":6500,"pitchFactor":0.2,"crossfade":[3000,6500],
+     *  "layers":{"on_low":{"file":"on_low.wav","rpm":1000,"volume":0.5},"off_low":{…},"on_high":{…},
+     *            "off_high":{…},"limiter":{…}}}
+     */
+    private static Loaded loadLoops(File d, JSONObject j, int outRate) throws Exception {
+        JSONObject ly = j.getJSONObject("layers");
+        float idle = (float) j.optDouble("idle", 850), red = (float) j.optDouble("redline", 6500);
+        JSONArray cf = j.optJSONArray("crossfade");
+        float from = cf != null ? (float) cf.optDouble(0, 3000) : 3000, to = cf != null ? (float) cf.optDouble(1, 6500) : 6500;
+        LoopEngine e = new LoopEngine(layer(d, ly, "on_low", outRate), layer(d, ly, "off_low", outRate),
+                layer(d, ly, "on_high", outRate), layer(d, ly, "off_high", outRate), layer(d, ly, "limiter", outRate),
+                from, to, (float) j.optDouble("pitchFactor", .2), red);
+        return new Loaded(e, idle, red, j.optString("name", "Ses paketi"), j.optString("sub", "4 döngü"));
+    }
+
+    private static LoopEngine.Layer layer(File d, JSONObject ly, String key, int outRate) throws Exception {
+        JSONObject o = ly.optJSONObject(key);
+        if (o == null) return null;
+        int[] sr = new int[1];
+        short[] pcm = readWav(new File(d, o.optString("file", key + ".wav")), sr);
+        if (pcm == null || pcm.length < 64) return null;
+        return new LoopEngine.Layer(pcm, sr[0], outRate, (float) o.optDouble("rpm", 1000), (float) o.optDouble("volume", 1));
     }
 
     private static float[][] bank(JSONObject j, String key) {

@@ -11,7 +11,7 @@ import java.util.Random;
  *
  * Pure Java (no Android).
  */
-public final class GrainEngine {
+public final class GrainEngine implements PackEngine {
     public static final int IDLE = 0, ON = 1, OFF = 2;
 
     private final short[] src;
@@ -53,6 +53,7 @@ public final class GrainEngine {
         if (gains != null) for (int b = 0; b < 3 && b < gains.length; b++) bankGain[b] = gains[b];
     }
 
+    @Override
     public void render(float[] out, int off, int len, float rpm, float load) {
         // Bank weights, smoothed
         float idleW = Math.max(0, Math.min(1, (idleRpm * 1.55f - rpm) / (idleRpm * .55f)));
