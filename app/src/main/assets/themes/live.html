@@ -23,6 +23,12 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;strok
 .card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);backdrop-filter:blur(6px)}
 #stage{position:fixed;inset:0}
 #c{position:absolute;left:0;top:7vh;width:100%;height:65vh}
+#spin{position:absolute;left:24%;top:12vh;width:52%;height:56vh;object-fit:contain;display:none;filter:drop-shadow(0 3vh 3vh rgba(0,0,0,.6))}
+#glowF,#glowR{position:absolute;top:38vh;width:30vh;height:18vh;border-radius:50%;opacity:0;transition:opacity .3s;pointer-events:none;display:none}
+#glowF{background:radial-gradient(closest-side,rgba(255,236,200,.5),transparent)}#glowR{background:radial-gradient(closest-side,rgba(255,40,30,.45),transparent)}
+.blk{position:absolute;top:34vh;font-size:9vh;color:#FFB341;text-shadow:0 0 3vh #FF8A00;opacity:0;display:none;pointer-events:none}
+#blkL{left:27%}#blkR{right:27%}
+body.photo #spin,body.photo #glowF,body.photo #glowR,body.photo .blk{display:block}body.photo #c{opacity:0}
 /* top */
 .top{position:fixed;left:3vh;right:3vh;top:2vh;height:6vh;display:flex;align-items:center;gap:2vh;font-size:2.2vh;color:var(--mut)}
 .top .t{font-size:3.4vh;color:var(--fg)}
@@ -79,7 +85,7 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;strok
 </style>
 </head>
 <body>
-<div id="stage"><canvas id="c"></canvas></div>
+<div id="stage"><canvas id="c"></canvas><img id="spin" alt=""><div id="glowF"></div><div id="glowR"></div><div class="blk" id="blkL">◀</div><div class="blk" id="blkR">▶</div></div>
 
 <div class="top">
   <span class="t n" id="time">--:--</span><span id="date"></span>
@@ -303,7 +309,7 @@ function init3D() {
         ms.forEach(function (m, k) {
           var nm = m.name || '';
           if (nm === 'body') {
-            var pm = new THREE.MeshPhysicalMaterial({ color: +(store('myds.colorHex') || 0xf2f1ee), metalness: .3, roughness: .26, clearcoat: 1, clearcoatRoughness: .04, side: THREE.DoubleSide });
+            var pm = new THREE.MeshStandardMaterial({ color: +(store('myds.colorHex') || 0xf2f1ee), metalness: .3, roughness: .3, side: THREE.DoubleSide });   // Standard: the unit's GPU fails the clearcoat shader
             if (Array.isArray(o.material)) o.material[k] = pm; else o.material = pm;
           }
           // Tinted windows (black film): the greenhouse glass goes nearly opaque and dark
@@ -311,7 +317,7 @@ function init3D() {
           if (m.transparent) { m.depthWrite = false; o.renderOrder = 2; }
         });
       });
-      S.add(model);
+      S.add(model); window.__shown3d = true;
     });
   }
   load();
@@ -362,13 +368,62 @@ function init3D() {
     pool.material.opacity = ease(pool.material.opacity, low ? (high ? .16 : .09) : 0, .1);
     pool.position.x = high ? 3.6 : 3.0;
     ring.material.opacity = .25 + .15 * Math.sin(t * 1.4);
+    if (window.__photo) return;
     R.render(S, cam);
+    fpsTick(now);
   }
   requestAnimationFrame(frame);
   three = true;
 }
 var focusOn = function () {};
-try { init3D(); } catch (e) { $('c').style.display = 'none'; }
+// ---- photo spin: where WebGL cannot draw the car (shader error, too slow, no model after 10 s)
+// the 48 pre-rendered frames (7.5° apart; frame 0 = front, 12 = left side) stand in for it.
+var phAz = 35, phWant = 35, phIdle = 0;
+function photoFocus(k) {
+  var V = { doorFL: 75, doorRL: 100, doorFR: -75, doorRR: -100, trunk: 150, hood: 20, low: 15, high: 15, park: 30, turnL: 60, turnR: -60, hazard: 0 };
+  if (V[k] !== undefined) { phWant = V[k]; phIdle = Date.now(); }
+}
+function toPhoto(why) {
+  if (window.__photo) return;
+  window.__photo = why || 'yes'; document.body.classList.add('photo'); focusOn = photoFocus;
+  var pics = [];
+  for (var i = 0; i < 48; i++) { var im = new Image(); im.src = '3d/home/h' + ('0' + i).slice(-2) + '.webp'; pics.push(im); }
+  var drag = null;
+  $('spin').addEventListener('pointerdown', function (e) { drag = { x: e.clientX, a: phWant }; });
+  window.addEventListener('pointermove', function (e) { if (drag) { phWant = drag.a - (e.clientX - drag.x) / 3; phIdle = Date.now(); } });
+  window.addEventListener('pointerup', function () { drag = null; });
+  setInterval(function () {
+    if (window.__asleep) return;
+    if (Date.now() - phIdle > 9000 && !drag) phWant += 0.6;
+    phAz += (phWant - phAz) * .15;
+    var f = ((Math.round(phAz / 7.5) % 48) + 48) % 48;
+    var src = '3d/home/h' + ('0' + f).slice(-2) + '.webp';
+    if ($('spin').getAttribute('src') !== src) $('spin').setAttribute('src', src);
+    // where the nose / tail are on screen for this angle: + = right
+    var a = phAz * Math.PI / 180, nose = Math.sin(a);           // left side view (90°) → nose right
+    var low = body.low || body.high, park = body.park || low, blink = Math.sin(Date.now() / 1000 * Math.PI * 3) > 0;
+    $('glowF').style.left = (50 + nose * 22 - 11) + '%'; $('glowR').style.left = (50 - nose * 22 - 11) + '%';
+    $('glowF').style.opacity = low ? (body.high ? 1 : .7) : 0; $('glowR').style.opacity = park ? .8 : 0;
+    $('blkL').style.opacity = (body.turnL || body.hazard) && blink ? 1 : 0;
+    $('blkR').style.opacity = (body.turnR || body.hazard) && blink ? 1 : 0;
+  }, 50);
+}
+var fpsN = 0, fpsT = 0, slow = 0;
+function fpsTick(now) {
+  if (!window.__shown3d) return;
+  fpsN++; if (!fpsT) fpsT = now;
+  if (now - fpsT > 1000) { var fps = fpsN * 1000 / (now - fpsT); fpsN = 0; fpsT = now; slow = fps < 10 ? slow + 1 : 0; if (slow >= 4) toPhoto('fps'); }
+}
+(function () {
+  var ce = console.error;
+  console.error = function () {
+    try { var m = [].join.call(arguments, ' '); if (/Shader Error|shader not compiled|VALIDATE_STATUS|Program Info Log/i.test(m)) setTimeout(function () { toPhoto('shader'); }, 0); } catch (e) {}
+    return ce.apply(console, arguments);
+  };
+})();
+if (store('myds.3d') === 'sprites') toPhoto('pref');
+else { try { init3D(); } catch (e) { toPhoto('error'); } }
+setTimeout(function () { if (!window.__shown3d) toPhoto('slow'); }, 10000);
 window.__sleep = function (v) { window.__asleep = v; };
 
 // ---------------------------------------------------------------- learning sheet
