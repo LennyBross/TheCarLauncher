@@ -15,6 +15,34 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
 .kv{display:flex;flex-direction:column;line-height:1.15;white-space:nowrap}.kv b{font-size:3.06vh}.kv span{font-size:1.67vh;color:var(--muted)}
 .sep{width:1px;height:4.44vh;background:var(--sep);flex-shrink:0}
 .mb{border:none;border-radius:50%;background:transparent;color:var(--fg);display:flex;align-items:center;justify-content:center}
+
+/* ---- Noir: deep black with grain, frosted glass, white light. Day = the same in white. ---- */
+:root{--a:#FFFFFF;--as:rgba(255,255,255,.12);--bg:#050505;--fg:#F5F5F5;--card:rgba(255,255,255,.055);--muted:rgba(255,255,255,.52);--track:rgba(255,255,255,.10);--stage:rgba(255,255,255,.03);--sep:rgba(255,255,255,.08);--edge:rgba(255,255,255,.14);--glow:rgba(255,255,255,.10)}
+body.day{--a:#0A0A0A;--as:rgba(0,0,0,.08);--bg:#ECECEC;--fg:#0A0A0A;--card:rgba(255,255,255,.55);--muted:rgba(0,0,0,.5);--track:rgba(0,0,0,.08);--stage:rgba(255,255,255,.35);--sep:rgba(0,0,0,.08);--edge:rgba(255,255,255,.9);--glow:rgba(0,0,0,.06)}
+html{background:var(--bg)}
+body{background:
+  radial-gradient(60vw 60vh at 78% 30%,rgba(255,255,255,.075),transparent 70%),
+  radial-gradient(50vw 50vh at 12% 95%,rgba(255,255,255,.05),transparent 70%),
+  repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 7px),
+  var(--bg) !important}
+body.day{background:
+  radial-gradient(60vw 60vh at 78% 30%,rgba(255,255,255,.9),transparent 70%),
+  radial-gradient(50vw 50vh at 12% 95%,rgba(0,0,0,.05),transparent 70%),
+  repeating-linear-gradient(135deg,rgba(0,0,0,.025) 0 2px,transparent 2px 7px),
+  var(--bg) !important}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.16;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E")}
+.c,.dock,#carBox{background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 45%,rgba(255,255,255,.035)) ,var(--card) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(120%);backdrop-filter:blur(18px) saturate(120%);
+  box-shadow:inset 0 1px 0 var(--edge),inset 0 0 0 1px rgba(255,255,255,.06),0 2vh 5vh rgba(0,0,0,.45) !important}
+body.day .c,body.day .dock,body.day #carBox{background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.45)) !important;box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(0,0,0,.06),0 2vh 4vh rgba(0,0,0,.10) !important}
+#carBox::before{content:'';position:absolute;left:10%;right:10%;bottom:8%;height:18%;border-radius:50%;background:radial-gradient(closest-side,var(--glow),transparent);pointer-events:none}
+.seg button.on{background:var(--fg) !important;color:var(--bg) !important}
+#start .arc{filter:drop-shadow(0 0 1vh rgba(255,255,255,.55))}
+#start.on .cap{box-shadow:inset 0 0 0 1px var(--a),0 0 4vh rgba(255,255,255,.18),0 1.4vh 3vh rgba(0,0,0,.45) !important}
+#start .cap{background:radial-gradient(circle at 50% 22%,rgba(255,255,255,.22),rgba(255,255,255,.03) 62%),rgba(10,10,10,.6) !important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+body.day #start .cap{background:radial-gradient(circle at 50% 22%,#fff,rgba(255,255,255,.6) 62%) !important}
+.sg{letter-spacing:-.05vh}
 </style>
 </head>
 <body>
@@ -36,7 +64,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
 </div>
 <div style="flex:1;display:flex;gap:2.22vh;min-height:0">
 <div id="map" style="flex:1;min-width:0;border-radius:3.33vh;background:#121821;position:relative;overflow:hidden">
-<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true"><rect width="800" height="600" fill="#121821"/><path d="M-20 140 L820 90" stroke="#232C38" stroke-width="18"/><path d="M-20 420 L820 470" stroke="#232C38" stroke-width="22"/><path d="M180 -20 L230 620" stroke="#232C38" stroke-width="16"/><path d="M560 -20 L520 620" stroke="#232C38" stroke-width="20"/><path d="M-20 290 C200 260 360 330 820 280" stroke="#1C2430" stroke-width="10" fill="none"/><path d="M380 620 C390 420 420 300 540 200 C600 150 620 110 640 -20" stroke="#5CC8B0" stroke-width="12" fill="none" stroke-linecap="round"/><circle cx="388" cy="520" r="20" fill="#5CC8B0" opacity=".25"/><polygon points="388,500 402,532 388,524 374,532" fill="#fff"/></svg>
+<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true"><rect width="800" height="600" fill="#0b0b0b"/><path d="M-20 140 L820 90" stroke="#1d1d1d" stroke-width="18"/><path d="M-20 420 L820 470" stroke="#1d1d1d" stroke-width="22"/><path d="M180 -20 L230 620" stroke="#1d1d1d" stroke-width="16"/><path d="M560 -20 L520 620" stroke="#1d1d1d" stroke-width="20"/><path d="M-20 290 C200 260 360 330 820 280" stroke="#161616" stroke-width="10" fill="none"/><path d="M380 620 C390 420 420 300 540 200 C600 150 620 110 640 -20" stroke="#FFFFFF" stroke-width="12" fill="none" stroke-linecap="round"/><circle cx="388" cy="520" r="20" fill="#FFFFFF" opacity=".2"/><polygon points="388,500 402,532 388,524 374,532" fill="#fff"/></svg>
 <div style="position:absolute;top:2.78vh;left:2.78vh;width:min(47.22vh,40vw);border-radius:2.78vh;background:var(--a);color:#0B0E13;padding:2.5vh 3.06vh;display:flex;align-items:center;gap:2.22vh">
 <svg id="turnIcon" style="width:6.67vh;height:6.67vh;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V5"/><path d="M6 11l6-6 6 6"/></svg>
 <div style="display:flex;flex-direction:column;min-width:0"><span class="sg" style="font-size:4.72vh;line-height:1.1" id="turnDist">Rota yok</span><span style="font-size:2.5vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="turnName">Haritaya dokun</span></div>
@@ -61,7 +89,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
 </div>
 <script src="common.js"></script>
 <script>
-var SRC_COL = { spotify: '#1F9D55', ytmusic: '#D93636', youtube: '#C62828', bt: '#2F6FED', radio: '#C98A3A', own: '#5CC8B0', app: '#5A6B85' };
+var SRC_COL = { spotify: '#1F9D55', ytmusic: '#D93636', youtube: '#C62828', bt: '#2F6FED', radio: '#C98A3A', own: '#FFFFFF', app: '#5A6B85' };
 function paintSrc(s) {
   var c = SRC_COL[s.srcKind] || '#5A6B85';
   $('srcDot').style.background = c; $('art').style.background = c;
@@ -87,7 +115,7 @@ car.on(function (s) {
   paintSrc(s);
   $('clock').textContent = s.time || '--:--';
   var pct = s.fuelLeft !== undefined && s.tank ? Math.round(s.fuelLeft / s.tank * 100) : null;
-  var low = pct !== null && pct <= 15, col = low ? '#F2994A' : '#5CC8B0';
+  var low = pct !== null && pct <= 15, col = low ? '#F2994A' : (document.body.classList.contains('day') ? '#0A0A0A' : '#FFFFFF');
   $('bar').style.width = (pct || 0) + '%'; $('bar').style.background = col; $('fuelIcon').style.color = col;
   $('liters').textContent = s.fuelLeft !== undefined ? num(s.fuelLeft, 1) + ' L' : '— L'; $('liters').style.color = col;
   $('pct').textContent = 'Depoda' + (pct !== null ? ' · %' + pct : '');
