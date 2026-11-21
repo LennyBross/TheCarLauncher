@@ -38,12 +38,12 @@ import java.util.Locale;
  */
 public class ThemeScreen extends Screen {
     public static final String P_THEME = "home_theme", P_PREV = "home_theme_prev";
-    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7, STOCK = 8;
+    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7, STOCK = 8, LIVE = 9;
     /** The themes offered in Settings (ids into NAMES). */
-    public static final int[] OFFERED = {STOCK, DS4PLUS, PANEL};
+    public static final int[] OFFERED = {LIVE, STOCK, DS4PLUS, PANEL};
     public static final String[][] NAMES = {
             {"Klasična", "Classic"}, {"Moderna", "Modern"}, {"Retro", "Retro"}, {"Pilot", "Pilot"}, {"Panel", "Panel"},
-            {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}, {"Stock", "Stock"}};
+            {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}, {"Stock", "Stock"}, {"DS Live", "DS Live"}};
     public static final String PKG_MAPS = "com.google.android.apps.maps", PKG_SPOTIFY = "com.spotify.music",
             PKG_YTMUSIC = "com.google.android.apps.youtube.music", PKG_YOUTUBE = "com.google.android.youtube";
     private static final Locale TR = new Locale("tr", "TR");
@@ -112,7 +112,7 @@ public class ThemeScreen extends Screen {
     public static int current(Context c) {
         int t = Prefs.integer(c, P_THEME, -1);
         // Only DS4+, Panel and Stock are offered now; anything else moves to Stock.
-        if (t != DS4PLUS && t != PANEL && t != STOCK) {
+        if (t != DS4PLUS && t != PANEL && t != STOCK && t != LIVE) {
             t = STOCK;
             Prefs.put(c, P_THEME, t);
             Prefs.put(c, ModernScreen.P_MODERN, false);
@@ -128,7 +128,7 @@ public class ThemeScreen extends Screen {
     public static Screen create(LauncherActivity act) {
         int t = current(act);
         if (t == MODERN) return new ModernScreen(act);
-        if (t >= RETRO && t <= STOCK) return new ThemeScreen(act, t);
+        if (t >= RETRO && t <= LIVE) return new ThemeScreen(act, t);
         return new MenuScreen(act);
     }
 
@@ -139,6 +139,7 @@ public class ThemeScreen extends Screen {
         switch (theme) {
             case DRIVE: return "drive.html";
             case DS4PLUS: return "ds4plus.html";
+            case LIVE: return "live.html";
             case STOCK: return "stock.html";
             default: return "panel.html";
         }
@@ -246,6 +247,22 @@ public class ThemeScreen extends Screen {
     // Android 8.1 cannot embed another app, but it has free-form windows: Google Maps opens in a
     // window on the left, our panel (music, next turn, keys) floats on the right above everything.
     // Without free-form support Maps opens full screen and the panel still floats on its right.
+
+    private android.speech.tts.TextToSpeech tts;
+    private boolean ttsReady;
+
+    private void speak(final String text) {
+        if (tts == null) {
+            tts = new android.speech.tts.TextToSpeech(act.getApplicationContext(), new android.speech.tts.TextToSpeech.OnInitListener() {
+                public void onInit(int st) {
+                    ttsReady = st == android.speech.tts.TextToSpeech.SUCCESS;
+                    if (ttsReady) { tts.setLanguage(new Locale("tr", "TR")); tts.speak(text, android.speech.tts.TextToSpeech.QUEUE_ADD, null, "b"); }
+                }
+            });
+            return;
+        }
+        if (ttsReady) tts.speak(text, android.speech.tts.TextToSpeech.QUEUE_ADD, null, "b" + System.currentTimeMillis());
+    }
 
     private WebView panel;
     private Bridge bridge;
@@ -414,7 +431,20 @@ public class ThemeScreen extends Screen {
             o.put("pos", com.thecarlauncher.util.PhoneLink.position() / 1000).put("dur", com.thecarlauncher.util.PhoneLink.dur / 1000).put("artId", com.thecarlauncher.util.PhoneLink.artId);
             o.put("srcLabel", com.thecarlauncher.util.PhoneLink.app_.isEmpty() ? "Telefon" : com.thecarlauncher.util.PhoneLink.app_).put("srcKind", "phone");
         }
- // Phone bridge: Wi-Fi link and ECU freshness, shown separately.
+        // Doors, boot, bonnet, lights, indicators (learned from the CAN box frames)
+        o.put("body", com.thecarlauncher.util.CarBody.json());
+        // Gear from road speed / engine rpm (DS4 1.6 e-HDi, 6-speed: km/h per 1000 rpm)
+        if (o.has("rpm") && o.has("speed")) {
+            double r = o.optDouble("rpm"), v = o.optDouble("speed");
+            if (r > 600 && v > 4) {
+                double k = v / (r / 1000.0);
+                double[] G = {8.2, 14.6, 22.4, 30.8, 39.0, 47.5};
+                int best = 0; double bd = 1e9;
+                for (int g = 0; g < G.length; g++) { double d = Math.abs(Math.log(k / G[g])); if (d < bd) { bd = d; best = g; } }
+                o.put("gearObd", bd < 0.12 ? String.valueOf(best + 1) : "N");
+            } else if (r > 300) o.put("gearObd", "N");
+        }
+        // Phone bridge: Wi-Fi link and ECU freshness, shown separately.
         com.thecarlauncher.util.ObdHub obh = com.thecarlauncher.util.ObdHub.get();
         o.put("link", new JSONObject().put("wifi", com.thecarlauncher.util.PhoneLink.connected())
                 .put("wifiSt", com.thecarlauncher.util.PhoneLink.dialStatus).put("addr", com.thecarlauncher.util.PhoneLink.dialAddr)
@@ -564,6 +594,7 @@ public class ThemeScreen extends Screen {
                         case "minimal": case "drive": load("minimal.html"); break;
                         case "obd": load("obd.html"); break;
                         case "remote": load("destek.html"); break;
+                        case "pavyon": load("pavyon.html"); break;
                         case "obdDtc": { com.thecarlauncher.util.ObdHub h = com.thecarlauncher.util.ObdHub.get(); if (h != null) h.readDtc(); break; }
                         case "obdSetup": com.thecarlauncher.util.CanLive.openCp(act); break;
                         case "engine":
@@ -788,6 +819,22 @@ public class ThemeScreen extends Screen {
 
         @JavascriptInterface
         public void remoteSetup(boolean open) { if (open) com.thecarlauncher.util.RemoteSupport.openSetup(act); else com.thecarlauncher.util.RemoteSupport.closeSetup(); }
+
+        // ---- body learning (live.html)
+        @JavascriptInterface
+        public void bodyLearnStart() { com.thecarlauncher.util.CarBody.learnStart(); }
+
+        @JavascriptInterface
+        public String bodyLearn(String field) { return com.thecarlauncher.util.CarBody.learn(field); }
+
+        @JavascriptInterface
+        public void bodyForget() { com.thecarlauncher.util.CarBody.forget(); }
+
+        /** Speaks a short Turkish sentence (door open, lights on...). */
+        @JavascriptInterface
+        public void say(final String text) {
+            main.post(new Runnable() { public void run() { speak(text); } });
+        }
 
         /** Adapter search on the unit (classic + BLE, unpaired too). */
         @JavascriptInterface

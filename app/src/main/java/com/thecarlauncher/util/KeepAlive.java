@@ -35,6 +35,7 @@ public class KeepAlive extends Service {
     public void onCreate() {
         super.onCreate();
         try { ObdHub.start(this); } catch (Throwable ignored) { }
+        try { CarBody.start(this); } catch (Throwable ignored) { }
         try { RemoteSupport.start(this); } catch (Throwable ignored) { }
         try { AutoReturn.ensureAccess(this); } catch (Throwable ignored) { }
         try {

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta id="stockcss">
+<title>Pavyon</title>
+<style>
+/* Pavyon modu: a dim night-club in the car. Spinning disco ball throwing light spots, red /
+   purple / green sweeping beams, fog creeping in from the sides, flickering neon signs, and now
+   and then a flaming fruit platter with sparklers. All drawn here (canvas + CSS), no pictures. */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#050208;overflow:hidden;user-select:none;font-family:'Montserrat',sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+.neon{position:fixed;font-weight:700;font-style:italic;letter-spacing:.3vh;white-space:nowrap;pointer-events:none}
+.flick{animation:flick 6s infinite}
+@keyframes flick{0%,18%,22%,62%,64%,100%{opacity:1}20%,63%{opacity:.25}}
+#n1{left:50%;transform:translateX(-50%);bottom:24vh;font-size:11vh;color:#ffd6f4;text-shadow:0 0 1vh #ff3dd2,0 0 3vh #ff3dd2,0 0 7vh #ff007a,0 0 12vh #ff007a}
+#n2{left:4vh;top:30vh;font-size:4.6vh;color:#d8ffe8;text-shadow:0 0 1vh #2dff8a,0 0 3vh #00e06a,0 0 7vh #00b050;transform:rotate(-6deg)}
+#n3{right:4vh;top:28vh;font-size:4.2vh;color:#ffe9c8;text-shadow:0 0 1vh #ffae3d,0 0 3vh #ff7a00,0 0 7vh #ff5000;transform:rotate(5deg)}
+#n4{left:50%;transform:translateX(-50%);bottom:15vh;font-size:3.4vh;color:#e6dcff;text-shadow:0 0 1vh #9d6bff,0 0 3vh #7a3dff,0 0 6vh #5a1dff}
+#rose{position:fixed;left:6vh;bottom:6vh;width:16vh;height:16vh;filter:drop-shadow(0 0 1vh #ff2050) drop-shadow(0 0 3vh #ff0040)}
+#glass{position:fixed;right:6vh;bottom:6vh;width:13vh;height:17vh;filter:drop-shadow(0 0 1vh #9ff) drop-shadow(0 0 3vh #3df)}
+#song{position:fixed;left:50%;transform:translateX(-50%);bottom:4vh;font-size:2.6vh;color:#fff;text-shadow:0 0 1vh #ff3dd2,0 0 2vh #ff007a;max-width:70vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#back{position:fixed;left:2.4vh;top:2.4vh;width:7vh;height:7vh;border-radius:50%;border:none;background:rgba(255,255,255,.08);color:#fff;font-size:3vh;z-index:5}
+#plateMsg{position:fixed;left:50%;top:14vh;transform:translateX(-50%);font-size:5vh;font-weight:700;font-style:italic;color:#fff2b0;text-shadow:0 0 1vh #ffb020,0 0 3vh #ff6a00,0 0 6vh #ff3000;opacity:0;transition:opacity .6s;white-space:nowrap}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="neon flick" id="n1">PAVYON</div>
+<div class="neon" id="n2" style="animation:flick 9s 2s infinite">Gönül Sofrası</div>
+<div class="neon" id="n3" style="animation:flick 7s 1s infinite">Her Gece Canlı Fasıl</div>
+<div class="neon" id="n4">✦ Hoş geldiniz beyefendi · Masanız hazır ✦</div>
+<svg id="rose" viewBox="0 0 64 64" fill="none" stroke="#ff7aa0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M32 28c-6 0-10-4-10-9 0-4 4-7 8-6 2-4 8-4 10 0 4-1 7 3 6 7-1 5-6 8-14 8z"/><path d="M28 17c2 3 6 3 8 0"/><path d="M32 28v28"/><path d="M32 40c-6-2-10 0-12 4 6 1 10 0 12-4zM32 46c5-3 10-2 12 2-5 2-10 1-12-2z"/>
+</svg>
+<svg id="glass" viewBox="0 0 48 64" fill="none" stroke="#bff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M10 6h28l-3 52H13z"/><path d="M12 26h24"/><path d="M13 34c4 2 8-2 11 0s7 2 11 0" opacity=".7"/>
+</svg>
+<div id="song"></div>
+<div id="plateMsg">🔥 Meyve tabağı geldi! 🔥</div>
+<button id="back" aria-label="Çık">✕</button>
+<script src="common.js"></script>
+<script>
+$('back').onclick = function () { call('open', 'themehome'); };
+var cv = $('c'), g = cv.getContext('2d'), W, H, DPR = Math.min(1, window.devicePixelRatio || 1);
+function size() { W = cv.width = Math.round(innerWidth * DPR); H = cv.height = Math.round(innerHeight * DPR); }
+addEventListener('resize', size); size();
+var playing = false, beat = 0;
+car.on(function (s) {
+  playing = !!s.playing;
+  $('song').textContent = s.title ? '♫ ' + s.title + (s.artist ? ' — ' + s.artist : '') + ' ♫' : '';
+});
+
+// ---- disco ball: facet grid on a sphere, lit by a turning light
+var BALL = { x: .5, y: .17, r: .09 };
+function drawBall(t) {
+  var cx = W * BALL.x, cy = H * BALL.y, R = Math.min(W, H) * BALL.r * 1.6;
+  g.strokeStyle = 'rgba(200,200,220,.5)'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx, 0); g.lineTo(cx, cy - R); g.stroke();
+  var rows = 12, cols = 22, rot = t * .6;
+  for (var i = 0; i < rows; i++) {
+    var la0 = -Math.PI / 2 + i / rows * Math.PI, la1 = la0 + Math.PI / rows;
+    for (var j = 0; j < cols; j++) {
+      var lo0 = j / cols * Math.PI * 2 + rot, lo1 = lo0 + Math.PI * 2 / cols;
+      var mid = (lo0 + lo1) / 2;
+      if (Math.cos(mid) < 0) continue;                     // back side
+      var p = [[la0, lo0], [la0, lo1], [la1, lo1], [la1, lo0]].map(function (a) { return [cx + R * Math.cos(a[0]) * Math.sin(a[1]), cy + R * Math.sin(a[0])]; });
+      var lit = .35 + .65 * Math.abs(Math.sin(mid * 3 + i * 1.7 + t * 2)) * Math.cos(mid);
+      var sp = Math.sin(j * 7.3 + i * 3.1 + t * 5) > .96;
+      g.fillStyle = sp ? '#fff' : 'rgb(' + Math.round(120 + 120 * lit) + ',' + Math.round(110 + 110 * lit) + ',' + Math.round(140 + 115 * lit) + ')';
+      g.beginPath(); g.moveTo(p[0][0], p[0][1]); for (var k = 1; k < 4; k++) g.lineTo(p[k][0], p[k][1]); g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(20,10,30,.6)'; g.lineWidth = 1; g.stroke();
+    }
+  }
+  var hl = g.createRadialGradient(cx - R * .35, cy - R * .35, 0, cx - R * .35, cy - R * .35, R * .9);
+  hl.addColorStop(0, 'rgba(255,255,255,.55)'); hl.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = hl; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
+  return { cx: cx, cy: cy, R: R };
+}
+// ---- light spots thrown around the room by the ball
+var SPOTS = [];
+for (var i = 0; i < 70; i++) SPOTS.push({ a: Math.random() * Math.PI * 2, d: .25 + Math.random() * .9, s: .6 + Math.random() * 1.2, c: ['#fff', '#ffd0ff', '#d0ffe0', '#ffe0c0'][i % 4] });
+// ---- beams from the ceiling corners
+var BEAMS = [{ x: .02, c: [255, 20, 60] }, { x: .98, c: [160, 40, 255] }, { x: .25, c: [20, 255, 120] }, { x: .75, c: [255, 40, 200] }];
+// ---- fog puffs from the sides
+var FOG = [];
+for (var i = 0; i < 18; i++) FOG.push(newFog(Math.random()));
+function newFog(p) { var left = Math.random() < .5; return { x: left ? -.2 + p * .4 : 1.2 - p * .4, y: .55 + Math.random() * .45, r: .18 + Math.random() * .22, v: (left ? 1 : -1) * (.0006 + Math.random() * .0009), o: .05 + Math.random() * .08, hue: [330, 280, 140][Math.floor(Math.random() * 3)] }; }
+// ---- fruit platter with sparklers
+var plate = { t: -1, next: 8 }, sparks = [];
+function drawPlate(t, dt) {
+  if (plate.t < 0) { plate.next -= dt; if (plate.next <= 0) { plate.t = 0; $('plateMsg').style.opacity = 1; } return; }
+  plate.t += dt;
+  var T = plate.t, inT = Math.min(1, T / 1.2), outT = T > 8 ? Math.min(1, (T - 8) / 1.2) : 0;
+  if (T > 9.3) { plate.t = -1; plate.next = 25 + Math.random() * 20; $('plateMsg').style.opacity = 0; return; }
+  var e = 1 - Math.pow(1 - inT, 3);
+  var cx = W * .5, cy = H * (1.25 - .7 * e + .7 * outT), s = Math.min(W, H) * .55;
+  // plate
+  g.save(); g.translate(cx, cy);
+  var pg = g.createRadialGradient(0, -s * .05, s * .1, 0, 0, s * .62); pg.addColorStop(0, '#f4f4f8'); pg.addColorStop(.75, '#b8bcc8'); pg.addColorStop(1, '#6a6e7a');
+  g.fillStyle = pg; g.beginPath(); g.ellipse(0, 0, s * .62, s * .2, 0, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = '#e8d080'; g.lineWidth = 4; g.beginPath(); g.ellipse(0, 0, s * .58, s * .18, 0, 0, Math.PI * 2); g.stroke();
+  // fruit: orange slices, grapes, strawberries, banana, pineapple crown
+  function circ(x, y, r, c) { g.fillStyle = c; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
+  for (var k = 0; k < 5; k++) { var ox = -s * .42 + k * s * .09, oy = -s * .02; circ(ox, oy, s * .06, '#ff9a1a'); circ(ox, oy, s * .045, '#ffc24a'); g.strokeStyle = '#ff9a1a'; g.lineWidth = 2; for (var q = 0; q < 6; q++) { g.beginPath(); g.moveTo(ox, oy); g.lineTo(ox + Math.cos(q) * s * .045, oy + Math.sin(q) * s * .045); g.stroke(); } }
+  for (var k = 0; k < 14; k++) circ(s * .12 + (k % 4) * s * .045, -s * .1 + Math.floor(k / 4) * s * .04, s * .028, k % 2 ? '#7a2a8a' : '#9a3aa8');
+  for (var k = 0; k < 4; k++) { var sx = s * .36 + k * s * .045, sy = -s * .02 + (k % 2) * s * .03; g.fillStyle = '#e01830'; g.beginPath(); g.moveTo(sx - s * .025, sy - s * .02); g.quadraticCurveTo(sx, sy + s * .06, sx + s * .025, sy - s * .02); g.fill(); circ(sx, sy - s * .025, s * .012, '#2a8a2a'); }
+  g.strokeStyle = '#ffe14a'; g.lineWidth = s * .04; g.lineCap = 'round'; g.beginPath(); g.arc(-s * .05, -s * .02, s * .18, Math.PI * 1.1, Math.PI * 1.6); g.stroke();
+  g.fillStyle = '#2f9a3a'; for (var k = 0; k < 7; k++) { g.save(); g.translate(0, -s * .16); g.rotate(-.9 + k * .3); g.beginPath(); g.moveTo(-s * .015, 0); g.lineTo(0, -s * .16); g.lineTo(s * .015, 0); g.fill(); g.restore(); }
+  // flaming bowl in the middle
+  circ(0, -s * .1, s * .07, '#4a2a10');
+  var fl = .7 + .3 * Math.sin(T * 17);
+  var fg = g.createRadialGradient(0, -s * .2, 0, 0, -s * .2, s * .16 * fl);
+  fg.addColorStop(0, 'rgba(255,255,200,.95)'); fg.addColorStop(.4, 'rgba(255,170,40,.8)'); fg.addColorStop(1, 'rgba(255,40,0,0)');
+  g.fillStyle = fg; g.beginPath(); g.ellipse(0, -s * .2, s * .1 * fl, s * .17 * fl, 0, 0, Math.PI * 2); g.fill();
+  g.restore();
+  // sparklers (maytap): sticks and spark particles
+  [-.3, -.12, .12, .3].forEach(function (k, idx) {
+    var bx = cx + k * s, by = cy - s * .12, tx = bx + k * s * .2, ty = by - s * .38;
+    g.strokeStyle = '#999'; g.lineWidth = 3; g.beginPath(); g.moveTo(bx, by); g.lineTo(tx, ty); g.stroke();
+    for (var n = 0; n < 6; n++) sparks.push({ x: tx, y: ty, vx: (Math.random() - .5) * 6, vy: (Math.random() - .8) * 6, l: 1 });
+  });
+}
+function drawSparks() {
+  g.globalCompositeOperation = 'lighter';
+  for (var i = sparks.length - 1; i >= 0; i--) {
+    var p = sparks[i]; p.x += p.vx; p.y += p.vy; p.vy += .25; p.l -= .04;
+    if (p.l <= 0) { sparks.splice(i, 1); continue; }
+    g.fillStyle = 'rgba(255,' + Math.round(200 + 55 * p.l) + ',' + Math.round(120 * p.l) + ',' + p.l + ')';
+    g.fillRect(p.x, p.y, 2.5, 2.5);
+  }
+  g.globalCompositeOperation = 'source-over';
+  if (sparks.length > 900) sparks.splice(0, sparks.length - 900);
+}
+
+var last = performance.now();
+function frame(now) {
+  requestAnimationFrame(frame);
+  var dt = Math.min(.05, (now - last) / 1000); last = now;
+  var t = now / 1000;
+  var bpm = playing ? 2.0 : 1.2;                 // 120 bpm with music, slower without
+  var pulse = Math.pow(Math.max(0, Math.sin(t * Math.PI * bpm)), 8);
+  // room
+  var bg = g.createRadialGradient(W * .5, H * .7, 0, W * .5, H * .7, Math.max(W, H) * .8);
+  bg.addColorStop(0, 'rgb(' + Math.round(40 + 30 * pulse) + ',8,40)'); bg.addColorStop(.6, '#12041a'); bg.addColorStop(1, '#050208');
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  // beams
+  g.globalCompositeOperation = 'lighter';
+  BEAMS.forEach(function (b, k) {
+    var ang = Math.PI / 2 + Math.sin(t * (.4 + k * .13) + k) * .7, x0 = W * b.x, len = H * 1.4, wd = .09;
+    var gr = g.createLinearGradient(x0, 0, x0 + Math.cos(ang) * len, Math.sin(ang) * len);
+    gr.addColorStop(0, 'rgba(' + b.c + ',' + (.35 + .25 * pulse) + ')'); gr.addColorStop(1, 'rgba(' + b.c + ',0)');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(x0, 0);
+    g.lineTo(x0 + Math.cos(ang - wd) * len, Math.sin(ang - wd) * len); g.lineTo(x0 + Math.cos(ang + wd) * len, Math.sin(ang + wd) * len); g.closePath(); g.fill();
+  });
+  // spots from the ball
+  var bx = W * BALL.x, by = H * BALL.y;
+  SPOTS.forEach(function (p) {
+    var a = p.a + t * .35, x = bx + Math.cos(a) * p.d * W * .7, y = by + Math.abs(Math.sin(a * 1.3)) * p.d * H * .9;
+    var r = 3 + p.s * 5;
+    g.fillStyle = p.c; g.globalAlpha = .55; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+  });
+  g.globalAlpha = 1;
+  g.globalCompositeOperation = 'source-over';
+  drawBall(t);
+  // fog
+  FOG.forEach(function (f, k) {
+    f.x += f.v; if (f.x < -.5 || f.x > 1.5) FOG[k] = newFog(0);
+    var fr = g.createRadialGradient(f.x * W, f.y * H, 0, f.x * W, f.y * H, f.r * W);
+    fr.addColorStop(0, 'hsla(' + f.hue + ',60%,70%,' + f.o + ')'); fr.addColorStop(1, 'hsla(' + f.hue + ',60%,70%,0)');
+    g.fillStyle = fr; g.fillRect(0, 0, W, H);
+  });
+  drawPlate(t, dt);
+  drawSparks();
+  // neon pulses with the beat
+  var hide = plate.t >= 0 ? .08 : 1;
+  $('n1').style.opacity = .82 + .18 * pulse; $('n1').style.visibility = hide < 1 ? 'hidden' : 'visible'; $('n4').style.opacity = hide;
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

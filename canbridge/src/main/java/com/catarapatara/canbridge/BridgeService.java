@@ -155,6 +155,8 @@ public final class BridgeService extends Service {
         n -= start;
     }
 
+    private final java.util.HashMap<Integer, String> lastRaw = new java.util.HashMap<>();
+
     private void frame(byte[] f) {
         int cmd = f[2] & 0xFF;
         frameCount++;
@@ -166,6 +168,14 @@ public final class BridgeService extends Service {
             frames.put(cmd, sb.toString().trim());
             Integer c = counts.get(cmd);
             counts.put(cmd, c == null ? 1 : c + 1);
+        }
+        // Every frame type, raw, whenever it changes: MYDS learns doors / lights / indicators from these.
+        String hex;
+        synchronized (frames) { hex = frames.get(cmd); }
+        String prev = lastRaw.get(cmd);
+        if (prev == null || !prev.equals(hex)) {
+            lastRaw.put(cmd, hex);
+            sendBroadcast(new Intent("com.thecarlauncher.CANRAW").putExtra("cmd", cmd).putExtra("hex", hex));
         }
         Intent out = null;
         if (cmd == 0x33 && f.length >= 10) {

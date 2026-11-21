@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta id="stockcss">
+<title>DS Live</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* DS Live: the car itself in the middle, alive. Doors, boot, bonnet, lights and indicators from the
+   CAN box are shown on the 3D DS4 (tinted glass) and spoken; trip data left, gear right, a long
+   rpm bar, five keys. Ice-blue on graphite, Inter. */
+:root{--bg:#06080b;--card:rgba(20,24,30,.72);--chip:#1a2028;--fg:#EEF3F8;--mut:#8792a0;--a:#7FD3FF;--a2:rgba(127,211,255,.16);--amber:#FFB020;--red:#FF4A3D;--line:rgba(255,255,255,.09);--r:2.4vh}
+body.day{--bg:#e8ecf0;--card:rgba(255,255,255,.8);--chip:#dde3ea;--fg:#10151b;--mut:#5d6874;--a:#0a7fc0;--a2:rgba(10,127,192,.14);--line:rgba(0,0,0,.08)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(70% 70% at 50% 45%,#121822 0%,var(--bg) 70%);color:var(--fg);font-family:'Inter',sans-serif;overflow:hidden;user-select:none}
+body.day{background:radial-gradient(70% 70% at 50% 45%,#ffffff 0%,var(--bg) 70%)}
+svg.ic{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.n{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
+.card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);backdrop-filter:blur(6px)}
+#stage{position:fixed;inset:0}
+#c{position:absolute;left:0;top:7vh;width:100%;height:65vh}
+/* top */
+.top{position:fixed;left:3vh;right:3vh;top:2vh;height:6vh;display:flex;align-items:center;gap:2vh;font-size:2.2vh;color:var(--mut)}
+.top .t{font-size:3.4vh;color:var(--fg)}
+.sp{flex:1}
+/* left: trip */
+#trip{position:fixed;left:3vh;top:10vh;width:21%;bottom:30vh;display:flex;flex-direction:column;gap:1.4vh}
+.st{padding:1.6vh 2vh;display:flex;align-items:center;gap:1.6vh}
+.st svg{width:3.4vh;height:3.4vh;color:var(--a);flex-shrink:0}
+.st b{font-size:4.2vh;line-height:1}
+.st small{font-size:1.8vh;color:var(--mut);margin-left:.5vh}
+.st .lab{font-size:1.6vh;color:var(--mut);letter-spacing:.15vh}
+#fuelBar{height:.9vh;border-radius:.45vh;background:var(--chip);overflow:hidden;margin-top:.8vh}
+#fuelBar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--amber) 25%,var(--a) 45%)}
+/* right: gear */
+#gearC{position:fixed;right:3vh;top:10vh;width:19%;bottom:30vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vh}
+#gear{font-size:22vh;line-height:.9;color:var(--a);text-shadow:0 0 4vh var(--a2)}
+#gearL{font-size:1.8vh;letter-spacing:.5vh;color:var(--mut)}
+#spd{font-size:5.6vh}
+#spd small{font-size:2vh;color:var(--mut);margin-left:.6vh}
+/* rpm bar */
+#rpmW{position:fixed;left:3vh;right:3vh;bottom:15vh;height:9vh;display:flex;align-items:center;gap:2vh;padding:0 2.4vh}
+#rpmBar{flex:1;height:3.4vh;display:flex;gap:.35vh}
+#rpmBar i{flex:1;border-radius:.4vh;background:var(--chip);transition:background .08s}
+#rpmBar i.on{background:var(--a);box-shadow:0 0 1vh var(--a2)}
+#rpmBar i.on.w{background:var(--amber)}
+#rpmBar i.on.r{background:var(--red)}
+#rpmN{width:16vh;text-align:right;font-size:4.4vh}
+#rpmN small{font-size:1.8vh;color:var(--mut);margin-left:.5vh}
+/* dock */
+#dock{position:fixed;left:50%;transform:translateX(-50%);bottom:2.2vh;display:flex;gap:2vh}
+#dock button{width:15vh;height:11vh;border:none;border-radius:var(--r);background:var(--card);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8vh;font-family:inherit;font-size:1.7vh;letter-spacing:.1vh}
+#dock button svg{width:4.2vh;height:4.2vh;color:var(--a)}
+#dock button:active{background:var(--a2)}
+/* callouts */
+#alerts{position:fixed;left:50%;transform:translateX(-50%);top:9vh;display:flex;gap:1vh;flex-wrap:wrap;justify-content:center;max-width:56%}
+.al{display:flex;align-items:center;gap:1vh;padding:.9vh 1.8vh;border-radius:3vh;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px var(--line);font-size:2vh;animation:pop .35s ease}
+.al i{width:1.3vh;height:1.3vh;border-radius:50%;background:var(--amber);box-shadow:0 0 1vh var(--amber)}
+.al.red i{background:var(--red);box-shadow:0 0 1vh var(--red)}
+.al.blue i{background:var(--a);box-shadow:0 0 1vh var(--a)}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
+/* popovers */
+.pop{position:fixed;bottom:15vh;left:50%;transform:translateX(-50%);display:none;flex-direction:column;gap:1.4vh;padding:2.4vh;min-width:62vh;z-index:10}
+.pop.on{display:flex}
+.pop h3{margin:0;font-size:2.4vh;font-weight:600}
+.row{display:flex;gap:1.4vh}
+.opt{flex:1;min-height:9vh;border:none;border-radius:1.8vh;background:var(--chip);color:var(--fg);font-family:inherit;font-size:1.9vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6vh;padding:1vh}
+.opt svg{width:3.6vh;height:3.6vh;color:var(--a)}
+.opt.on{background:var(--a);color:#06121a}.opt.on svg{color:#06121a}
+#black{position:fixed;inset:0;background:#000;z-index:50;display:none}
+#learn{position:fixed;inset:0;background:var(--bg);z-index:20;display:none;flex-direction:column;padding:3vh;gap:1.6vh}
+#learn.on{display:flex}
+.lg{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2vh}
+#lMsg{font-size:2vh;color:var(--mut);min-height:3vh}
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+
+<div class="top">
+  <span class="t n" id="time">--:--</span><span id="date"></span>
+  <span class="sp"></span>
+  <svg class="ic" style="width:2.8vh;height:2.8vh" viewBox="0 0 24 24"><path d="M12 3v11"/><circle cx="12" cy="17" r="3.5"/></svg><span class="n" id="out" style="font-size:2.6vh;color:var(--fg)">--°</span>
+</div>
+
+<div id="alerts"></div>
+
+<div id="trip">
+  <div class="card st"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20 9 4M20 20 15 4M12 6v2M12 11v2M12 16v3"/></svg><div><div class="lab">MENZİL</div><b class="n" id="rng">--</b><small>km</small></div></div>
+  <div class="card st" style="display:block"><div style="display:flex;align-items:center;gap:1.6vh"><svg class="ic" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M14 9h2a2 2 0 0 1 2 2v5a2 2 0 0 0 4 0V8l-3-3"/><path d="M6 8h6"/></svg><div><div class="lab">YAKIT</div><b class="n" id="fuel">--</b><small>L</small></div></div><div id="fuelBar"><i></i></div></div>
+  <div class="card st"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg><div><div class="lab">ANLIK</div><b class="n" id="inst">--</b><small>L/100</small></div></div>
+  <div class="card st"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><path d="M4 20 20 4"/></svg><div><div class="lab">ORTALAMA</div><b class="n" id="avg">--</b><small>L/100</small></div></div>
+  <div class="card st"><svg class="ic" viewBox="0 0 24 24"><path d="M5 19c3-6 11-6 14-14"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/></svg><div><div class="lab">YOL</div><b class="n" id="trp">--</b><small>km</small></div></div>
+</div>
+
+<div id="gearC">
+  <div id="gearL">VİTES</div>
+  <div class="n" id="gear">N</div>
+  <div class="n" id="spd">--<small>km/h</small></div>
+</div>
+
+<div id="rpmW" class="card"><svg class="ic" style="width:3.6vh;height:3.6vh;color:var(--a)" viewBox="0 0 24 24"><path d="M5 18a8 8 0 1 1 14 0"/><path d="M12 13l4-4"/></svg><div id="rpmBar"></div><div class="n" id="rpmN">--<small>d/d</small></div></div>
+
+<div id="dock"></div>
+
+<div class="card pop" id="screenP">
+  <h3>Ekran</h3>
+  <div class="row">
+    <button class="opt" id="oDim"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 4v1M12 19v1M4 12h1M19 12h1"/></svg>En düşük ışık</button>
+    <button class="opt" id="oNight"><svg class="ic" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>Gece</button>
+    <button class="opt" id="oDay"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Gündüz</button>
+    <button class="opt" id="oPav"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="10" r="6"/><path d="M6 10h12M12 4v12M8 6l8 8M16 6l-8 8M12 16v4"/></svg>Pavyon modu</button>
+    <button class="opt" id="oOff"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M4 4l16 14"/></svg>Ekranı karart</button>
+  </div>
+  <input type="range" id="bri" min="10" max="100" step="5" style="accent-color:var(--a)">
+</div>
+
+<div class="card pop" id="musicP">
+  <h3 id="npT">Müzik</h3>
+  <div class="row">
+    <button class="opt" data-r="spotify"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7.5 9.5c3-1 6.5-.7 9 .8M8 12.6c2.5-.7 5.2-.4 7.3.8M8.6 15.5c2-.5 4-.3 5.6.6"/></svg>Spotify</button>
+    <button class="opt" data-r="ytmusic"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M11 10.2v3.6l3-1.8z"/></svg>YouTube Music</button>
+    <button class="opt" data-r="btMusic"><svg class="ic" viewBox="0 0 24 24"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>Telefon (BT)</button>
+    <button class="opt" data-r="radio"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="13" rx="2"/><path d="M6 8l12-5"/><circle cx="8" cy="14.5" r="2.5"/></svg>Radyo</button>
+  </div>
+  <div class="row"><button class="opt" data-m="prev">⏮</button><button class="opt" data-m="play">⏯</button><button class="opt" data-m="next">⏭</button></div>
+</div>
+
+<div class="card pop" id="engineP">
+  <h3>Motor sesi · CataraPatara</h3>
+  <div class="row">
+    <button class="opt" id="eOn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg><span id="eOnT">Aç</span></button>
+    <button class="opt" id="eOpen"><svg class="ic" viewBox="0 0 24 24"><path d="M3 15h4l2-3h6l2 3h4"/><path d="M8 12V9h8v3"/><path d="M10 9V6h4v3"/></svg>Sesler ve ayarlar</button>
+    <button class="opt" id="eObd"><svg class="ic" viewBox="0 0 24 24"><path d="M5 18a8 8 0 1 1 14 0"/><path d="M12 13l4-4"/></svg>Motor verileri</button>
+  </div>
+</div>
+
+<div id="learn">
+  <div style="display:flex;align-items:center;gap:2vh"><span style="font-size:3vh;font-weight:600;flex:1">Aracı tanıt (CAN)</span><button class="opt" id="lClose" style="flex:none;min-height:6vh;padding:0 3vh">Kapat</button></div>
+  <div style="font-size:2vh;color:var(--mut);line-height:1.5">1) Her şey kapalıyken <b>Başla</b>'ya bas. 2) Arabada bir şeyi aç (ör. sürücü kapısı). 3) Aşağıdan onu seç. Tekrarla: her öğe için önce Başla, sonra aç, sonra seç. Sinyal ve dörtlüler yanıp sönerken seç.</div>
+  <div class="row"><button class="opt" id="lStart" style="min-height:7vh">Başla (her şey kapalı)</button><button class="opt" id="lDemo" style="min-height:7vh">Önizleme</button><button class="opt" id="lForget" style="min-height:7vh">Öğrenileni sil</button></div>
+  <div class="lg" id="lGrid"></div>
+  <div id="lMsg"></div>
+</div>
+<div id="black"></div>
+
+<script src="common.js"></script>
+<script src="3d/three.min.js"></script>
+<script src="3d/GLTFLoader.js"></script>
+<script>
+var night = true;
+// ---------------------------------------------------------------- dock & popovers
+var DOCK = [['music', 'Müzik', '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'],
+  ['apps', 'Uygulamalar', '<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>'],
+  ['engine', 'Motor', '<path d="M3 15h4l2-3h6l2 3h4"/><path d="M8 12V9h8v3"/><path d="M10 9V6h4v3"/><circle cx="6.5" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/>'],
+  ['screen', 'Ekran', '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>'],
+  ['settings', 'Ayarlar', '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>']];
+function closePops() { [].forEach.call(document.querySelectorAll('.pop'), function (p) { p.classList.remove('on'); }); }
+DOCK.forEach(function (d) {
+  var b = document.createElement('button'); b.className = 'key';
+  b.innerHTML = '<svg class="ic" viewBox="0 0 24 24">' + d[2] + '</svg>' + d[1];
+  b.onclick = function (e) {
+    e.stopPropagation();
+    if (d[0] === 'screen' || d[0] === 'engine' || d[0] === 'music') { var p = $(d[0] + 'P'), was = p.classList.contains('on'); closePops(); if (!was) p.classList.add('on'); return; }
+    closePops();
+    call('open', d[0] === 'music' ? 'srcPick' : d[0] === 'apps' ? 'apps' : 'settings');
+  };
+  $('dock').appendChild(b);
+});
+document.addEventListener('click', function (e) { if (!e.target.closest || !e.target.closest('.pop')) closePops(); });
+$('oDim').onclick = function () { call('setBrightness', 10); $('bri').value = 10; store('live.bri', 10); };
+$('oNight').onclick = function () { call('setNight', true); };
+$('oDay').onclick = function () { call('setNight', false); };
+$('oPav').onclick = function () { closePops(); call('open', 'pavyon'); };
+[].forEach.call(document.querySelectorAll('#musicP [data-r]'), function (b) { b.onclick = function () { call('open', b.dataset.r); }; });
+[].forEach.call(document.querySelectorAll('#musicP [data-m]'), function (b) { b.onclick = function () { call('media', b.dataset.m); }; });
+$('oOff').onclick = function () { closePops(); $('black').style.display = 'block'; };
+$('black').onclick = function () { $('black').style.display = 'none'; };
+$('bri').value = +(store('live.bri') || 70);
+$('bri').oninput = function () { call('setBrightness', +this.value); store('live.bri', this.value); };
+$('eOn').onclick = function () { call('open', 'cpToggle'); };
+$('eOpen').onclick = function () { closePops(); call('open', 'engine'); };
+$('eObd').onclick = function () { closePops(); call('open', 'obd'); };
+
+// ---------------------------------------------------------------- rpm bar
+var SEG = 50, RPMMAX = 5000, RED = 4500;
+for (var i = 0; i < SEG; i++) { var el = document.createElement('i'); var r = (i + 1) / SEG * RPMMAX; if (r > RED) el.className = 'r0'; else if (r > RED - 700) el.className = 'w0'; $('rpmBar').appendChild(el); }
+function rpmBar(r) {
+  var n = Math.round(Math.max(0, Math.min(1, r / RPMMAX)) * SEG), c = $('rpmBar').children;
+  for (var i = 0; i < SEG; i++) { var on = i < n; c[i].className = (on ? 'on ' : '') + ((i + 1) / SEG * RPMMAX > RED ? 'r' : (i + 1) / SEG * RPMMAX > RED - 700 ? 'w' : ''); }
+}
+
+// ---------------------------------------------------------------- body state: names, speech
+var BODY = {
+  doorFL: ['Sol ön kapı', 'red'], doorFR: ['Sağ ön kapı', 'red'], doorRL: ['Sol arka kapı', 'red'], doorRR: ['Sağ arka kapı', 'red'],
+  trunk: ['Bagaj', 'red'], hood: ['Kaput', 'red'], park: ['Park lambaları', 'blue'], low: ['Farlar', 'blue'], high: ['Uzunlar', 'blue'],
+  turnL: ['Sol sinyal', ''], turnR: ['Sağ sinyal', ''], hazard: ['Dörtlüler', '']
+};
+var SAY_ON = { doorFL: 'Sol ön kapı açık', doorFR: 'Sağ ön kapı açık', doorRL: 'Sol arka kapı açık', doorRR: 'Sağ arka kapı açık', trunk: 'Bagaj açık', hood: 'Kaput açık',
+  park: 'Park lambaları yandı', low: 'Farlar açık', high: 'Uzun farlar açık', turnL: 'Sol sinyal', turnR: 'Sağ sinyal', hazard: 'Dörtlüler yanıyor' };
+var SAY_OFF = { doorFL: 'Sol ön kapı kapandı', doorFR: 'Sağ ön kapı kapandı', doorRL: 'Sol arka kapı kapandı', doorRR: 'Sağ arka kapı kapandı', trunk: 'Bagaj kapandı', hood: 'Kaput kapandı', high: 'Uzunlar kapandı', low: 'Farlar kapandı', hazard: 'Dörtlüler söndü' };
+var body = {}, sticky = {}, spokeAt = {};
+function setBody(b) {
+  // indicators blink: keep them "on" for 1.3 s after the last flash
+  var now = Date.now(), nb = {};
+  Object.keys(BODY).forEach(function (k) {
+    var v = !!b[k];
+    if (k === 'turnL' || k === 'turnR' || k === 'hazard') { if (v) sticky[k] = now; v = sticky[k] && now - sticky[k] < 1300; }
+    nb[k] = v;
+  });
+  if (nb.turnL && nb.turnR) { nb.hazard = true; }
+  if (nb.hazard) { nb.turnL = nb.turnR = false; }
+  Object.keys(BODY).forEach(function (k) {
+    if (nb[k] !== !!body[k]) {
+      var t = nb[k] ? SAY_ON[k] : SAY_OFF[k];
+      if (t && (!spokeAt[k] || now - spokeAt[k] > 4000)) { spokeAt[k] = now; call('say', t); }
+      if (nb[k]) focusOn(k);
+    }
+  });
+  body = nb;
+  var h = '';
+  Object.keys(BODY).forEach(function (k) { if (body[k]) h += '<div class="al ' + BODY[k][1] + '"><i></i>' + BODY[k][0] + '</div>'; });
+  $('alerts').innerHTML = h;
+}
+
+// ---------------------------------------------------------------- 3D
+var three = null;
+function init3D() {
+  var canvas = $('c');
+  var R = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+  R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
+  R.setClearColor(0, 0);
+  var S = new THREE.Scene();
+  var cam = new THREE.PerspectiveCamera(30, 1, .05, 100), TGT = new THREE.Vector3(0, .62, 0);
+  S.add(new THREE.HemisphereLight(0xcfe6ff, 0x101418, .9));
+  var key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(4, 7, 3); S.add(key);
+  var rim = new THREE.DirectionalLight(0x7fd3ff, 1.1); rim.position.set(-5, 3, -4); S.add(rim);
+  var shTex = (function () { var c = document.createElement('canvas'); c.width = c.height = 128; var g = c.getContext('2d'); var gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(0,0,0,.7)'); gr.addColorStop(.5, 'rgba(0,0,0,.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
+  var ground = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), new THREE.MeshBasicMaterial({ map: shTex, transparent: true, depthWrite: false }));
+  ground.rotation.x = -Math.PI / 2; S.add(ground);
+  var ring = new THREE.Mesh(new THREE.RingGeometry(2.7, 2.74, 96), new THREE.MeshBasicMaterial({ color: 0x7fd3ff, transparent: true, opacity: .4 }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = .004; S.add(ring);
+
+  var FX = new THREE.Group(); S.add(FX);
+  // ---- parts that move (the model is one mesh: these are glowing "ghost" panels that swing out)
+  function panel(w, h, mat) { return new THREE.Mesh(new THREE.BoxGeometry(w, h, .035), mat); }
+  function ghost(c) { return new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: .0, depthWrite: false, side: THREE.DoubleSide }); }
+  var parts = {};
+  function door(key, x0, x1, side) {   // hinge at the front edge x1, side ±1
+    var piv = new THREE.Group(); piv.position.set(x1, .78, side * .93);
+    var m = panel(x1 - x0, .74, ghost(0xff4a3d)); m.position.set(-(x1 - x0) / 2, 0, 0); piv.add(m);
+    var edge = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), new THREE.LineBasicMaterial({ color: 0xff6a5d, transparent: true, opacity: 0 }));
+    edge.position.copy(m.position); piv.add(edge);
+    FX.add(piv); parts[key] = { piv: piv, mat: m.material, edge: edge.material, side: side, k: 0, axis: 'y' };
+  }
+  door('doorFL', .12, 1.12, -1); door('doorFR', .12, 1.12, 1); door('doorRL', -.88, .1, -1); door('doorRR', -.88, .1, 1);   // nose +x, y up: left side is -z
+  (function () {   // boot: hinge at the roof's rear edge, swings up
+    var piv = new THREE.Group(); piv.position.set(-1.62, 1.36, 0);
+    var m = panel(.6, 1.6, ghost(0xff4a3d)); m.rotation.y = Math.PI / 2; m.position.set(-.3, -.05, 0); m.rotation.z = 0;
+    m.geometry = new THREE.BoxGeometry(.62, .035, 1.55); m.rotation.set(0, 0, 0); m.position.set(-.31, 0, 0);
+    piv.add(m); FX.add(piv); parts.trunk = { piv: piv, mat: m.material, k: 0, axis: 'zt' };
+  })();
+  (function () {   // bonnet: hinge at the windscreen base, opens up towards the front
+    var piv = new THREE.Group(); piv.position.set(1.15, .98, 0);
+    var m = new THREE.Mesh(new THREE.BoxGeometry(.9, .035, 1.5), ghost(0xff4a3d)); m.position.set(.45, 0, 0);
+    piv.add(m); FX.add(piv); parts.hood = { piv: piv, mat: m.material, k: 0, axis: 'zh' };
+  })();
+  // ---- lights: glows (sprites) and beams
+  var glowTex = (function () {
+    var c = document.createElement('canvas'); c.width = c.height = 64; var g = c.getContext('2d');
+    var gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.35, 'rgba(255,255,255,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64); var t = new THREE.CanvasTexture(c); return t;
+  })();
+  function glow(x, y, z, color, size) {
+    var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: color, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    s.position.set(x, y, z); s.scale.set(size, size, 1); FX.add(s); return s.material;
+  }
+  var L = {
+    headL: glow(2.02, .78, .66, 0xffffff, .55), headR: glow(2.02, .78, -.66, 0xffffff, .55),
+    tailL: glow(-2.05, .96, .66, 0xff2a20, .45), tailR: glow(-2.05, .96, -.66, 0xff2a20, .45),
+    tfL: glow(2.0, .74, -.8, 0xffa000, .4), tfR: glow(2.0, .74, .8, 0xffa000, .4),
+    tmL: glow(.95, 1.04, -1.02, 0xffa000, .3), tmR: glow(.95, 1.04, 1.02, 0xffa000, .3),
+    trL: glow(-2.04, .93, -.74, 0xffa000, .4), trR: glow(-2.04, .93, .74, 0xffa000, .4)
+  };
+  function beam(z) {
+    var g = new THREE.ConeGeometry(.6, 3.2, 24, 1, true); g.translate(0, -1.6, 0); g.rotateZ(Math.PI / 2);
+    var m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xdff2ff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+    m.position.set(2.05, .76, z); m.rotation.z = -.06; FX.add(m); return m;
+  }
+  var beams = [beam(.66), beam(-.66)];
+  var pool = new THREE.Mesh(new THREE.CircleGeometry(2.4, 48), new THREE.MeshBasicMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+  pool.rotation.x = -Math.PI / 2; pool.position.set(3.6, .01, 0); pool.scale.set(.9, .6, 1); FX.add(pool);
+
+  var model = null;
+  function b64(s) { var b = atob(s), n = b.length, u = new Uint8Array(n); for (var i = 0; i < n; i++) u[i] = b.charCodeAt(i); return u.buffer; }
+  function load() {
+    if (!window.DS4_GLB) { var sc = document.createElement('script'); sc.src = '3d/ds4model.js'; sc.onload = load; document.body.appendChild(sc); return; }
+    new THREE.GLTFLoader().parse(b64(window.DS4_GLB), '', function (g) {
+      model = g.scene;
+      model.traverse(function (o) {
+        if (!o.isMesh) return;
+        var ms = Array.isArray(o.material) ? o.material : [o.material];
+        ms.forEach(function (m, k) {
+          var nm = m.name || '';
+          if (nm === 'body') {
+            var pm = new THREE.MeshPhysicalMaterial({ color: +(store('myds.colorHex') || 0xf2f1ee), metalness: .3, roughness: .26, clearcoat: 1, clearcoatRoughness: .04, side: THREE.DoubleSide });
+            if (Array.isArray(o.material)) o.material[k] = pm; else o.material = pm;
+          }
+          // Tinted windows (black film): the greenhouse glass goes nearly opaque and dark
+          if (m.transparent && /lights_lod0 \[env/.test(nm)) { m.color.setHex(0x05070a); m.opacity = .9; m.roughness = .05; m.metalness = .6; }
+          if (m.transparent) { m.depthWrite = false; o.renderOrder = 2; }
+        });
+      });
+      S.add(model);
+    });
+  }
+  load();
+
+  var az = 35 * Math.PI / 180, azT = az, el = .26, dist = 8.2, t0 = performance.now(), idleSince = performance.now();
+  var VIEW = { doorFL: 75, doorRL: 100, doorFR: -75, doorRR: -100, trunk: 150, hood: 20, low: 15, high: 15, park: 30, turnL: 60, turnR: -60, hazard: 0 };
+  focusOn = function (k) { if (VIEW[k] !== undefined) { azT = VIEW[k] * Math.PI / 180; idleSince = performance.now(); } };
+  function size() { var w = canvas.clientWidth, h = canvas.clientHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  window.addEventListener('resize', size); size();
+  // drag to turn the car
+  var drag = null;
+  canvas.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, a: azT }; });
+  window.addEventListener('pointermove', function (e) { if (drag) { azT = drag.a - (e.clientX - drag.x) / 160; idleSince = performance.now(); } });
+  window.addEventListener('pointerup', function () { drag = null; });
+  var lp = 0;
+  canvas.addEventListener('pointerdown', function () { lp = setTimeout(function () { $('learn').classList.add('on'); }, 1200); });
+  canvas.addEventListener('pointerup', function () { clearTimeout(lp); });
+
+  function ease(p, want, sp) { return p + (want - p) * sp; }
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden || window.__asleep) return;
+    var t = (now - t0) / 1000;
+    if (now - idleSince > 9000 && !drag) azT += .0016;            // slow showroom turn when nothing happens
+    az = ease(az, azT, .05);
+    cam.position.set(Math.cos(az) * Math.cos(el) * dist, Math.sin(el) * dist + .2, -Math.sin(az) * Math.cos(el) * dist).add(new THREE.Vector3(0, 0, 0));
+    cam.lookAt(TGT);
+    // doors / boot / bonnet
+    Object.keys(parts).forEach(function (k) {
+      var p = parts[k], want = body[k] ? 1 : 0;
+      p.k = ease(p.k, want, .08);
+      var a = p.k;
+      if (p.axis === 'y') p.piv.rotation.y = p.side * a * 1.05;
+      if (p.axis === 'zt') p.piv.rotation.z = a * 1.25;
+      if (p.axis === 'zh') p.piv.rotation.z = a * 0.85;
+      p.mat.opacity = a * (.35 + .12 * Math.sin(t * 6));
+      if (p.edge) p.edge.opacity = a;
+    });
+    // lights
+    var low = body.low || body.high, high = body.high, park = body.park || low;
+    var blink = Math.sin(t * Math.PI * 3) > 0 ? 1 : 0;   // 1.5 Hz
+    var tl = body.turnL || body.hazard ? blink : 0, tr = body.turnR || body.hazard ? blink : 0;
+    L.headL.opacity = L.headR.opacity = ease(L.headL.opacity, low ? 1 : park ? .35 : 0, .15);
+    L.tailL.opacity = L.tailR.opacity = ease(L.tailL.opacity, park ? .9 : 0, .15);
+    [L.tfL, L.tmL, L.trL].forEach(function (m) { m.opacity = tl; });
+    [L.tfR, L.tmR, L.trR].forEach(function (m) { m.opacity = tr; });
+    beams.forEach(function (b) { b.material.opacity = ease(b.material.opacity, low ? (high ? .2 : .1) : 0, .1); b.scale.set(1, high ? 1.6 : 1, high ? 1.1 : 1); });
+    pool.material.opacity = ease(pool.material.opacity, low ? (high ? .22 : .12) : 0, .1);
+    pool.position.x = high ? 4.4 : 3.6;
+    ring.material.opacity = .25 + .15 * Math.sin(t * 1.4);
+    R.render(S, cam);
+  }
+  requestAnimationFrame(frame);
+  three = true;
+}
+var focusOn = function () {};
+try { init3D(); } catch (e) { $('c').style.display = 'none'; }
+window.__sleep = function (v) { window.__asleep = v; };
+
+// ---------------------------------------------------------------- learning sheet
+['doorFL', 'doorFR', 'doorRL', 'doorRR', 'trunk', 'hood', 'park', 'low', 'high', 'turnL', 'turnR', 'hazard'].forEach(function (k) {
+  var b = document.createElement('button'); b.className = 'opt'; b.style.minHeight = '8vh'; b.textContent = BODY[k][0];
+  b.onclick = function () { $('lMsg').textContent = call('bodyLearn', k) || ''; };
+  $('lGrid').appendChild(b);
+});
+$('lStart').onclick = function () { call('bodyLearnStart'); $('lMsg').textContent = 'Tamam. Şimdi arabada bir şeyi aç, sonra aşağıdan seç.'; };
+$('lForget').onclick = function () { call('bodyForget'); $('lMsg').textContent = 'Silindi.'; };
+$('lClose').onclick = function () { $('learn').classList.remove('on'); };
+var demo = 0;
+$('lDemo').onclick = function () { $('learn').classList.remove('on'); demo = Date.now(); };
+function demoBody() {
+  var t = (Date.now() - demo) / 1000, b = {};
+  if (t > 26) { demo = 0; return null; }
+  if (t < 4) b.doorFL = true; else if (t < 7) b.doorRR = true; else if (t < 10) b.trunk = true; else if (t < 13) b.hood = true;
+  else if (t < 16) b.low = true; else if (t < 19) { b.low = b.high = true; } else if (t < 22) b.turnL = Math.sin(t * Math.PI * 3) > 0; else b.hazard = Math.sin(t * Math.PI * 3) > 0;
+  return b;
+}
+
+// ---------------------------------------------------------------- data
+car.on(function (s) {
+  night = s.night !== false; document.body.classList.toggle('day', !night);
+  $('time').textContent = s.time || ''; $('date').textContent = s.date || '';
+  var o = s.outdoor !== undefined ? s.outdoor : s.outdoorObd; $('out').textContent = o !== undefined ? Math.round(o) + '°' : '--°';
+  $('rng').textContent = s.range ? Math.round(s.range) : '--';
+  var fl = s.fuelLeft; $('fuel').textContent = fl !== undefined && fl !== null ? Math.round(fl) : '--';
+  $('fuelBar').firstChild.style.width = fl ? Math.min(100, fl / (s.tank || 60) * 100) + '%' : '0';
+  var inst = s.inst !== undefined ? s.inst : s.l100; $('inst').textContent = inst !== undefined && inst !== null && inst >= 0 ? num(inst, 1) : '--';
+  $('avg').textContent = s.avgL100 > 0 ? num(s.avgL100, 1) : '--';
+  $('trp').textContent = s.tripKm !== undefined ? num(s.tripKm, 1) : '--';
+  $('spd').innerHTML = (s.gps === 'ok' ? Math.round(s.speed || 0) : '--') + '<small>km/h</small>';
+  var rpm = s.rpm || (s.cpOn ? s.cpRpm : 0);
+  $('rpmN').innerHTML = (s.rpm ? s.rpm : '--') + '<small>d/d</small>';
+  rpmBar(rpm || 0);
+  $('gear').textContent = s.gearObd || (s.cpOn && s.cpGear ? s.cpGear : 'N');
+  $('npT').textContent = s.title ? '♪ ' + s.title + (s.artist ? ' · ' + s.artist : '') : 'Müzik';
+  $('eOn').classList.toggle('on', !!s.cpOn); $('eOnT').textContent = s.cpOn ? 'Kapat' : 'Aç';
+  var b = demo ? demoBody() : null;
+  setBody(b || (s.body || {}));
+});
+</script>
+</body>
+</html>

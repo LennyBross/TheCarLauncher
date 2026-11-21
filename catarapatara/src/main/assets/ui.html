@@ -54,9 +54,13 @@ body.t-stock .top h1{font-style:italic;font-weight:600}
 #side{display:flex;flex-direction:column;gap:1.6vh;min-height:0}
 #rack{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:1vh;padding:1.6vh;scrollbar-width:none}
 #rack::-webkit-scrollbar{display:none}
-.eng{display:flex;align-items:center;gap:1.4vh;height:7.4vh;padding:0 1.6vh;border-radius:2vh;background:var(--chip);text-align:left;flex-shrink:0}
+.eng{display:flex;align-items:center;gap:1.4vh;height:8.4vh;padding:0 1.6vh;border-radius:2vh;background:var(--chip);text-align:left;flex-shrink:0}
 .eng b{flex:1;font-size:2.2vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .eng i{font-style:normal;font-size:1.5vh;color:var(--muted)}
+.eng .pic{position:relative;width:11vh;height:5.6vh;flex-shrink:0;border-radius:1.4vh;overflow:hidden;background:linear-gradient(135deg,var(--c1),var(--c2))}
+.eng .pic svg.car{position:absolute;left:.6vh;right:.6vh;bottom:.3vh;width:calc(100% - 1.2vh);height:80%;fill:rgba(255,255,255,.95)}
+.eng .pic svg.fl{position:absolute;right:.5vh;top:.5vh;width:2.6vh;height:1.75vh;border-radius:.3vh;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.eng.on .pic{box-shadow:0 0 0 .3vh var(--on)}
 .eng.on{background:var(--a);color:var(--on)}
 .eng.on i{color:var(--on);opacity:.7}
 .vol{display:flex;align-items:center;gap:1.4vh;padding:1.6vh 2vh}
@@ -164,9 +168,45 @@ if (th === 4 && /^#[0-9A-F]{6}$/i.test(cfg.accent || '')) {
   bs.setProperty('--a2', 'rgba(' + rgb + ',.12)'); bs.setProperty('--line', 'rgba(' + rgb + ',.22)'); bs.setProperty('--muted', 'rgba(' + rgb + ',.55)');
 }
 
+// Original pictograms: a body-style silhouette on a colour badge and the country flag of the engine's
+// tradition. Drawn here, no brand logos.
+var SIL = {
+  hatch: 'M3 22c0-3 1-5 4-6l7-2 7-6c2-1.5 4-2 7-2h12c4 0 7 2 9 5l3 4c2 .5 4 2 4 4v3H3z',
+  muscle: 'M2 21c0-2 1-4 4-4.5l12-2 8-6c1.5-1 3-1.5 5-1.5h9c3 0 6 2 8 4l6 3.5c3 .5 5 2 5 4v4H2z',
+  super: 'M2 22c0-2 2-3 5-3.5l14-3 9-5c2-1 4-1.5 7-1.5h6c3 0 6 1 9 3l8 4c2 .5 3 2 3 3.5v3H2z',
+  round: 'M3 22c0-2.5 1.5-4 4-4.5l9-2c4-5 9-8 16-8 6 0 10 3 13 6l9 3c3 .8 6 2 6 4.5v2.5H3z',
+  gt: 'M2 21.5c0-2 1.5-3.5 4-4l16-2.5 7-5c2-1.2 4-2 7-2h7c3 0 5 1.5 7 3.5l5 4.5c3 .5 6 2 6 3.5v3.5H2z',
+  sedan: 'M3 22c0-2.5 1-4 4-4.5l10-1.5 7-6c2-1.5 4-2 7-2h10c3 0 5 1.5 7 4l3 4c3 .5 6 2 6 4v3.5H3z',
+  rally: 'M3 22c0-3 1-5 4-6l7-2 7-6c2-1.5 4-2 7-2h12c4 0 7 2 9 5l3 3.5 1-4h7v2h-4l-1 4c2 .5 2 2 2 4v3H3z',
+  jdm: 'M3 22c0-2.5 1.5-4 4-4.5l11-2 7-5.5c2-1.3 4-2 7-2h8c3 0 5 1.5 7 3.5l4 4 1-3.5h7v2h-4.5l-1 3c2 .5 3 2 3 3.5v3H3z',
+  pack: ''
+};
+var FLAG = {
+  tr: '<rect width="30" height="20" fill="#E30A17"/><circle cx="11" cy="10" r="5" fill="#fff"/><circle cx="12.3" cy="10" r="4" fill="#E30A17"/><path d="M17.5 10l4-1.3-2.5 3.4V7.9l2.5 3.4z" fill="#fff"/>',
+  us: '<rect width="30" height="20" fill="#fff"/><path d="M0 1.5h30M0 4.6h30M0 7.7h30M0 10.8h30M0 13.9h30M0 17h30" stroke="#B22234" stroke-width="1.55"/><rect width="13" height="10.8" fill="#3C3B6E"/>',
+  it: '<rect width="10" height="20" fill="#009246"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#CE2B37"/>',
+  de: '<rect width="30" height="7" fill="#000"/><rect y="6.6" width="30" height="7" fill="#DD0000"/><rect y="13.3" width="30" height="6.7" fill="#FFCE00"/>',
+  gb: '<rect width="30" height="20" fill="#012169"/><path d="M0 0l30 20M30 0L0 20" stroke="#fff" stroke-width="4"/><path d="M0 0l30 20M30 0L0 20" stroke="#C8102E" stroke-width="1.5"/><path d="M15 0v20M0 10h30" stroke="#fff" stroke-width="6"/><path d="M15 0v20M0 10h30" stroke="#C8102E" stroke-width="3.5"/>',
+  jp: '<rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#BC002D"/>'
+};
+var PIC = {
+  ds4d: ['hatch', 'tr', '#2b6f97', '#0e2a3d'], ds4ds: ['hatch', 'tr', '#b0322a', '#3a0e0b'],
+  v8us: ['muscle', 'us', '#2d4f9e', '#0f1a38'], v8sc: ['muscle', 'us', '#d06a12', '#3a1a04'],
+  v8it: ['super', 'it', '#d12a1f', '#450a06'], v10: ['super', 'it', '#d7a400', '#3b2c00'], v12: ['gt', 'it', '#7d1a1a', '#220606'],
+  b6: ['round', 'de', '#9aa3ad', '#2a2f35'], i6: ['gt', 'gb', '#1e5a3a', '#07200f'], v6t: ['sedan', 'it', '#2a3f8f', '#0a1230'],
+  i5: ['rally', 'de', '#e8e8e8', '#55595e'], i4v: ['jdm', 'jp', '#1d8ac9', '#08263a']
+};
+function picFor(p) {
+  var m = PIC[p.id];
+  if (!m) { var h = 0; for (var k = 0; k < p.id.length; k++) h = (h * 31 + p.id.charCodeAt(k)) % 360; m = ['pack', '', 'hsl(' + h + ',60%,42%)', 'hsl(' + h + ',60%,14%)']; }
+  var body = m[0] === 'pack'
+    ? '<svg class="car" viewBox="0 0 64 28"><path d="M6 14h4M14 8v12M20 4v20M26 9v10M32 2v24M38 7v14M44 11v6M50 5v18M56 12v4" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/></svg>'
+    : '<svg class="car" viewBox="0 0 66 28"><path d="' + SIL[m[0]] + '"/><circle cx="15" cy="23" r="4.6" fill="rgba(0,0,0,.55)" stroke="#fff" stroke-width="1.6"/><circle cx="51" cy="23" r="4.6" fill="rgba(0,0,0,.55)" stroke="#fff" stroke-width="1.6"/></svg>';
+  return '<span class="pic" style="--c1:' + m[2] + ';--c2:' + m[3] + '">' + body + (m[1] ? '<svg class="fl" viewBox="0 0 30 20">' + FLAG[m[1]] + '</svg>' : '') + '</span>';
+}
 PROFILES.forEach(function (p) {
   var b = document.createElement('button'); b.className = 'key eng'; b.setAttribute('data-id', p.id);
-  b.innerHTML = '<b>' + p.name + '</b><i>' + (p.pack ? 'KAYIT' : 'SENTEZ') + '</i>';
+  b.innerHTML = picFor(p) + '<b>' + p.name + (p.sub ? '<small style="display:block;font-size:1.5vh;font-weight:500;opacity:.65;margin-top:.3vh">' + p.sub + '</small>' : '') + '</b><i>' + (p.pack ? 'KAYIT' : 'SENTEZ') + '</i>';
   b.onclick = function () { cfg.id = p.id; set('id', p.id); if (!cfg.on) power(true); paint(); };
   $('rack').appendChild(b);
 });
