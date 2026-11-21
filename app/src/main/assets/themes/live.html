@@ -206,7 +206,7 @@ function setBody(b) {
   var now = Date.now(), nb = {};
   Object.keys(BODY).forEach(function (k) {
     var v = !!b[k];
-    if (k === 'turnL' || k === 'turnR' || k === 'hazard') { if (v) sticky[k] = now; v = sticky[k] && now - sticky[k] < 1300; }
+    if (k === 'turnL' || k === 'turnR' || k === 'hazard') { if (v) sticky[k] = now; v = !!(sticky[k] && now - sticky[k] < 1300); }
     nb[k] = v;
   });
   if (nb.turnL && nb.turnR) { nb.hazard = true; }
