@@ -32,8 +32,41 @@ public class MediaListenerService extends NotificationListenerService {
         sInstance = null;
     }
 
+    /** Google Maps' turn card while it navigates on the unit (shown in our panel beside the map). */
+    public static volatile String navDist = "", navText = "", navEta = "";
+    public static volatile android.graphics.Bitmap navArrow;
+    public static volatile int navId;
+    public static volatile long navAt;
+
+    private void maps(StatusBarNotification sbn, boolean removed) {
+        if (!"com.google.android.apps.maps".equals(sbn.getPackageName())) return;
+        android.app.Notification n = sbn.getNotification();
+        if ((n.flags & android.app.Notification.FLAG_ONGOING_EVENT) == 0) return;
+        if (removed) { navAt = 0; return; }
+        android.os.Bundle x = n.extras;
+        CharSequence d = x.getCharSequence(android.app.Notification.EXTRA_TITLE), t = x.getCharSequence(android.app.Notification.EXTRA_TEXT),
+                e = x.getCharSequence(android.app.Notification.EXTRA_SUB_TEXT);
+        if (d == null && t == null) return;
+        navDist = d == null ? "" : d.toString();
+        navText = t == null ? "" : t.toString();
+        navEta = e == null ? "" : e.toString();
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 23 && n.getLargeIcon() != null) {
+                android.graphics.drawable.Drawable dr = n.getLargeIcon().loadDrawable(this);
+                android.graphics.Bitmap b = android.graphics.Bitmap.createBitmap(Math.max(1, dr.getIntrinsicWidth()), Math.max(1, dr.getIntrinsicHeight()), android.graphics.Bitmap.Config.ARGB_8888);
+                dr.setBounds(0, 0, b.getWidth(), b.getHeight());
+                dr.draw(new android.graphics.Canvas(b));
+                navArrow = b;
+                navId++;
+            }
+        } catch (Throwable ignored) {
+        }
+        navAt = System.currentTimeMillis();
+    }
+
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
+        try { maps(sbn, false); } catch (Throwable ignored) { }
         media(sbn);
         publish();
     }
@@ -74,6 +107,7 @@ public class MediaListenerService extends NotificationListenerService {
 
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn) {
+        try { maps(sbn, true); } catch (Throwable ignored) { }
         publish();
     }
 

@@ -198,6 +198,7 @@ public class ThemeScreen extends Screen {
             }
         });
         final Bridge br = new Bridge();
+        bridge = br;
         web.addJavascriptInterface(br, "Car");
         // The phone app ("MYDS Telefon") may open screens and read our state.
         com.thecarlauncher.util.PhoneLink.remote = new com.thecarlauncher.util.PhoneLink.Remote() {
@@ -232,11 +233,91 @@ public class ThemeScreen extends Screen {
     // ---- State to the page --------------------------------------------------------------------
 
     private void push() {
-        if (web == null || !ready) return;
+        if (web == null) return;
         try {
-            web.evaluateJavascript("window.car&&car.update(" + state().toString() + ")", null);
+            String js = "window.car&&car.update(" + state().toString() + ")";
+            if (ready) web.evaluateJavascript(js, null);
+            if (panel != null) panel.evaluateJavascript(js, null);
         } catch (Throwable ignored) {
         }
+    }
+
+    // ---- Google Maps beside our panel, like Android Auto ----------------------------------------
+    // Android 8.1 cannot embed another app, but it has free-form windows: Google Maps opens in a
+    // window on the left, our panel (music, next turn, keys) floats on the right above everything.
+    // Without free-form support Maps opens full screen and the panel still floats on its right.
+
+    private WebView panel;
+    private Bridge bridge;
+    private static final float MAPS_W = .58f;
+
+    @SuppressWarnings("deprecation")
+    private void enableFreeform() {
+        try {
+            android.content.ContentResolver cr = act.getContentResolver();
+            if (android.provider.Settings.Global.getInt(cr, "enable_freeform_support", 0) != 1) {
+                android.provider.Settings.Global.putInt(cr, "enable_freeform_support", 1);
+                android.provider.Settings.Global.putInt(cr, "force_resizable_activities", 1);
+                Prefs.put(act, "freeform_set_at", System.currentTimeMillis());   // takes effect after a restart
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private boolean canOverlay() {
+        if (android.os.Build.VERSION.SDK_INT < 23 || android.provider.Settings.canDrawOverlays(act)) return true;
+        try {   // privileged app: allow ourselves
+            android.app.AppOpsManager ao = (android.app.AppOpsManager) act.getSystemService(Context.APP_OPS_SERVICE);
+            int op = (Integer) android.app.AppOpsManager.class.getField("OP_SYSTEM_ALERT_WINDOW").get(null);
+            android.app.AppOpsManager.class.getMethod("setMode", int.class, int.class, String.class, int.class)
+                    .invoke(ao, op, android.os.Process.myUid(), act.getPackageName(), android.app.AppOpsManager.MODE_ALLOWED);
+        } catch (Throwable ignored) {
+        }
+        return android.provider.Settings.canDrawOverlays(act);
+    }
+
+    private void openMapsSplit() {
+        Intent i = act.getPackageManager().getLaunchIntentForPackage(PKG_MAPS);
+        if (i == null || !canOverlay()) { load("split.html"); return; }
+        enableFreeform();
+        android.util.DisplayMetrics dm = new android.util.DisplayMetrics();
+        act.getWindowManager().getDefaultDisplay().getRealMetrics(dm);
+        int W = dm.widthPixels, H = dm.heightPixels, mw = Math.round(W * MAPS_W);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        android.app.ActivityOptions o = android.app.ActivityOptions.makeBasic();
+        try { o.setLaunchBounds(new android.graphics.Rect(0, 0, mw, H)); } catch (Throwable ignored) { }
+        try { android.app.ActivityOptions.class.getMethod("setLaunchStackId", int.class).invoke(o, 2); } catch (Throwable ignored) { }      // 8.x: FREEFORM_WORKSPACE_STACK_ID
+        try { android.app.ActivityOptions.class.getMethod("setLaunchWindowingMode", int.class).invoke(o, 5); } catch (Throwable ignored) { } // 9+: WINDOWING_MODE_FREEFORM
+        com.thecarlauncher.util.AutoReturn.markOwn();
+        try { act.startActivity(i, o.toBundle()); } catch (Throwable t) { try { act.startActivity(i); } catch (Throwable ignored) { } }
+        showPanel(W - mw, H);
+    }
+
+    @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
+    private void showPanel(int w, int h) {
+        if (panel != null) return;
+        panel = new WebView(act);
+        panel.setBackgroundColor(Color.BLACK);
+        WebSettings s = panel.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setAllowFileAccess(true);
+        panel.setWebViewClient(new WebViewClient());
+        panel.addJavascriptInterface(bridge, "Car");
+        panel.loadUrl("file:///android_asset/themes/split.html?overlay=1");
+        android.view.WindowManager.LayoutParams lp = new android.view.WindowManager.LayoutParams(w, h,
+                android.os.Build.VERSION.SDK_INT >= 26 ? android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : android.view.WindowManager.LayoutParams.TYPE_PHONE,
+                android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                android.graphics.PixelFormat.OPAQUE);
+        lp.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+        try { ((android.view.WindowManager) act.getSystemService(Context.WINDOW_SERVICE)).addView(panel, lp); } catch (Throwable t) { panel = null; }
+    }
+
+    private void closePanel() {
+        if (panel == null) return;
+        try { ((android.view.WindowManager) act.getSystemService(Context.WINDOW_SERVICE)).removeView(panel); } catch (Throwable ignored) { }
+        try { panel.destroy(); } catch (Throwable ignored) { }
+        panel = null;
     }
 
     private JSONObject state() throws Exception {
@@ -310,6 +391,8 @@ public class ThemeScreen extends Screen {
         o.put("pos", m.position() / 1000);
         o.put("dur", m.duration() / 1000);
         android.graphics.Bitmap art = m.art();
+        // No cover from the source (Bluetooth): look the song up on the internet.
+        if (art == null && m.hasTrackInfo()) art = com.thecarlauncher.util.CoverLookup.get(act, m.artist(), m.title());
         o.put("artId", art == null ? 0 : System.identityHashCode(art));
         // Whichever source is active (Spotify, YouTube Music, Bluetooth, radio…) drives the one player.
         String src = m.packageName();
@@ -340,6 +423,12 @@ public class ThemeScreen extends Screen {
                 .put("ecuAge", obh == null ? -1 : obh.rpmAge()));
         JSONObject ph = new JSONObject().put("on", com.thecarlauncher.util.PhoneLink.connected()).put("name", com.thecarlauncher.util.PhoneLink.phoneName).put("via", com.thecarlauncher.util.PhoneLink.via);
         o.put("phone", ph);
+        // Google Maps navigating on the unit: its next turn for our panel
+        if (System.currentTimeMillis() - com.thecarlauncher.media.MediaListenerService.navAt < 30000) {
+            o.put("pnav", new JSONObject().put("dist", com.thecarlauncher.media.MediaListenerService.navDist)
+                    .put("text", com.thecarlauncher.media.MediaListenerService.navText).put("eta", com.thecarlauncher.media.MediaListenerService.navEta)
+                    .put("id", 1000 + com.thecarlauncher.media.MediaListenerService.navId));
+        }
         if (com.thecarlauncher.util.PhoneLink.navActive()) o.put("pnav", new JSONObject().put("dist", com.thecarlauncher.util.PhoneLink.navDist).put("text", com.thecarlauncher.util.PhoneLink.navText)
                 .put("eta", com.thecarlauncher.util.PhoneLink.navEta).put("id", com.thecarlauncher.util.PhoneLink.navId));
 
@@ -410,6 +499,7 @@ public class ThemeScreen extends Screen {
 
     @Override
     public void onShow() {
+        closePanel();   // MyDS itself is in front again: the floating panel goes away
         main.removeCallbacks(tick);
         main.post(tick);
         if (web != null) {
@@ -495,7 +585,10 @@ public class ThemeScreen extends Screen {
                         case "spotify": if (!com.thecarlauncher.util.PhoneLink.control("play", PKG_SPOTIFY)) MediaHub.get(act).playInBackground(PKG_SPOTIFY); break;
                         case "ytmusic": if (!com.thecarlauncher.util.PhoneLink.control("play", PKG_YTMUSIC)) MediaHub.get(act).playInBackground(PKG_YTMUSIC); break;
                         case "phoneMusic": com.thecarlauncher.util.PhoneLink.control("play", null); break;
-                        case "split": load("split.html"); break;
+                        case "split": openMapsSplit(); break;
+                        case "splitOsm": load("split.html"); break;
+                        case "closeSplit": closePanel(); com.thecarlauncher.util.BringBack.toLauncher(act); break;
+                        case "mapsFull": closePanel(); break;
                         case "navFull": act.show(LauncherActivity.NAV, true); break;
                         case "spotifyApp": openSpotify(); break;
                         case "ytmusicApp": openPkg(PKG_YTMUSIC); break;
@@ -659,7 +752,9 @@ public class ThemeScreen extends Screen {
         @JavascriptInterface
         public String mediaArt() {
             try {
-                android.graphics.Bitmap b = com.thecarlauncher.util.PhoneLink.mediaActive() && com.thecarlauncher.util.PhoneLink.art != null ? com.thecarlauncher.util.PhoneLink.art : MediaHub.get(act).art();
+                MediaHub mh = MediaHub.get(act);
+                android.graphics.Bitmap b = mh.art();
+                if (b == null && mh.hasTrackInfo()) b = com.thecarlauncher.util.CoverLookup.get(act, mh.artist(), mh.title());
                 if (b == null) return "";
                 android.graphics.Bitmap sc = android.graphics.Bitmap.createScaledBitmap(b, 200, 200 * b.getHeight() / Math.max(1, b.getWidth()), true);
                 java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
@@ -713,6 +808,7 @@ public class ThemeScreen extends Screen {
         public String phoneArrow() {
             try {
                 android.graphics.Bitmap b = com.thecarlauncher.util.PhoneLink.navArrow;
+                if (b == null) b = com.thecarlauncher.media.MediaListenerService.navArrow;
                 if (b == null) return "";
                 java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
                 b.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out);

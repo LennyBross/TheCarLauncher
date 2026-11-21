@@ -105,6 +105,9 @@ var IC = {
   aa: '<path d="M12 3 4 20l8-4 8 4z"/>'
 };
 var KEYS = [['home', 'themehome', 'Ana ekran'], ['spotify', 'spotify', 'Spotify'], ['ytmusic', 'ytmusic', 'YouTube Music'], ['radio', 'radio', 'Radyo'], ['map', 'navFull', 'Tam harita'], ['aa', 'aa', 'Android Auto']];
+// Floating beside Google Maps: home closes the panel and returns to MyDS, map key leaves Maps full screen.
+var OVERLAY = /overlay=1/.test(location.search);
+if (OVERLAY) KEYS = KEYS.map(function (k) { return k[0] === 'home' ? ['home', 'closeSplit', 'MyDS'] : k[0] === 'map' ? ['map', 'mapsFull', 'Haritayı büyüt'] : k; });
 KEYS.forEach(function (k) {
   var b = document.createElement('button'); b.className = 'key'; b.id = 'k_' + k[0]; b.setAttribute('aria-label', k[2]);
   b.innerHTML = '<svg class="ic" viewBox="0 0 24 24">' + IC[k[0]] + '</svg>';

@@ -143,6 +143,15 @@ button{background:none;border:none;padding:0;color:inherit}
 #rcF{font-size:66px;font-weight:600;font-style:italic;letter-spacing:-1px;line-height:1;color:#F2EEE6}
 #rcF small{font-size:20px;margin-left:6px;color:#A8A39A;letter-spacing:0}
 #rcN{font-size:22px;font-style:italic;font-weight:600;color:#E8D5B0;max-width:330px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mediaC{left:calc(470px + var(--dx));top:228px;width:340px;height:180px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;pointer-events:auto}
+#mediaC.on{display:flex}
+#mediaC{gap:5px}
+#mcArt{width:88px;height:88px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px rgba(232,213,176,.55),0 10px 30px rgba(0,0,0,.7);background:#1a1b1e}
+#mcArt.spin{animation:mcspin 18s linear infinite}
+@keyframes mcspin{to{transform:rotate(360deg)}}
+#mcNo{width:88px;height:88px;border-radius:50%;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#2a2b2f,#121215);box-shadow:0 0 0 3px rgba(232,213,176,.4)}
+#mcT{font-size:18px;font-weight:600;font-style:italic;color:#F2EEE6;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mcA{font-size:14px;font-style:italic;color:#E8D5B0;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #rcT{font-size:15px;color:#A8A39A;max-width:330px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #car.hide,#dots.hide{visibility:hidden}
 </style>
@@ -237,6 +246,7 @@ button{background:none;border:none;padding:0;color:inherit}
 </svg>
 <div id="car" class="ab"><canvas id="c"></canvas><img id="spin" alt=""></div>
 <div id="load" class="ab">3D YÜKLENİYOR</div>
+<div id="mediaC" class="ab"><img id="mcArt" alt=""><div id="mcNo"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#E8D5B0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div><div id="mcT"></div><div id="mcA"></div></div>
 <div id="radioC" class="ab"><img id="rcL" alt=""><div id="rcF"></div><div id="rcN"></div><div id="rcT"></div></div>
 <div id="dots" class="ab"><button data-v="0" class="on"></button><button data-v="1"></button><button data-v="2"></button></div>
 
@@ -433,11 +443,18 @@ car.on(function (s) {
     artId = s.artId;
     var u = artId ? call('mediaArt') : '';
     $('cover').src = u || ''; $('cover').style.visibility = u ? 'visible' : 'hidden'; $('noart').style.display = u ? 'none' : 'flex';
+    $('mcArt').src = u || ''; $('mcArt').style.display = u ? 'block' : 'none'; $('mcNo').style.display = u ? 'none' : 'flex';
   }
   $('b0').classList.toggle('hi', !!s.navActive);
   // Radio on: the dial's centre shows the station instead of the car
+  // Music playing (phone over Bluetooth, Spotify, USB…): the dial's centre shows the song
+  var song = !tun && !!s.playing && !!s.title;
+  $('mediaC').classList.toggle('on', song);
+  $('mcArt').classList.toggle('spin', song);
+  $('rpmD').style.display = song ? 'none' : '';
+  if (song) { $('mcT').textContent = s.title; $('mcA').textContent = s.artist || s.srcLabel || ''; }
   $('radioC').classList.toggle('on', !!tun);
-  $('car').classList.toggle('hide', !!tun); $('dots').classList.toggle('hide', !!tun);
+  $('car').classList.toggle('hide', !!tun || song); $('dots').classList.toggle('hide', !!tun || song);
   if (tun) {
     var mhz = s.khz > 30000 ? (s.khz / 1000).toFixed(1).replace('.', ',') : String(s.khz);
     $('rcF').innerHTML = mhz + '<small>' + (s.khz > 30000 ? 'MHz' : 'kHz') + '</small>';
@@ -449,6 +466,7 @@ car.on(function (s) {
 });
 
 // Station logo from the RDS name (radio-browser.info, open station database), cached per name.
+$('mediaC').onclick = function () { call('media', 'play'); };
 var logoFor = null;
 function stationLogo(ps) {
   ps = (ps || '').trim();
