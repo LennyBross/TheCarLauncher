@@ -45,6 +45,17 @@ public final class EngineSim {
     /** GPS speed may drive the virtual gearbox when no real rpm comes in. */
     public volatile boolean gpsAllowed = false;
 
+    /** Manual gear from the + / − keys (0 = automatic); falls back to automatic after 20 s untouched. */
+    public volatile int manualGear = 0;
+    private volatile long manualAt;
+    private volatile int pendingShift;
+
+    /** + / − key: one gear up or down, with the cut / blip of a real shift. */
+    public void shift(int dir, long nowMs) {
+        pendingShift += dir > 0 ? 1 : -1;
+        manualAt = nowMs;
+    }
+
     public void setRealRpm(float r, float max, long nowMs) {
         realRpm = r;
         realMax = max > 1000 ? max : 4500;
@@ -98,6 +109,20 @@ public final class EngineSim {
             return;
         }
 
+        // manual + / − shifts (applied on the audio thread)
+        int ps = pendingShift;
+        if (ps != 0) {
+            pendingShift -= ps;
+            int base = manualGear > 0 ? manualGear : Math.max(1, gear);
+            int g = Math.max(1, Math.min(6, base + ps));
+            if (g != base || manualGear == 0) {
+                shiftUp = g > base;
+                shiftT = shiftUp ? .2f : .25f;
+                if (shiftUp) synth.pop(.55f);
+            }
+            manualGear = g;
+        }
+        if (manualGear > 0 && nowMs - manualAt > 20000) manualGear = 0;
         boolean realFresh = realRpm >= 0 && nowMs - realAt < 2000;
         boolean consFresh = cons >= 0 && nowMs - consAt < 4000;
         if (realFresh) {
@@ -110,10 +135,12 @@ public final class EngineSim {
                 wantRpm = idle + Math.max(0, realRpm - 800) * k;
             }
             wantLoad = accel > .4f ? Math.min(1f, .35f + accel / 6f) : accel < -1f ? 0f : .25f;
-            gear = speed < 3 ? 0 : gear;
+            gear = manualGear > 0 ? manualGear : speed < 3 ? 0 : gear;
+            if (shiftT > 0) { shiftT -= dt; wantLoad = shiftUp ? 0f : .75f; }
         } else if (!gpsAllowed && !rev) {
             // No rpm source and no GPS: the CAN trip computer's fuel flow is the throttle.
-            gear = 0;
+            gear = manualGear;
+            if (shiftT > 0) { shiftT -= dt; }
             float f = consFresh ? Math.min(1f, cons / 25f) : 0f;
             wantRpm = idle + f * (red * .55f - idle);
             wantLoad = consFresh ? (cons < .2f ? 0f : .15f + .85f * f) : .15f;
@@ -126,7 +153,8 @@ public final class EngineSim {
             float aggr = Math.max(0, Math.min(1, accel / 9f));
             float upAt = red * (.42f + .5f * aggr);
             float r = speed / KMH_PER_1000[gear - 1] * 1000f;
-            if (shiftT <= 0) {
+            if (manualGear > 0) gear = manualGear;
+            else if (shiftT <= 0) {
                 if (r > upAt && gear < 6) { gear++; shiftT = .2f; shiftUp = true; if (aggr > .3f) synth.pop(.5f + aggr * .5f); }
                 else if (r < Math.max(idle * 1.5f, 1350) && gear > 1) { gear--; shiftT = .25f; shiftUp = false; }
             }

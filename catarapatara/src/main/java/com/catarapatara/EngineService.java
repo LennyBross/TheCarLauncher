@@ -364,7 +364,7 @@ public final class EngineService extends Service implements LocationListener, Ob
     String live() {
         long now = System.currentTimeMillis();
         try {
-            return new JSONObject().put("rpm", Math.round(sim.rpm)).put("gear", sim.gear).put("kmh", Math.round(sim.speed))
+            return new JSONObject().put("rpm", Math.round(sim.rpm)).put("gear", sim.gear).put("manual", sim.manualGear > 0).put("kmh", Math.round(sim.speed))
                     .put("red", Math.round(synth.profile().redline())).put("load", Math.round(sim.load * 100))
                     .put("src", sim.source(now)).put("level", Math.round(level * 100)).put("err", audioError).put("gh", SoundPacks.ghStatus).put("can", now - canStatusAt < 6000 ? canStatus : "").put("on", running).put("obd", obdStatus).put("gps", now - lastFixAt < 3000)
                     .put("duck", Math.round(duckNow * 100)).put("music", musicOn).put("nav", duckNav).put("spec", new JSONArray(spectrumList())).toString();
@@ -573,6 +573,9 @@ public final class EngineService extends Service implements LocationListener, Ob
         } catch (Exception ignored) {
         }
     }
+
+    /** + / − gear keys of the app screen. */
+    void shift(int dir) { sim.shift(dir, System.currentTimeMillis()); }
 
     /** Called when the settings change from the app screen. */
     void settingsChanged(String key) {

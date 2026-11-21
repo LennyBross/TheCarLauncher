@@ -5,209 +5,149 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>CataraPatara</title>
 <style>
-/* CataraPatara · motor sesi stüdyosu
-   Layout after CAR-SOUND-CHANGER's sound mod page (MIT): engine rack, live harmonics hero,
-   cabin soundstage, output & ducking, drive tray. Own code, DS4 / CataraPatara styling. */
+/* CataraPatara — one calm screen: gear (− / +), rpm, the engine, throttle and volume.
+   Everything else lives behind ⚙. Takes the MYDS home theme's look:
+   Stock (champagne, italic Montserrat), DS4+ (teal, Inter), Panel 80 (VFD cyan, mono). */
 @font-face{font-family:'Space Grotesk';src:url(fonts/SpaceGrotesk.ttf);font-weight:300 700}
 @font-face{font-family:'Inter';src:url(fonts/Inter.ttf);font-weight:100 900}
 @font-face{font-family:'Montserrat';src:url(themes/fonts/Montserrat-Regular.ttf);font-weight:400}
 @font-face{font-family:'Montserrat';src:url(themes/fonts/Montserrat-SemiBold.ttf);font-weight:600}
 @font-face{font-family:'Montserrat';src:url(themes/fonts/Montserrat-Bold.ttf);font-weight:700}
-/* MYDS theme font: Stock & Panel = Montserrat everywhere */
-body.f-montserrat,body.f-montserrat button,body.f-montserrat input,body.f-montserrat .sg,body.f-montserrat h1,body.f-montserrat .eng b,body.f-montserrat #gas{font-family:'Montserrat',sans-serif}
-:root{--acid:#D9FF78;--acid2:rgba(217,255,120,.16);--hot:#FF6A3D;--bg:#070A08;--card:#121814;--card2:#171E19;--ink:#F1EFE8;--muted:#8F998F;--line:rgba(241,239,232,.09)}
+@font-face{font-family:'Share Tech Mono';src:url(themes/fonts/ShareTechMono.ttf)}
+:root{--a:#5CC8B0;--a2:rgba(92,200,176,.16);--hot:#FF6A3D;--bg:#0B0E13;--card:#161B23;--chip:#1E252F;--ink:#F3F5F7;--muted:#A3ADBA;--line:rgba(255,255,255,.08);--on:#0B0E13;--ff:'Inter',sans-serif;--fd:'Space Grotesk',sans-serif}
+body.t-stock{--a:#E8D5B0;--a2:rgba(232,213,176,.14);--bg:#050506;--card:#141518;--chip:#1c1d21;--ink:#EEEAE2;--muted:#A8A39A;--on:#111;--ff:'Montserrat',sans-serif;--fd:'Montserrat',sans-serif}
+body.t-panel{--a:#56F2FF;--a2:rgba(86,242,255,.12);--hot:#FF4FD8;--bg:#030608;--card:#0b1114;--chip:#0f181c;--ink:#56F2FF;--muted:#2a8f98;--line:rgba(86,242,255,.22);--on:#031014;--ff:'Share Tech Mono',monospace;--fd:'Share Tech Mono',monospace}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
-body{background:radial-gradient(120% 80% at 50% -10%,#16201a 0%,var(--bg) 60%);color:var(--ink);font-family:'Inter',sans-serif;user-select:none;overflow-y:auto;overflow-x:hidden}
-.sg{font-family:'Space Grotesk',sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
-button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:var(--ff);user-select:none}
+body.t-stock{background:radial-gradient(70% 70% at 50% 40%,#1b1c1f,#050506 70%)}
+.d{font-family:var(--fd);font-weight:700;font-variant-numeric:tabular-nums}
+body.t-stock .d{font-style:italic;font-weight:600}
+body.t-panel .d{font-weight:400;text-shadow:0 0 1vh currentColor}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
 .key:active{transform:scale(.96)}
-.eye{font-size:1.5vh;letter-spacing:.32vh;color:var(--muted);font-weight:600}
-.page{padding:2.2vh 3vh 3vh;display:flex;flex-direction:column;gap:1.8vh;min-height:100vh}
-.card{background:linear-gradient(150deg,rgba(25,32,27,.92),rgba(12,16,14,.94));border:1px solid var(--line);border-radius:2.8vh}
-
-/* header */
-.top{display:flex;align-items:center;gap:1.8vh}
-.top img{height:6.4vh}
-.top h1{font-family:'Space Grotesk',sans-serif;font-size:3.9vh;line-height:1;font-weight:700}
-#ign{display:flex;align-items:center;gap:1.4vh;height:7.2vh;padding:0 3vh;border-radius:3.6vh;background:#1a211c;border:1px solid rgba(217,255,120,.28);font-size:2.1vh;font-weight:700;letter-spacing:.1vh}
-#ign i{width:2.2vh;height:2.2vh;border-radius:50%;background:#3a443c;box-shadow:inset 0 0 0 .3vh #222}
-#ign.on{background:var(--acid);color:#0b0f0c;border-color:transparent;box-shadow:0 0 3vh rgba(217,255,120,.35)}
-#ign.on i{background:#0b0f0c;box-shadow:0 0 0 .4vh rgba(11,15,12,.25)}
-#hide{width:7.2vh;height:7.2vh;border-radius:50%;background:#1a211c;border:1px solid var(--line);font-size:3vh}
-.badges{display:flex;gap:.9vh;flex-wrap:wrap;flex:1;justify-content:flex-end}
-.badge{display:inline-flex;align-items:center;gap:.7vh;font-size:1.6vh;padding:.7vh 1.3vh;border-radius:2vh;background:#18201a;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
-.badge.ok{color:var(--acid);border-color:rgba(217,255,120,.3)}
-.badge.err{color:#FF8A6B;border-color:rgba(255,106,61,.35)}
-
-/* engine rack */
-#rack{display:flex;gap:1.3vh;overflow-x:auto;padding-bottom:.6vh;scrollbar-width:none}
+svg.ic{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.card{background:var(--card);border-radius:3vh;box-shadow:inset 0 0 0 1px var(--line)}
+body.t-stock .card{background:linear-gradient(180deg,rgba(32,33,36,.95),rgba(12,12,14,.95));box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.18)}
+body.t-panel .card{background:transparent;border-radius:1.4vh}
+.page{height:100%;display:grid;grid-template-columns:1fr 34%;grid-template-rows:8vh 1fr 15vh;gap:2vh;padding:2.4vh}
+.top{grid-column:1/3;display:flex;align-items:center;gap:1.6vh}
+.top img{height:5.4vh}
+.top h1{font-family:var(--fd);font-size:3.4vh;font-weight:700;flex:1}
+body.t-stock .top h1{font-style:italic;font-weight:600}
+.badge{font-size:1.7vh;padding:.8vh 1.4vh;border-radius:2vh;background:var(--chip);color:var(--muted);white-space:nowrap}
+.badge.ok{color:var(--a)}
+.badge.err{color:var(--hot)}
+.rb{width:7vh;height:7vh;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--line)}
+.rb svg{width:3.6vh;height:3.6vh}
+#ign.on{background:var(--a);color:var(--on);box-shadow:0 0 2.4vh var(--a2)}
+#hero{display:flex;align-items:center;justify-content:center;gap:4vh;position:relative}
+.gk{width:15vh;height:15vh;border-radius:50%;background:var(--chip);box-shadow:inset 0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center}
+.gk svg{width:6vh;height:6vh}
+.gk:active{background:var(--a2)}
+#dial{position:relative;width:46vh;height:46vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#dial svg.r{position:absolute;inset:0;width:100%;height:100%;transform:rotate(135deg)}
+#gear{font-size:17vh;line-height:.9;color:var(--a)}
+#mode{font-size:1.8vh;letter-spacing:.4vh;color:var(--muted)}
+#rpm{font-size:4.4vh}
+#viz{position:absolute;left:6%;width:88%;bottom:3vh;height:6vh}
+#side{display:flex;flex-direction:column;gap:1.6vh;min-height:0}
+#rack{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:1vh;padding:1.6vh;scrollbar-width:none}
 #rack::-webkit-scrollbar{display:none}
-.eng{flex:0 0 24vh;height:12.5vh;border-radius:2.2vh;background:var(--card2);border:1px solid var(--line);text-align:left;padding:1.5vh 1.8vh;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
-.eng b{font-family:'Space Grotesk',sans-serif;font-size:2.4vh;line-height:1.1}
-.eng span{font-size:1.55vh;color:var(--muted);line-height:1.3}
-.eng em{font-style:normal;font-size:1.4vh;letter-spacing:.15vh;color:var(--muted)}
-.eng.pack em{color:#E6C887}
-.eng.on{background:linear-gradient(150deg,#2a3420,#151b16);border-color:var(--acid);box-shadow:inset 0 0 0 1px var(--acid),0 0 2.4vh rgba(217,255,120,.18)}
-.eng.on b{color:var(--acid)}
-.eng.add{border:1px dashed rgba(241,239,232,.22);background:transparent;align-items:center;justify-content:center;gap:.6vh}
-
-/* deck */
-.deck{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:1.8vh}
-.deck>.card{padding:2.2vh;min-height:46vh;display:flex;flex-direction:column}
-.hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4vh}
-.pill{font-size:1.5vh;letter-spacing:.2vh;padding:.5vh 1.2vh;border-radius:1.5vh;background:var(--acid2);color:var(--acid);font-weight:700}
-
-/* hero */
-#hero{align-items:center;background:radial-gradient(circle at 50% 30%,rgba(217,255,120,.09),transparent 45%),linear-gradient(150deg,rgba(25,32,27,.92),rgba(12,16,14,.94))}
-#orbit{width:19vh;height:19vh;border-radius:50%;border:1px solid rgba(217,255,120,.25);display:grid;place-items:center;position:relative;box-shadow:inset 0 0 5vh rgba(217,255,120,.03),0 0 0 2vh rgba(255,255,255,.015)}
-#orbit::before,#orbit::after{content:'';position:absolute;border-radius:50%}
-#orbit::before{inset:1.6vh;border:1px dashed rgba(217,255,120,.18)}
-#orbit::after{inset:4.6vh;border:1px solid rgba(217,255,120,.14)}
-#orbit.on::before{animation:spin 6s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-#gear{font-size:7.2vh;color:var(--acid);z-index:1;line-height:1}
-#ring{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);transform:rotate(-90deg)}
-#pname{margin-top:1.5vh;font-size:1.7vh;color:var(--muted)}
-#rpm{font-size:4.6vh;line-height:1.05}
-#rpmL{font-size:1.4vh;letter-spacing:.3vh;color:var(--muted)}
-#viz{width:100%;flex:1;min-height:10vh;margin-top:1.2vh}
-.mini{display:flex;gap:2.4vh;font-size:1.7vh;color:var(--muted);margin-top:.8vh}
-.mini b{color:var(--ink);font-size:2.1vh}
-
-/* cabin */
-#stage{width:100%;height:16vh}
-.eqs{display:flex;gap:1.2vh;margin-top:1.2vh;flex:1}
-.eqc{flex:1;display:flex;flex-direction:column;align-items:center;gap:.6vh}
-.eqc b{font-size:1.9vh;color:var(--acid)}
-.eqc span{font-size:1.45vh;color:var(--muted)}
-.vs{-webkit-appearance:slider-vertical;appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;width:4.4vh;height:13vh;accent-color:var(--acid)}
-.seg{display:flex;gap:.7vh;background:#0e130f;border:1px solid var(--line);border-radius:1.8vh;padding:.5vh}
-.seg button{flex:1;height:5vh;border-radius:1.4vh;font-size:1.8vh;font-weight:600;color:var(--muted)}
-.seg button.on{background:var(--acid);color:#0b0f0c}
-
-/* output */
-.big{font-size:6vh;line-height:1}
-.duckNote{font-size:1.5vh;color:var(--hot);margin-left:1vh}
-input[type=range].h{width:100%;height:4.4vh;accent-color:var(--acid)}
-.sep{height:1px;background:var(--line);margin:1.6vh 0}
-.rowx{display:flex;align-items:center;gap:1.4vh}
-.rowx .t{flex:1;font-size:1.95vh}
-.rowx small{display:block;font-size:1.5vh;color:var(--muted);margin-top:.3vh}
-.sw{width:8.4vh;height:4.6vh;border-radius:2.3vh;background:#2a322c;position:relative;flex-shrink:0}
-.sw::after{content:'';position:absolute;top:.55vh;left:.55vh;width:3.5vh;height:3.5vh;border-radius:50%;background:#e9ece6;transition:left .15s}
-.sw.on{background:var(--acid)}.sw.on::after{left:4.35vh;background:#0b0f0c}
-#lvl{height:1.1vh;border-radius:.6vh;background:#232a25;overflow:hidden;margin-top:1vh}
-#lvlF{height:100%;width:0;background:linear-gradient(90deg,var(--acid),#ffe27a,var(--hot));transition:width .08s}
-
-/* drive tray */
-.tray{display:flex;align-items:center;gap:2vh;padding:1.8vh 2.2vh}
-#gas{width:30vh;height:11vh;border-radius:2.4vh;background:linear-gradient(180deg,#2c3824,#151c14);border:1px solid rgba(217,255,120,.35);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:3.4vh;letter-spacing:.4vh;color:var(--acid);touch-action:none;display:flex;align-items:center;justify-content:center;gap:1.4vh;
-  background-image:repeating-linear-gradient(0deg,rgba(217,255,120,.07) 0 .4vh,transparent .4vh 1.4vh)}
-#gas.down{background:var(--acid);color:#0b0f0c;transform:scale(.97);box-shadow:0 0 3vh rgba(217,255,120,.4)}
-.tbtn{height:8vh;padding:0 2.6vh;border-radius:2vh;background:#1a211c;border:1px solid var(--line);font-size:2vh;font-weight:600}
-.trayInfo{flex:1;display:flex;gap:3.2vh;align-items:baseline;justify-content:flex-end;color:var(--muted);font-size:1.8vh}
-.trayInfo b{font-size:4.2vh;color:var(--ink)}
-
-/* settings */
-.set{padding:1vh 2.2vh}
-.set h2{font-size:1.5vh;letter-spacing:.3vh;color:var(--muted);font-weight:600;margin:1.4vh 0 .4vh}
+.eng{display:flex;align-items:center;gap:1.4vh;height:7.4vh;padding:0 1.6vh;border-radius:2vh;background:var(--chip);text-align:left;flex-shrink:0}
+.eng b{flex:1;font-size:2.2vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eng i{font-style:normal;font-size:1.5vh;color:var(--muted)}
+.eng.on{background:var(--a);color:var(--on)}
+.eng.on i{color:var(--on);opacity:.7}
+.vol{display:flex;align-items:center;gap:1.4vh;padding:1.6vh 2vh}
+.vol svg{width:3.4vh;height:3.4vh;color:var(--muted);flex-shrink:0}
+input[type=range]{flex:1;accent-color:var(--a);height:4vh}
+.bot{grid-column:1/3;display:flex;gap:2vh}
+#gas{flex:1;border-radius:2.6vh;display:flex;align-items:center;justify-content:center;gap:1.6vh;font-family:var(--fd);font-size:3.2vh;letter-spacing:.5vh;color:var(--a);touch-action:none;
+  background:repeating-linear-gradient(90deg,var(--a2) 0 .5vh,transparent .5vh 1.6vh),var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+#gas svg{width:4vh;height:4vh}
+#gas.down{background:var(--a);color:var(--on)}
+#test{width:22vh;border-radius:2.6vh;background:var(--chip);box-shadow:inset 0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center}
+#test svg{width:4.4vh;height:4.4vh}
+#sheet{position:fixed;inset:0;background:var(--bg);display:none;overflow-y:auto;padding:2.4vh 3vh 4vh;z-index:5}
+#sheet.on{display:block}
+.sh{display:flex;align-items:center;gap:1.6vh;margin-bottom:1vh}
+.sh h2{font-family:var(--fd);font-size:3vh;flex:1}
+.grp{font-size:1.5vh;letter-spacing:.3vh;color:var(--muted);margin:2.4vh 0 .8vh}
 .row{display:flex;align-items:center;gap:1.6vh;padding:1.5vh 0;border-bottom:1px solid var(--line)}
-.row:last-child{border-bottom:none}
-.row>span{font-size:2vh;width:30vh;flex-shrink:0}
+.row>span{font-size:2vh;width:32vh;flex-shrink:0}
 .row small{display:block;font-size:1.5vh;color:var(--muted);margin-top:.3vh}
-.row .seg{flex:1}
-input[type=text]{flex:1;height:5.8vh;border-radius:1.6vh;border:1px solid var(--line);background:#0e130f;color:var(--ink);font-size:2vh;padding:0 1.6vh;font-family:inherit}
-#gh{font-size:1.5vh;color:var(--muted)}
-@media (max-aspect-ratio:1/1){.deck{grid-template-columns:1fr}}
+.seg{flex:1;display:flex;gap:.6vh;background:var(--chip);border-radius:1.8vh;padding:.5vh}
+.seg button{flex:1;height:5vh;border-radius:1.4vh;font-size:1.8vh;color:var(--muted)}
+.seg button.on{background:var(--a);color:var(--on)}
+.sw{width:8.4vh;height:4.6vh;border-radius:2.3vh;background:var(--chip);position:relative;flex-shrink:0;box-shadow:inset 0 0 0 1px var(--line)}
+.sw::after{content:'';position:absolute;top:.55vh;left:.55vh;width:3.5vh;height:3.5vh;border-radius:50%;background:var(--muted);transition:left .15s}
+.sw.on{background:var(--a)}.sw.on::after{left:4.35vh;background:var(--on)}
+.eqs{display:flex;gap:1.4vh;flex:1}
+.eqc{flex:1;display:flex;flex-direction:column;align-items:center;gap:.6vh}
+.eqc b{font-size:1.8vh;color:var(--a)}
+.eqc span{font-size:1.4vh;color:var(--muted)}
+.vs{-webkit-appearance:slider-vertical;appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;width:4.4vh;height:13vh;flex:none}
+input[type=text]{flex:1;height:5.8vh;border-radius:1.6vh;border:none;box-shadow:inset 0 0 0 1px var(--line);background:var(--chip);color:var(--ink);font-size:2vh;padding:0 1.6vh;font-family:inherit}
+.note{font-size:1.6vh;color:var(--muted);line-height:1.5;padding:1.6vh 0}
 </style>
 </head>
 <body>
 <div class="page">
+  <div class="top">
+    <img src="logo.svg" alt="">
+    <h1>CataraPatara</h1>
+    <span class="badge" id="bSrc">—</span>
+    <span class="badge err" id="bErr" style="display:none"></span>
+    <button class="key rb" id="ign" aria-label="Motoru çalıştır / durdur"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></button>
+    <button class="key rb" id="gear-set" aria-label="Ayarlar"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button>
+    <button class="key rb" id="hide" aria-label="Kapat"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
 
-<div class="top">
-  <img src="logo.svg" alt="">
-  <div><h1>CataraPatara</h1><div class="eye" style="margin-top:.6vh">MOTOR SESİ STÜDYOSU</div></div>
-  <div class="badges"><span class="badge" id="bSrc">GPS</span><span class="badge" id="bObd" style="display:none"></span><span class="badge" id="bCan" style="display:none"></span><span class="badge err" id="bErr" style="display:none"></span></div>
-  <button class="key" id="ign"><i></i><span id="ignT">Motoru çalıştır</span></button>
-  <button class="key" id="hide" aria-label="Gizle">—</button>
-</div>
-
-<div>
-  <div class="hd" style="margin-bottom:1vh"><span class="eye">MOTORLAR</span><span id="gh"></span></div>
-  <div id="rack"></div>
-</div>
-
-<div class="deck">
   <section class="card" id="hero">
-    <div class="hd" style="width:100%"><span class="eye">CANLI HARMONİKLER</span><span class="pill" id="srcPill">GPS</span></div>
-    <div id="orbit"><svg id="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="49" fill="none" stroke="rgba(217,255,120,.08)" stroke-width="2"/><circle id="ringF" cx="50" cy="50" r="49" fill="none" stroke="#D9FF78" stroke-width="2" stroke-linecap="round" stroke-dasharray="0 400"/></svg><span class="sg" id="gear">N</span></div>
-    <div id="pname"></div>
-    <div class="sg" id="rpm">0</div>
-    <div id="rpmL">D/D</div>
+    <button class="key gk" id="dn" aria-label="Vites düşür"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+    <div id="dial">
+      <svg class="r" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="var(--chip)" stroke-width="2.4" stroke-dasharray="216.8 400" stroke-linecap="round"/><circle id="ringF" cx="50" cy="50" r="46" fill="none" stroke="var(--a)" stroke-width="2.8" stroke-dasharray="0 400" stroke-linecap="round"/></svg>
+      <span class="d" id="gear">N</span>
+      <span id="mode">OTOMATİK</span>
+      <span class="d" id="rpm">0</span>
+    </div>
+    <button class="key gk" id="up" aria-label="Vites yükselt"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
     <canvas id="viz"></canvas>
-    <div class="mini"><span>Hız <b class="sg" id="kmh">0</b> km/h</span><span>Gaz <b class="sg" id="load">0</b>%</span></div>
   </section>
 
-  <section class="card">
-    <div class="hd"><span class="eye">KABİN SES SAHNESİ</span><span class="pill" id="exPill">SPOR</span></div>
-    <svg id="stage" viewBox="0 0 240 120" aria-label="DS4 kabin hoparlörleri">
-      <path d="M40 30 C70 14 170 14 205 26 C222 32 228 46 228 60 C228 74 222 88 205 94 C170 106 70 106 40 90 C24 82 16 72 16 60 C16 48 24 38 40 30Z" fill="rgba(255,255,255,.03)" stroke="rgba(241,239,232,.3)" stroke-width="1.5"/>
-      <path d="M78 32 C100 26 150 26 170 32 C182 40 182 80 170 88 C150 94 100 94 78 88 C68 80 68 40 78 32Z" fill="rgba(14,19,15,.85)" stroke="rgba(241,239,232,.18)"/>
-      <line x1="124" y1="30" x2="124" y2="90" stroke="rgba(241,239,232,.14)" stroke-dasharray="3 3"/>
-      <g id="waves" opacity="0">
-        <ellipse cx="226" cy="60" rx="10" ry="16" fill="none" stroke="#D9FF78" stroke-width="1.4"/>
-        <ellipse cx="226" cy="60" rx="18" ry="26" fill="none" stroke="#D9FF78" stroke-width="1" opacity=".6"/>
-        <ellipse cx="226" cy="60" rx="26" ry="36" fill="none" stroke="#D9FF78" stroke-width=".8" opacity=".35"/>
-        <ellipse cx="96" cy="60" rx="20" ry="26" fill="none" stroke="#D9FF78" stroke-width=".9" opacity=".5"/>
-        <ellipse cx="160" cy="60" rx="20" ry="26" fill="none" stroke="#D9FF78" stroke-width=".9" opacity=".5"/>
-      </g>
-      <g fill="#1b221d" stroke="rgba(241,239,232,.32)">
-        <circle cx="86" cy="30" r="6"/><circle cx="86" cy="90" r="6"/><circle cx="170" cy="30" r="6"/><circle cx="170" cy="90" r="6"/>
-      </g>
-      <g id="pods" fill="#5f6a61"><circle cx="86" cy="30" r="2.6"/><circle cx="86" cy="90" r="2.6"/><circle cx="170" cy="30" r="2.6"/><circle cx="170" cy="90" r="2.6"/></g>
-      <text x="16" y="114" font-size="8" fill="#8F998F" font-family="Inter">ÖN</text>
-      <text x="200" y="114" font-size="8" fill="#8F998F" font-family="Inter">EGZOZ</text>
-    </svg>
-    <div class="seg" id="ex"></div>
-    <div class="eqs" id="eqBox"></div>
-    <div class="rowx" style="margin-top:1vh"><span class="t">Bas <small>120 Hz altı</small></span><input type="range" class="h" min="0" max="9" step="1" id="bass" style="width:50%"><b class="sg" id="bassT" style="width:4vh;text-align:right"></b></div>
-  </section>
+  <aside id="side">
+    <div class="card" id="rack"></div>
+    <div class="card vol"><svg class="ic" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg><input type="range" min="0" max="100" step="5" id="vol"><b class="d" id="volT" style="width:6vh;text-align:right"></b></div>
+  </aside>
 
-  <section class="card">
-    <div class="hd"><span class="eye">SES ÇIKIŞI</span><span class="duckNote" id="duckNote"></span></div>
-    <div style="display:flex;align-items:baseline;gap:1vh"><span class="sg big" id="effT">70</span><span style="font-size:2.2vh;color:var(--muted)">%</span><span style="font-size:1.6vh;color:var(--muted);margin-left:auto">ayar <b id="volT">70</b></span></div>
-    <input type="range" class="h" min="0" max="100" step="5" id="vol">
-    <div id="lvl"><div id="lvlF"></div></div>
-    <div class="sep"></div>
-    <div class="rowx"><span class="t">Müzik çalarken kıs<small>Spotify, YT Music, Bluetooth çalınca motor sesi azalır</small></span><button class="key sw" id="duckMusic"></button></div>
-    <div class="rowx" style="margin-top:1vh" id="duckRow"><input type="range" class="h" min="10" max="90" step="5" id="duckAmt"><b class="sg" id="duckAmtT" style="width:6vh;text-align:right"></b></div>
-    <div class="rowx" style="margin-top:.6vh"><span class="t" style="font-size:1.6vh;color:var(--muted)">Navigasyon ya da asistan konuşunca motor sesi her zaman 18 dB kısılır.</span></div>
-    <div class="sep"></div>
-    <div class="rowx"><span class="t">Patlamalar<small>gazdan ayak çekince, viteste</small></span><button class="key sw" id="pops"></button></div>
-  </section>
+  <div class="bot">
+    <button class="key" id="gas"><svg class="ic" viewBox="0 0 24 24"><path d="M5 20h14L17 6H7z"/></svg>GAZ</button>
+    <button class="key" id="test" aria-label="Ses testi"><svg class="ic" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></button>
+  </div>
 </div>
 
-<section class="card tray">
-  <button class="key" id="gas"><svg width="3.4vh" height="3.4vh" viewBox="0 0 24 24" fill="currentColor"><path d="M5 20h14l-2-14H7z"/></svg>GAZ</button>
-  <button class="key tbtn" id="test">Ses testi</button>
-  <div class="trayInfo"><span><b class="sg" id="tKmh">0</b> km/h</span><span><b class="sg" id="tGear">N</b> vites</span><span><b class="sg" id="tRpm">0</b> d/d</span></div>
-</section>
-
-<section class="card set">
-  <h2>ARAÇ VE VERİ</h2>
-  <div class="row"><span>OBD2 adaptörü<small>ELM327 · gerçek devir + gaz pedalı</small></span><div class="seg" id="obd"></div></div>
-  <div class="row"><span>Veri yolu<small>OBD2 = soket · PSA CAN = ekran arkası CAN (0x0B6, sadece dinler)</small></span><div class="seg" id="obdProto"></div></div>
-  <div class="row"><span>Adaptör adresi<small>Wi-Fi: 192.168.0.10:35000 · BT: cihaz adı</small></span><input type="text" id="obdTarget" placeholder="boş = otomatik"></div>
-  <div class="row"><span>Devir saatiyle birebir<small>açık: ses aracın gerçek devrinde döner · kapalı: motor profiline yayılır</small></span><div style="flex:1"></div><button class="key sw" id="matchRpm"></button></div>
-  <div class="row"><span>GPS yedeği<small>kapalı önerilir · OBD / CAN yokken hızdan sanal vites hesaplar</small></span><div style="flex:1"></div><button class="key sw" id="gps"></button></div>
-  <div class="row"><span>Aracın devir sınırı<small>DS4 1.6 e-HDi ≈ 4500</small></span><input type="range" class="h" min="3500" max="7500" step="100" id="carMax" style="flex:1"><b class="sg" id="carMaxT" style="width:8vh;text-align:right"></b></div>
-  <h2>SİSTEM</h2>
-  <div class="row"><span>Ses kanalı<small>ses gelmezse diğerlerini dene</small></span><div class="seg" id="out"></div></div>
-  <div class="row"><span>Yüzen egzoz düğmesi<small>Android Auto açıkken: dokun aç/kapat · basılı tut uygulama</small></span><div style="flex:1"></div><button class="key tbtn" id="allow" style="display:none;height:5.6vh">İzin ver</button><button class="key sw" id="bubble"></button></div>
+<div id="sheet">
+  <div class="sh"><h2>Ayarlar</h2><button class="key rb" id="close" aria-label="Kapat"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="grp">SES</div>
+  <div class="row"><span>Egzoz</span><div class="seg" id="ex"></div></div>
+  <div class="row"><span>Kabin ekolayzeri<small>Sub · Alt-orta · Orta · Varlık · Tiz</small></span><div class="eqs" id="eqBox"></div></div>
+  <div class="row"><span>Bas</span><input type="range" min="0" max="9" step="1" id="bass"><b class="d" id="bassT" style="width:5vh;text-align:right"></b></div>
+  <div class="row"><span>Patlamalar</span><div style="flex:1"></div><button class="key sw" id="pops"></button></div>
+  <div class="row"><span>Müzik çalarken kıs</span><input type="range" min="10" max="90" step="5" id="duckAmt"><b class="d" id="duckAmtT" style="width:7vh;text-align:right"></b><button class="key sw" id="duckMusic"></button></div>
+  <div class="row"><span>Ses kanalı</span><div class="seg" id="out"></div></div>
+  <div class="grp">ARAÇ VERİSİ</div>
+  <div class="row"><span>OBD2 adaptörü</span><div class="seg" id="obd"></div></div>
+  <div class="row"><span>Veri yolu</span><div class="seg" id="obdProto"></div></div>
+  <div class="row"><span>Adaptör adresi</span><input type="text" id="obdTarget" placeholder="boş = otomatik"></div>
+  <div class="row"><span>Devir saatiyle birebir</span><div style="flex:1"></div><button class="key sw" id="matchRpm"></button></div>
+  <div class="row"><span>GPS yedeği</span><div style="flex:1"></div><button class="key sw" id="gps"></button></div>
+  <div class="row"><span>Devir sınırı</span><input type="range" min="3500" max="7500" step="100" id="carMax"><b class="d" id="carMaxT" style="width:8vh;text-align:right"></b></div>
+  <div class="grp">SİSTEM</div>
+  <div class="row"><span>Yüzen egzoz düğmesi</span><div style="flex:1"></div><button class="key badge" id="allow" style="display:none">İzin ver</button><button class="key sw" id="bubble"></button></div>
   <div class="row"><span>Araç açılınca hazırla</span><div style="flex:1"></div><button class="key sw" id="boot"></button></div>
-  <div class="row" style="display:block;font-size:1.6vh;color:var(--muted);line-height:1.5">Ekranın CAN kutusu (Raise PSA) devir ve gaz pedalı göndermiyor; yalnızca anlık yakıt, menzil ve dış sıcaklık veriyor. Devir saatiyle birebir ses için OBD soketine takılan bir Bluetooth ELM327 adaptörü gerekir: telefonla değil ünitenin Bluetooth'uyla bir kez eşleştir, CataraPatara kendiliğinden bağlanır. Adaptör yokken ses anlık yakıt akışını izler. Telefon görüşmesinde ses kendiliğinden susar.</div>
-</section>
+  <div class="row"><span>Ses paketi ekle<small>kendi kaydın · .zip</small></span><div style="flex:1"></div><button class="key badge" id="addPack">Seç</button></div>
+  <div class="note">Ekranın CAN kutusu devir ve gaz pedalı göndermiyor. Devir saatiyle birebir ses için OBD soketine Bluetooth ELM327 tak, ünitenin Bluetooth'uyla bir kez eşleştir. <span id="gh"></span></div>
 </div>
 
 <script>
@@ -216,36 +156,23 @@ function J(s, d) { try { return JSON.parse(s); } catch (e) { return d; } }
 var has = typeof CP !== 'undefined';
 var cfg = J(has ? CP.config() : '{}', {}), PROFILES = J(has ? CP.profiles() : '[]', []);
 function set(k, v) { if (has) CP.set(k, String(v)); }
-document.body.classList.toggle('f-montserrat', (cfg.font || 'montserrat') === 'montserrat');
+var th = +cfg.theme || 8;
+document.body.classList.add(th === 7 ? 't-ds4' : th === 4 ? 't-panel' : 't-stock');
 
-// ---- engine rack ----
 PROFILES.forEach(function (p) {
-  var builtin = p.pack && p.id.indexOf('pack:b-') === 0;
-  var b = document.createElement('button'); b.className = 'key eng' + (p.pack ? ' pack' : ''); b.setAttribute('data-id', p.id);
-  b.innerHTML = '<div><b>' + p.name + '</b><span style="display:block;margin-top:.4vh">' + p.sub + '</span></div><em>' + (p.pack ? 'KAYIT · ' : 'SENTEZ · ') + (p.red ? (p.red / 1000).toFixed(1).replace('.', ',') + 'K D/D' : '') + '</em>';
+  var b = document.createElement('button'); b.className = 'key eng'; b.setAttribute('data-id', p.id);
+  b.innerHTML = '<b>' + p.name + '</b><i>' + (p.pack ? 'KAYIT' : 'SENTEZ') + '</i>';
   b.onclick = function () { cfg.id = p.id; set('id', p.id); if (!cfg.on) power(true); paint(); };
-  if (p.pack && !builtin) {
-    var t = null;
-    b.addEventListener('pointerdown', function () { t = setTimeout(function () { t = null; if (confirm(p.name + ' silinsin mi?')) { CP.deletePack(p.id); location.reload(); } }, 900); });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { if (t) clearTimeout(t); }); });
-  }
   $('rack').appendChild(b);
 });
-var add = document.createElement('button'); add.className = 'key eng add';
-add.innerHTML = '<b style="font-size:2.2vh">+ Ses paketi</b><span>kendi kaydın · .zip</span>';
-add.onclick = function () { if (has) CP.importPack(); };
-$('rack').appendChild(add);
-
 function seg(id, text, fn) { var b = document.createElement('button'); b.className = 'key'; b.textContent = text; b.onclick = fn; $(id).appendChild(b); }
 ['Stok', 'Spor', 'Yarış'].forEach(function (n, i) { seg('ex', n, function () { cfg.ex = i; set('ex', i); paint(); }); });
-[['media', 'Medya'], ['focus', 'Medya + öncelik'], ['nav', 'Navigasyon']].forEach(function (o) { seg('out', o[1], function () { cfg.out = o[0]; set('out', o[0]); paint(); }); });
+[['media', 'Medya'], ['focus', 'Öncelikli'], ['nav', 'Navigasyon']].forEach(function (o) { seg('out', o[1], function () { cfg.out = o[0]; set('out', o[0]); paint(); }); });
 [['auto', 'Otomatik'], ['bt', 'Bluetooth'], ['wifi', 'Wi-Fi'], ['off', 'Yok']].forEach(function (o) { seg('obd', o[1], function () { cfg.obd = o[0]; set('obd', o[0]); paint(); }); });
 [['std', 'OBD2'], ['psa', 'PSA CAN']].forEach(function (o) { seg('obdProto', o[1], function () { cfg.obdProto = o[0]; set('obdProto', o[0]); paint(); }); });
-
-// ---- cabin EQ ----
 ['Sub', 'Alt-orta', 'Orta', 'Varlık', 'Tiz'].forEach(function (n, k) {
   var d = document.createElement('div'); d.className = 'eqc';
-  d.innerHTML = '<b class="sg" id="eqT' + k + '">0</b><input type="range" class="vs" orient="vertical" min="-9" max="9" step="1" id="eq' + k + '"><span>' + n + '</span>';
+  d.innerHTML = '<b class="d" id="eqT' + k + '">0</b><input type="range" class="vs" orient="vertical" min="-9" max="9" step="1" id="eq' + k + '"><span>' + n + '</span>';
   $('eqBox').appendChild(d);
   $('eq' + k).oninput = function () { var v = +this.value; $('eqT' + k).textContent = (v > 0 ? '+' : '') + v; set('eq' + k, v); };
 });
@@ -255,92 +182,73 @@ range('bass', 'bass', function (v) { return '+' + v; });
 range('carMax', 'carMax', function (v) { return v; });
 range('duckAmt', 'duckAmt', function (v) { return '−' + v + '%'; });
 function toggle(id) { $(id).onclick = function () { cfg[id] = !cfg[id]; set(id, cfg[id] ? 1 : 0); paint(); }; }
-toggle('pops'); toggle('bubble'); toggle('boot'); toggle('duckMusic'); toggle('gps'); toggle('matchRpm');
+['pops', 'bubble', 'boot', 'duckMusic', 'gps', 'matchRpm'].forEach(toggle);
 $('obdTarget').onchange = function () { cfg.obdTarget = this.value.trim(); set('obdTarget', cfg.obdTarget); };
 $('allow').onclick = function () { if (has) CP.allowOverlay(); };
+$('addPack').onclick = function () { if (has) CP.importPack(); };
 $('hide').onclick = function () { if (has) CP.close(); };
+$('gear-set').onclick = function () { $('sheet').classList.add('on'); };
+$('close').onclick = function () { $('sheet').classList.remove('on'); };
 function power(on) { cfg.on = on; if (has) CP.power(on); paint(); }
 $('ign').onclick = function () { power(!cfg.on); };
 $('test').onclick = function () { if (has) CP.test(); cfg.on = true; paint(); };
+$('up').onclick = function () { if (!cfg.on) power(true); if (has && CP.shift) CP.shift(1); };
+$('dn').onclick = function () { if (!cfg.on) power(true); if (has && CP.shift) CP.shift(-1); };
 var gas = $('gas');
 function rev(on) { gas.classList.toggle('down', on); if (has) CP.rev(on); }
 gas.addEventListener('pointerdown', function (e) { try { gas.setPointerCapture(e.pointerId); } catch (x) {} if (!cfg.on) power(true); rev(true); });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { gas.addEventListener(ev, function () { rev(false); }); });
 
 function onOff(id, list, val) { var c = $(id).children; for (var i = 0; i < c.length; i++) c[i].classList.toggle('on', list[i] === val); }
+var red = 6500;
 function paint() {
-  var l = $('rack').children;
-  for (var i = 0; i < l.length; i++) l[i].classList.toggle('on', l[i].getAttribute('data-id') === cfg.id);
+  [].forEach.call($('rack').children, function (b) { b.classList.toggle('on', b.getAttribute('data-id') === cfg.id); });
   onOff('ex', [0, 1, 2], cfg.ex); onOff('out', ['media', 'focus', 'nav'], cfg.out || 'focus');
   onOff('obd', ['auto', 'bt', 'wifi', 'off'], cfg.obd || 'auto'); onOff('obdProto', ['std', 'psa'], cfg.obdProto || 'std');
-  $('exPill').textContent = ['STOK', 'SPOR', 'YARIŞ'][cfg.ex || 0];
-  $('ign').classList.toggle('on', !!cfg.on); $('ignT').textContent = cfg.on ? 'Çalışıyor · Durdur' : 'Motoru çalıştır';
-  $('orbit').classList.toggle('on', !!cfg.on);
+  $('ign').classList.toggle('on', !!cfg.on);
   $('vol').value = cfg.vol; $('volT').textContent = cfg.vol;
   (cfg.eq || [0, 0, 0, 0, 0]).forEach(function (v, k) { $('eq' + k).value = v; $('eqT' + k).textContent = (v > 0 ? '+' : '') + v; });
   $('bass').value = cfg.bass; $('bassT').textContent = '+' + cfg.bass;
   $('carMax').value = cfg.carMax; $('carMaxT').textContent = cfg.carMax;
   $('duckAmt').value = cfg.duckAmt || 40; $('duckAmtT').textContent = '−' + (cfg.duckAmt || 40) + '%';
-  $('duckRow').style.opacity = cfg.duckMusic ? 1 : .35;
   $('obdTarget').value = cfg.obdTarget || '';
   ['pops', 'bubble', 'boot', 'duckMusic', 'gps', 'matchRpm'].forEach(function (k) { $(k).classList.toggle('on', !!cfg[k]); });
   $('allow').style.display = cfg.bubble && !cfg.canDraw ? 'inline-block' : 'none';
-  var p = PROFILES.filter(function (x) { return x.id === cfg.id; })[0] || PROFILES[0] || { name: '', red: 6500 };
-  $('pname').textContent = p.name; red = p.red || 6500;
+  var p = PROFILES.filter(function (x) { return x.id === cfg.id; })[0];
+  red = p && p.red || 6500;
 }
 window.onResumeApp = function () { var c = J(has ? CP.config() : '{}', null); if (c) { cfg = c; paint(); } };
 
-// ---- live harmonics ----
-var cv = $('viz'), cx = cv.getContext('2d'), red = 6500, shown = 0, specS = [];
+var cv = $('viz'), cx = cv.getContext('2d'), shown = 0, specS = [];
 function sizeViz() { var r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1; cv.width = Math.max(10, r.width * d); cv.height = Math.max(10, r.height * d); }
 addEventListener('resize', sizeViz);
 function drawViz(spec, on) {
-  var W = cv.width, H = cv.height, n = 24; cx.clearRect(0, 0, W, H);
-  var bw = W / n;
+  var W = cv.width, H = cv.height, n = 24, bw = W / n, col = getComputedStyle(document.body).getPropertyValue('--a').trim() || '#5CC8B0';
+  cx.clearRect(0, 0, W, H);
   for (var i = 0; i < n; i++) {
-    // 12 measured bands, each drawn as two bars; with no data, harmonics from rpm
-    var v = spec && spec.length ? spec[Math.floor(i / 2)] / 100 : 0;
-    if (!spec || !spec.length) v = on ? Math.max(0, .75 - i * .03) * (.6 + .4 * Math.abs(Math.sin(shown / 400 + i))) : .04;
+    var v = spec && spec.length ? spec[Math.floor(i / 2)] / 100 : on ? .25 : .03;
     specS[i] = (specS[i] || 0) + (v - (specS[i] || 0)) * .35;
-    var h = Math.max(H * .03, specS[i] * H * .95);
-    var g = cx.createLinearGradient(0, H, 0, H - h);
-    g.addColorStop(0, 'rgba(217,255,120,.25)'); g.addColorStop(1, shown > red * .95 ? '#FF6A3D' : '#D9FF78');
-    cx.fillStyle = g;
-    cx.fillRect(i * bw + bw * .18, H - h, bw * .64, h);
+    var h = Math.max(H * .05, specS[i] * H);
+    cx.globalAlpha = .75; cx.fillStyle = col; cx.fillRect(i * bw + bw * .2, H - h, bw * .6, h);
   }
 }
-var SRC = { gps: 'GPS', fuel: 'CAN YAKIT AKIŞI', rpm: 'GERÇEK DEVİR', 'rpm+pedal': 'GERÇEK DEVİR + PEDAL', wait: 'OBD BEKLENİYOR' };
+var SRC = { gps: 'GPS', fuel: 'CAN YAKIT', rpm: 'GERÇEK DEVİR', 'rpm+pedal': 'DEVİR + PEDAL', wait: 'OBD BEKLENİYOR' };
 function tick() {
   var v = J(has ? CP.live() : '{}', {});
   var r = cfg.on ? (v.rpm || 0) : 0;
   shown += (r - shown) * .5;
   $('rpm').textContent = (Math.round(shown / 10) * 10).toLocaleString('tr-TR');
-  var f = Math.max(0, Math.min(1, shown / (red * 1.05)));
-  $('ringF').setAttribute('stroke-dasharray', (f * 307.9).toFixed(1) + ' 400');
-  $('ringF').setAttribute('stroke', shown > red * .95 ? '#FF6A3D' : '#D9FF78');
-  var g = v.gear > 0 ? v.gear : 'N';
-  $('gear').textContent = g; $('tGear').textContent = g;
-  $('kmh').textContent = v.kmh || 0; $('tKmh').textContent = v.kmh || 0;
-  $('tRpm').textContent = Math.round(shown / 10) * 10;
-  $('load').textContent = v.load || 0;
-  var duck = v.duck === undefined ? 100 : v.duck;
-  $('effT').textContent = Math.round((cfg.vol || 0) * duck / 100);
-  $('duckNote').textContent = duck < 100 ? (v.nav ? 'navigasyon konuşuyor · kısıldı' : 'müzik çalıyor · kısıldı') : '';
-  $('lvlF').style.width = Math.min(100, (v.level || 0) * 1.6) + '%';
-  $('waves').setAttribute('opacity', cfg.on ? (.25 + Math.min(.75, (v.level || 0) / 60)).toFixed(2) : 0);
-  $('pods').setAttribute('fill', cfg.on ? '#D9FF78' : '#5f6a61');
+  $('ringF').setAttribute('stroke-dasharray', (Math.max(0, Math.min(1, shown / (red * 1.05))) * 216.8).toFixed(1) + ' 400');
+  $('ringF').setAttribute('stroke', shown > red * .95 ? 'var(--hot)' : 'var(--a)');
+  $('gear').textContent = v.gear > 0 ? v.gear : 'N';
+  $('mode').textContent = v.manual ? 'MANUEL' : 'OTOMATİK';
   drawViz(v.spec, cfg.on);
   if (v.gh) $('gh').textContent = v.gh;
-  $('bCan').style.display = v.can ? 'inline-flex' : 'none'; $('bCan').textContent = 'CAN: ' + (v.can || '');
-  $('bCan').classList.toggle('ok', /bağlı/i.test(v.can || ''));
-  $('bErr').style.display = v.err ? 'inline-flex' : 'none'; $('bErr').textContent = v.err || '';
+  $('bErr').style.display = v.err ? 'inline-block' : 'none'; $('bErr').textContent = v.err || '';
   if (typeof v.on === 'boolean' && v.on !== !!cfg.on) { cfg.on = v.on; paint(); }
-  var s = v.src || 'gps';
-  var srcT = s === 'gps' && !v.gps ? 'GPS ARANIYOR' : SRC[s] || s.toUpperCase();
-  $('bSrc').textContent = srcT; $('srcPill').textContent = srcT;
-  $('bSrc').classList.toggle('ok', s !== 'gps' || !!v.gps);
-  $('bObd').style.display = v.obd ? 'inline-flex' : 'none'; $('bObd').textContent = v.obd || '';
-  $('bObd').classList.toggle('ok', /bağlı/i.test(v.obd || ''));
+  var s = v.src || 'wait';
+  $('bSrc').textContent = v.obd && /bağlı/i.test(v.obd) ? 'OBD · ' + (SRC[s] || s) : (SRC[s] || s.toUpperCase());
+  $('bSrc').classList.toggle('ok', s === 'rpm' || s === 'rpm+pedal' || s === 'fuel');
   setTimeout(tick, 80);
 }
 sizeViz(); paint(); tick();

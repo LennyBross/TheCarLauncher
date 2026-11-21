@@ -117,7 +117,8 @@ public final class MainActivity extends Activity {
                         .put("bubble", p.getBoolean("bubble", true)).put("canDraw", Bubble.canDraw(MainActivity.this))
                         .put("obd", p.getString("obd", "auto")).put("gps", p.getBoolean("gps", false)).put("matchRpm", p.getBoolean("matchRpm", true)).put("obdTarget", p.getString("obdTarget", "")).put("obdProto", p.getString("obdProto", "std"))
                         .put("carMax", p.getInt("carMax", 4500)).put("out", p.getString("out", "focus")).put("boot", p.getBoolean("boot", true)).put("duckMusic", p.getBoolean("duckMusic", false))
-                        .put("font", getSharedPreferences("launcher", MODE_MULTI_PROCESS).getInt("home_theme", 8) == 7 ? "inter" : "montserrat").put("duckAmt", p.getInt("duckAmt", 40))
+                        .put("font", getSharedPreferences("launcher", MODE_MULTI_PROCESS).getInt("home_theme", 8) == 7 ? "inter" : "montserrat")
+                        .put("theme", getSharedPreferences("launcher", MODE_MULTI_PROCESS).getInt("home_theme", 8)).put("duckAmt", p.getInt("duckAmt", 40))
                         .put("eq", new org.json.JSONArray().put(p.getInt("eq0", 0)).put(p.getInt("eq1", 0)).put(p.getInt("eq2", 0)).put(p.getInt("eq3", 0)).put(p.getInt("eq4", 0))).toString();
             } catch (Exception e) {
                 return "{}";
@@ -153,6 +154,11 @@ public final class MainActivity extends Activity {
             SharedPreferences p = EngineService.prefs(MainActivity.this);
             if (p.getBoolean("on", false) != on) EngineService.toggle(MainActivity.this);
         }
+
+        @JavascriptInterface
+
+        public void shift(int dir) { EngineService e = EngineService.get(); if (e != null) e.shift(dir); }
+
 
         @JavascriptInterface
         public void rev(boolean on) {

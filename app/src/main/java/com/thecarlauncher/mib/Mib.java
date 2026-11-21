@@ -60,7 +60,7 @@ public final class Mib {
 
     public static String family(Context c) {
         int t = Prefs.integer(c, "home_theme", 8);
-        return t == 7 ? "inter" : "montserrat";
+        return t == 7 ? "inter" : t == 4 ? "mono" : "montserrat";
     }
 
     public static void loadAmbient(Context c) {
@@ -70,6 +70,7 @@ public final class Mib {
         if (was != sStock || !fam.equals(sFamily)) sRegular = sSemibold = sBold = null;
         sFamily = fam;
         if (sStock) { BLUE = 0xFFE2CBA2; return; }
+        if (Prefs.integer(c, "home_theme", 8) == 4) { BLUE = 0xFF56F2FF; return; }   // Panel 80: VFD cyan
         BLUE = shade(Prefs.integer(c, Prefs.AMBIENT, DEFAULT_AMBIENT),
                 Prefs.integer(c, Prefs.AMBIENT_LEVEL, 100) / 100f, 0xFF);
     }
@@ -160,6 +161,10 @@ public final class Mib {
 
     /** Same type as the theme's pages: Montserrat (Stock, Panel) or Inter (DS4+). style -1 = semibold. */
     private static Typeface themed(Context c, int style) {
+        if ("mono".equals(family(c))) {
+            Typeface m = load(c, "themes/fonts/ShareTechMono.ttf", Typeface.NORMAL);
+            return style == Typeface.NORMAL ? m : Typeface.create(m, Typeface.BOLD);
+        }
         if ("inter".equals(family(c))) {
             Typeface base = load(c, "themes/fonts/Inter.ttf", Typeface.NORMAL);
             if (style == Typeface.NORMAL) return base;

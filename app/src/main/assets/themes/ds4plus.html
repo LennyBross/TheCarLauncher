@@ -19,24 +19,21 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;transit
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5.56vh;background:transparent}
 input[type=range]::-webkit-slider-runnable-track{height:1.67vh;border-radius:.83vh;background:linear-gradient(90deg,var(--a) var(--p,60%),var(--track) var(--p,60%))}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:5vh;height:5vh;margin-top:-1.67vh;border-radius:50%;background:#fff;box-shadow:0 .28vh 1.11vh rgba(0,0,0,.4)}
-/* Racing push-to-start button */
-#start{position:relative;width:min(36vh,30vw);height:min(36vh,30vw);border:none;border-radius:50%;padding:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}
-#start .bezel{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 210deg,#5d636b,#e7eaee 12%,#7b828b 28%,#30353b 45%,#d6dade 62%,#575d65 80%,#5d636b);box-shadow:0 1.6vh 3.2vh rgba(0,0,0,.55),inset 0 0 0 .4vh rgba(0,0,0,.35)}
-#start .ring{position:absolute;inset:7%;border-radius:50%;background:#14171b;box-shadow:inset 0 .6vh 1.2vh rgba(0,0,0,.8)}
-#start .glow{position:absolute;inset:9.5%;border-radius:50%;box-shadow:0 0 0 .5vh rgba(255,40,30,0);transition:box-shadow .3s}
-#start .cap{position:absolute;inset:13%;border-radius:50%;background:radial-gradient(circle at 50% 30%,#ff6a55 0%,#e3271b 38%,#a3110b 70%,#6d0905 100%);box-shadow:inset 0 -1.2vh 2vh rgba(0,0,0,.45),inset 0 1vh 1.6vh rgba(255,255,255,.35),0 .6vh 1.2vh rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6vh;color:#fff;transition:transform .08s}
-#start .cap::before{content:'';position:absolute;left:18%;right:18%;top:8%;height:28%;border-radius:50%;background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,0));pointer-events:none}
-#start .cap b{font-family:'Chakra Petch','Space Grotesk',sans-serif;font-weight:700;font-size:3.33vh;letter-spacing:.3vh;line-height:1;text-shadow:0 .2vh .3vh rgba(0,0,0,.5)}
-#start .cap span{font-size:1.67vh;letter-spacing:.42vh;font-weight:700;opacity:.9}
-#start .cap i{width:5.56vh;height:.42vh;border-radius:.2vh;background:rgba(255,255,255,.35)}
-#start.down .cap{transform:scale(.95)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
-#start.on .glow{box-shadow:0 0 0 .55vh rgba(255,60,40,.95),0 0 3.5vh 1vh rgba(255,40,20,.75);animation:pulse 1.6s ease-in-out infinite}
-#start.on .cap{background:radial-gradient(circle at 50% 30%,#ff8a70 0%,#ff3a24 38%,#c4170e 70%,#7a0a05 100%)}
+/* Engine-sound control: a quiet glass disc with a thin live rpm ring (no red racing button) */
+#start{position:relative;width:min(30vh,26vw);height:min(30vh,26vw);border:none;border-radius:50%;padding:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#start svg.rg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(135deg)}
+#start .trk{fill:none;stroke:var(--track);stroke-width:2.2;stroke-linecap:round}
+#start .arc{fill:none;stroke:var(--a);stroke-width:2.6;stroke-linecap:round;transition:stroke-dasharray .12s linear;filter:drop-shadow(0 0 .8vh var(--a))}
+#start .cap{position:absolute;inset:16%;border-radius:50%;background:radial-gradient(circle at 50% 28%,rgba(255,255,255,.14),rgba(255,255,255,.02) 60%),var(--card);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.10),0 1.4vh 3vh rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6vh;color:var(--muted);transition:transform .08s,color .3s,box-shadow .3s}
+#start .cap svg{width:38%;height:38%}
+#start .cap b{font-family:'Space Grotesk',sans-serif;font-size:2.4vh;color:var(--fg);font-variant-numeric:tabular-nums;min-height:2.6vh}
+#start.down .cap{transform:scale(.96)}
+#start.on .cap{color:var(--a);box-shadow:inset 0 0 0 1px var(--a),0 0 3vh rgba(92,200,176,.25),0 1.4vh 3vh rgba(0,0,0,.35)}
 .dock{height:11.11vh;border-radius:3.33vh;background:var(--card);display:flex;align-items:center;justify-content:space-between;padding:0 1.67vh;flex-shrink:0;gap:.56vh}
 .db{flex:1;height:9.44vh;border:none;border-radius:2.22vh;background:transparent;color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.56vh;font-family:inherit}
-.db i{width:5vh;height:5vh;border-radius:1.39vh;display:flex;align-items:center;justify-content:center}
-.db i svg{width:3.06vh;height:3.06vh}
+.db i{width:7vh;height:7vh;border-radius:2vh;display:flex;align-items:center;justify-content:center}
+.db i svg{width:3.9vh;height:3.9vh}
 .db span{font-size:1.67vh;color:var(--muted);white-space:nowrap}
 #carBox{position:relative;flex:1;min-height:0;border-radius:3.89vh;background:var(--stage);overflow:hidden;border:none;padding:0}
 body.day #carBox{box-shadow:inset 0 0 0 1px #E3E8EE}
@@ -58,8 +55,8 @@ body.day #carBox{box-shadow:inset 0 0 0 1px #E3E8EE}
 <div class="seg" id="mode"><button data-m="day">Gündüz</button><button data-m="auto">Oto</button><button data-m="night">Gece</button></div>
 </div>
 <div style="display:flex;flex-direction:column;align-items:center;gap:1.39vh">
-<button id="start" aria-label="CataraPatara başlat"><span class="bezel"></span><span class="ring"></span><span class="glow"></span><span class="cap"><span>ENGINE</span><b>START</b><i></i><span>STOP</span></span></button>
-<div style="display:flex;flex-direction:column;align-items:center"><span class="sg" style="font-size:2.36vh;color:#E8541E">CataraPatara</span><span style="font-size:1.81vh;color:var(--muted)" id="cpInfo">Motor sesi kapalı</span></div>
+<button id="start" aria-label="CataraPatara motor sesi"><svg class="rg" viewBox="0 0 100 100"><circle class="trk" cx="50" cy="50" r="46" stroke-dasharray="216.8 400"/><circle class="arc" id="stArc" cx="50" cy="50" r="46" stroke-dasharray="0 400"/></svg><span class="cap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15h4l2-3h6l2 3h4"/><path d="M8 12V9h8v3"/><path d="M10 9V6h4v3"/><circle cx="6.5" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/></svg><b id="stRpm"></b></span></button>
+<div style="display:flex;flex-direction:column;align-items:center"><span class="sg" style="font-size:2.36vh;color:var(--a)">CataraPatara</span><span style="font-size:1.81vh;color:var(--muted)" id="cpInfo">Motor sesi kapalı</span></div>
 </div>
 </div>
 </div>
@@ -102,16 +99,16 @@ var IC = {
   aa: '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M10 18h4"/><path d="M9.5 9.5l2.5-2.5 2.5 2.5M12 7v6"/>',
   rad: '<rect x="2" y="8" width="20" height="13" rx="2"/><path d="M6 8l12-5"/><circle cx="8" cy="14.5" r="2.5"/><path d="M14 13h4M14 16h4"/>',
   tel: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>',
-  drv: '<polygon points="3 11 22 2 13 21 11 13 3 11"/>',
+  drv: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
   apps: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   set: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'
 };
-[['Ana ekran', 'home', 'var(--as)', null, 'var(--a)'], ['Haritalar', 'map', '#2F80ED', 'gmaps'], ['Spotify', 'sp', '#1F9D55', 'spotify'],
- ['YT Music', 'ytm', '#D93636', 'ytmusic'], ['Android Auto', 'aa', '#5A6B85', 'aa'], ['Radyo', 'rad', '#C98A3A', 'radio'],
- ['Telefon', 'tel', '#3E7F72', 'phone'], ['Sürüş', 'drv', '#2C9C84', 'drive'], ['Uygulamalar', 'apps', '#4A5566', 'apps'], ['Ayarlar', 'set', '#4A5566', 'settings']]
+[['Haritalar', 'map', '#2F80ED', 'gmaps'], ['Müzik', 'sp', '#1F9D55', 'spotify'], ['Android Auto', 'aa', '#5A6B85', 'aa'],
+ ['Radyo', 'rad', '#C98A3A', 'radio'], ['Sade ekran', 'drv', '#2C9C84', 'minimal'], ['Ayarlar', 'set', '#4A5566', 'settings']]
 .forEach(function (a) {
   var b = document.createElement('button'); b.className = 'key db';
-  b.innerHTML = '<i style="background:' + a[2] + '"><svg viewBox="0 0 24 24" fill="none" stroke="' + (a[4] || '#fff') + '" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + IC[a[1]] + '</svg></i><span>' + a[0] + '</span>';
+  b.setAttribute('aria-label', a[0]);
+  b.innerHTML = '<i style="background:' + a[2] + '"><svg viewBox="0 0 24 24" fill="none" stroke="' + (a[4] || '#fff') + '" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + IC[a[1]] + '</svg></i>';
   b.onclick = function () { if (a[3]) call('open', a[3]); };
   $('dock').appendChild(b);
 });
@@ -176,6 +173,9 @@ car.on(function (s) {
   hasCp = !!s.cp;
   var on = !!s.cpOn;
   st.classList.toggle('on', on);
+  var red = s.cpRed || 6500, rr = on && s.cpRpm ? Math.min(1, s.cpRpm / red) : 0;
+  $('stArc').setAttribute('stroke-dasharray', (rr * 216.8).toFixed(1) + ' 400');
+  $('stRpm').textContent = on && s.cpRpm ? s.cpRpm : '';
   $('cpInfo').textContent = !hasCp ? 'Kurmak için dokun' : on ? (s.cpName || 'Motor') + (s.cpRpm ? ' · ' + s.cpRpm + ' d/d' : '') : 'Motor sesi kapalı';
 });
 </script>

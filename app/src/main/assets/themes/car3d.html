@@ -27,6 +27,25 @@ body.day #stage{background:#FFFFFF;box-shadow:inset 0 0 0 1px #E3E8EE}
 .row:last-child{border-bottom:none}
 .row span{font-size:2.08vh;color:var(--muted);white-space:nowrap}
 .row b{font-size:2.64vh;font-weight:600;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ik{width:7.2vh;height:7.2vh;padding:0;display:flex;align-items:center;justify-content:center}
+.ik svg{width:4.4vh;height:4.4vh;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:1.4vh}
+.tile{border-radius:2.4vh;background:var(--chip);padding:1.8vh;display:flex;flex-direction:column;gap:.8vh}
+.tile svg{width:3.6vh;height:3.6vh;fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tile b{font-size:3.6vh;line-height:1;font-variant-numeric:tabular-nums}
+.tile b small{font-size:1.8vh;color:var(--muted);margin-left:.5vh;font-weight:500}
+/* Stock skin */
+body.t-stock{--a:#E8D5B0;--bg:#050506;--card:#111214;--chip:#1a1b1f;--muted:#A8A39A;--sep:#26272B;font-family:'Montserrat',sans-serif}
+body.t-stock #stage{background:radial-gradient(70% 70% at 50% 40%,#232428,#08080a 70%)}
+body.t-stock .card,body.t-stock .tile,body.t-stock .chip{background:linear-gradient(180deg,rgba(32,33,36,.95),rgba(12,12,14,.95));box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.18)}
+body.t-stock .chip.on{background:linear-gradient(180deg,#f3e6cc,#cdb58b);color:#111}
+body.t-stock .sg,body.t-stock .tile b{font-family:'Montserrat',sans-serif;font-style:italic;font-weight:600}
+/* Panel 80 skin */
+body.t-panel{--a:#56F2FF;--bg:#030608;--card:#0b1114;--chip:#0f181c;--muted:#2a8f98;--sep:rgba(86,242,255,.18);--fg:#56F2FF;font-family:'Share Tech Mono',monospace}
+body.t-panel #stage{background:#020405;box-shadow:inset 0 0 0 1px rgba(86,242,255,.22);background-image:linear-gradient(rgba(86,242,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(86,242,255,.06) 1px,transparent 1px);background-size:4vh 4vh}
+body.t-panel .card,body.t-panel .tile,body.t-panel .chip{background:transparent;box-shadow:inset 0 0 0 1px rgba(86,242,255,.25);color:var(--fg)}
+body.t-panel .chip.on{background:rgba(86,242,255,.14);color:var(--fg);box-shadow:inset 0 0 0 1px var(--a),0 0 1.6vh rgba(86,242,255,.3)}
+body.t-panel .sg,body.t-panel .tile b{font-family:'Share Tech Mono',monospace;font-weight:400;text-shadow:0 0 1vh rgba(86,242,255,.6)}
 #sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:5}
 #sheet .box{width:min(110vh,92vw);max-height:92vh;overflow:auto;border-radius:3.33vh;background:var(--card);padding:3.33vh}
 #sheet label{display:flex;flex-direction:column;gap:.83vh;font-size:1.94vh;color:var(--muted)}
@@ -39,26 +58,26 @@ body.day #stage{background:#FFFFFF;box-shadow:inset 0 0 0 1px #E3E8EE}
 <canvas id="c"></canvas>
 <div id="load">Model hazırlanıyor…</div>
 <div id="top">
-<button class="key chip" id="back">‹ Geri</button>
+<button class="key chip ik" id="back" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
 <div style="flex:1"></div>
 <div id="colors" style="display:flex;gap:1.11vh"></div>
-<button class="key chip on" id="spin">360° dönüş</button>
+<button class="key chip ik on" id="spin" aria-label="360° dönüş"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button>
 </div>
 <div id="views"></div>
 </div>
 <div id="side">
 <div class="card" style="display:flex;flex-direction:column;gap:.56vh">
-<span style="font-size:1.94vh;color:var(--a);letter-spacing:.28vh;font-weight:700">MYDS</span>
+
 <span class="sg" style="font-size:4.72vh;line-height:1.05" id="iModel">Citroën DS4</span>
 <span style="font-size:2.36vh;color:var(--muted)" id="iSub">2013 · 10 KE 424</span>
 <div style="display:flex;align-items:baseline;gap:1.11vh;margin-top:1.67vh"><span class="sg" style="font-size:7.22vh;line-height:1" id="odo">—</span><span style="font-size:2.5vh;color:var(--muted)">km</span></div>
-<span style="font-size:1.81vh;color:var(--muted)" id="odoNote">Kilometreyi girmek için Düzenle'ye dokun</span>
+<span style="display:none" id="odoNote"></span>
 </div>
-<div class="card" style="flex:1;min-height:0;overflow:auto;padding-top:1.39vh;padding-bottom:1.39vh" id="info"></div>
+<div class="tiles" id="info" style="flex:1;min-height:0;align-content:start"></div>
 <div style="display:flex;gap:1.67vh">
-<button class="key chip" style="flex:1;height:7.78vh" id="edit">Düzenle</button>
-<button class="key chip" style="flex:1;height:7.78vh" id="logs">Bakım & yakıt</button>
-<button class="key chip" style="flex:1;height:7.78vh;background:#3E2A26;color:#FF8A6B" id="engine">Motor sesi</button>
+<button class="key chip ik" style="flex:1;height:8.4vh" id="edit" aria-label="Düzenle"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+<button class="key chip ik" style="flex:1;height:8.4vh" id="logs" aria-label="Bakım ve yakıt"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg></button>
+<button class="key chip ik" style="flex:1;height:8.4vh;color:var(--a)" id="engine" aria-label="Motor sesi"><svg viewBox="0 0 24 24"><path d="M3 15h4l2-3h6l2 3h4"/><path d="M8 12V9h8v3"/><path d="M10 9V6h4v3"/><circle cx="6.5" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/></svg></button>
 </div>
 </div>
 </div>
@@ -91,18 +110,17 @@ function paintInfo() {
   $('iModel').textContent = val('model');
   $('iSub').textContent = [val('year'), val('plate')].filter(Boolean).join(' · ');
   if (live.odo !== undefined) { $('odo').textContent = fmtKm(live.odo); $('odoNote').textContent = 'Girilen değer + GPS ile sürülen yol'; }
-  var rows = [['Motor', val('engine')], ['Yakıt tipi', val('fuel')], ['Şanzıman', val('gear')], ['Renk', val('color')],
-    ['Depo', live.tank ? Math.round(live.tank) + ' L' : ''],
-    ['Depoda kalan', live.fuelLeft !== undefined ? num(live.fuelLeft, 1) + ' L' : ''],
-    ['Ortalama tüketim', live.avgL100 ? num(live.avgL100, 1) + ' L/100 km' : ''],
-    ['Menzil', live.range ? Math.round(live.range) + ' km' : ''],
-    ['Yağ bakımı', live.oilKm ? fmtKm(live.oilKm) + ' km' + (live.oilDate ? ' · ' + live.oilDate : '') : (live.oilDate || '')],
-    ['Muayene / tescil', live.regDate || ''], ['Sigorta bitişi', val('insurance')], ['Şasi no', val('vin')]];
-  $('info').innerHTML = rows.filter(function (r) { return r[1]; }).map(function (r) {
-    return '<div class="row"><span>' + r[0] + '</span><b>' + String(r[1]).replace(/</g, '&lt;') + '</b></div>'; }).join('')
-    || '<div class="row"><span>Bilgi eklemek için Düzenle</span></div>';
+  // four icon tiles, numbers only: fuel left, range, next oil service, inspection
+  var T = [
+    ['<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12"/><path d="M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3"/>', live.fuelLeft !== undefined ? num(live.fuelLeft, 0) : '--', 'L'],
+    ['<path d="M4 20 9 4M20 20 15 4M12 6v2M12 11v2M12 16v3"/>', live.range ? Math.round(live.range) : '--', 'km'],
+    ['<path d="M7 4h7l3 3v3"/><path d="M5 10h12l2 3v7H5z"/><path d="M12 13v4"/>', live.oilKm ? fmtKm(live.oilKm) : '--', 'km'],
+    ['<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15l2 2 4-4"/>', live.regDate || '--', '']];
+  $('info').innerHTML = T.map(function (t) {
+    return '<div class="tile"><svg viewBox="0 0 24 24">' + t[0] + '</svg><b>' + String(t[1]).replace(/</g, '&lt;') + (t[2] ? '<small>' + t[2] + '</small>' : '') + '</b></div>'; }).join('');
 }
-car.on(function (s) { live = s; document.body.classList.toggle('day', s.night === false); paintInfo(); });
+(function () { var t = +(call('theme') || 7); document.body.classList.add(t === 8 ? 't-stock' : t === 4 ? 't-panel' : 't-ds4'); })();
+car.on(function (s) { live = s; document.body.classList.toggle('day', s.night === false && !document.body.classList.contains('t-stock')); paintInfo(); });
 paintInfo();
 
 FIELDS.forEach(function (f) {
@@ -123,7 +141,7 @@ $('save').onclick = function () {
   if (!isNaN(km) && km >= 0 && (live.odo === undefined || Math.round(live.odo) !== Math.round(km))) call('setOdometer', km);
   $('sheet').style.display = 'none'; paintInfo();
 };
-$('engine').onclick = function () { location.href = 'engine.html'; };
+$('engine').onclick = function () { call('open', 'engine'); };
 $('logs').onclick = function () { call('open', 'vehicleNative'); };
 $('back').onclick = function () { call('open', 'themehome'); };
 
@@ -138,8 +156,16 @@ var RENDER_MODE = location.hash === '#render';
   };
 })();
 var VIEWS, VIEWS2 = [0, 45, 90, 135, 180, 'top'];
-['Ön', '¾ Ön', 'Yan', '¾ Arka', 'Arka', 'Üst'].forEach(function (n) {
-  var b = document.createElement('button'); b.className = 'key chip'; b.textContent = n; $('views').appendChild(b);
+var VIC = {
+  front: '<path d="M6 12l1.6-4.2A2 2 0 0 1 9.5 6.5h5a2 2 0 0 1 1.9 1.3L18 12"/><rect x="3.5" y="12" width="17" height="5" rx="1.6"/><circle cx="7" cy="14.5" r="1"/><circle cx="17" cy="14.5" r="1"/><path d="M10 15h4M6 17v2M18 17v2"/>',
+  q3f: '<path d="M3 16v-2.5l2-1.5 2.5-3.5h7l3.5 3 2.5.8V16z"/><circle cx="7" cy="16.5" r="1.7"/><circle cx="17" cy="16.5" r="1.7"/><path d="M20.5 13.5h-1.6"/><path d="M9 9l-1 3h9"/>',
+  side: '<path d="M2 15.5V13l3-1 3-3.5h7l4 3.5h2.5V15.5z"/><circle cx="6.5" cy="16" r="1.8"/><circle cx="17.5" cy="16" r="1.8"/>',
+  q3r: '<path d="M21 16v-2.5l-2-1.5-2.5-3.5h-7L6 11.5l-2.5.8V16z"/><circle cx="17" cy="16.5" r="1.7"/><circle cx="7" cy="16.5" r="1.7"/><rect x="3.5" y="12.5" width="1.8" height="1.2" rx=".3"/><path d="M15 9l1 3H7"/>',
+  rear: '<path d="M6 12l1.6-4.2A2 2 0 0 1 9.5 6.5h5a2 2 0 0 1 1.9 1.3L18 12"/><rect x="3.5" y="12" width="17" height="5" rx="1.6"/><rect x="5.5" y="13.4" width="2.6" height="1.4" rx=".4"/><rect x="15.9" y="13.4" width="2.6" height="1.4" rx=".4"/><path d="M6 17v2M18 17v2"/>',
+  top: '<rect x="7" y="3" width="10" height="18" rx="4"/><path d="M8.5 8.5h7l-1 2.5h-5z"/><path d="M9 16.5h6"/>' };
+[['Ön', 'front'], ['¾ Ön', 'q3f'], ['Yan', 'side'], ['¾ Arka', 'q3r'], ['Arka', 'rear'], ['Üst', 'top']].forEach(function (n) {
+  var b = document.createElement('button'); b.className = 'key chip ik'; b.setAttribute('aria-label', n[0]);
+  b.innerHTML = '<svg viewBox="0 0 24 24">' + VIC[n[1]] + '</svg>'; $('views').appendChild(b);
 });
 function markView(i) { var s = $('views').children; for (var k = 0; k < s.length; k++) s[k].classList.toggle('on', k === i); }
 function webglOK() {
