@@ -110,6 +110,7 @@ body.day.t-stock .card{background:#fff}
   <span style="font-size:2.2vh">Telefon adresi <small style="color:var(--mut)">(MYDS Köprü'de yazan)</small></span>
   <input id="addrI" type="text" placeholder="boş = kendisi bulur (ör. 192.168.43.1:47322)" style="height:7vh;border-radius:1.6vh;border:none;background:var(--chip);color:var(--fg);font-size:2.6vh;padding:0 2vh;font-family:inherit;box-shadow:inset 0 0 0 1px var(--line)">
   <span id="addrS" style="font-size:1.9vh;color:var(--mut)"></span>
+  <button class="key chip" id="bleB" style="justify-content:center">Adaptöre doğrudan bağlan (BLE)</button>
   <div style="display:flex;gap:1.6vh"><button class="key chip" id="addrAuto" style="flex:1;justify-content:center">Otomatik</button><button class="key chip" id="addrOk" style="flex:1;justify-content:center;background:var(--a);color:#111">Kaydet</button></div>
 </div>
 
@@ -201,6 +202,7 @@ function showCodes(list) {
 
 $('back').onclick = function () { call('open', 'themehome'); };
 $('cWifi').onclick = function (e) { e.stopPropagation(); var m = $('addrM'), on = m.style.display !== 'flex'; m.style.display = on ? 'flex' : 'none'; if (on) $('addrI').value = (car.s.link && car.s.link.manual) || ''; };
+$('bleB').onclick = function () { var on = !(car.s.obd && car.s.obd.mode === 'ble'); call('obdMode', on ? 'ble' : 'auto'); $('addrM').style.display = 'none'; };
 $('addrOk').onclick = function () { call('phoneAddr', $('addrI').value); $('addrM').style.display = 'none'; };
 $('addrAuto').onclick = function () { $('addrI').value = ''; call('phoneAddr', ''); $('addrM').style.display = 'none'; };
 $('setup').onclick = function (e) { $('cWifi').onclick(e); };
@@ -219,8 +221,11 @@ car.on(function (s) {
   $('st').classList.toggle('ok', ecuLive);
   $('stT').textContent = ecuLive ? 'ECU canlı' : ln.wifi ? (o.st || 'ECU bekleniyor').replace(/^OBD:?\s*/, '') : 'ECU —';
   $('addrS').textContent = (ln.wifi ? 'Bağlı · ' : '') + (ln.wifiSt || '');
+  var ble = o.mode === 'ble';
+  $('bleB').textContent = ble ? 'Doğrudan BLE bağlantıyı kapat' : 'Adaptöre doğrudan bağlan (BLE)';
+  if (ble && !ln.wifi && !ecuLive) $('stT').textContent = (o.st || 'BLE aranıyor').replace(/^OBD:?\s*/, '');
   var bridge = !!(ln.wifi || ln.addr || ln.manual);
-  var none = !o.on && !ok && !bridge;
+  var none = !o.on && !ok && !bridge && o.mode !== 'ble';
   $('none').classList.toggle('on', none);
   $('main').style.visibility = none ? 'hidden' : 'visible';
   if (!o.on && o.st) { $('noneT').textContent = 'OBD bağlanamadı'; }

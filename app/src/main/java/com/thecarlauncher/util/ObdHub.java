@@ -54,7 +54,7 @@ public final class ObdHub implements Obd.Listener {
             public void run() {
                 while (true) {
                     try { Thread.sleep(15000); } catch (InterruptedException e) { return; }
-                    if (obd == null) apply();
+                    if (obd == null || PhoneLink.connected()) { applied = ""; apply(); }
                 }
             }
         }, "obd-watch").start();
@@ -67,6 +67,10 @@ public final class ObdHub implements Obd.Listener {
         SharedPreferences p = cp();
         String mode = p.getString("obd", "auto");
         if ("auto".equals(mode)) mode = Obd.pairedAdapter() != null ? Obd.BT : "off";
+        // "ble": a BLE adapter (VehiConn…) straight from the unit, no pairing (chosen on the Motor screen).
+        if ("ble".equals(mode)) mode = Obd.BT;
+        // The phone bridge is feeding us: the adapter is busy with the phone, leave it alone.
+        if (PhoneLink.connected()) mode = "off";
         String key = mode + "|" + p.getString("obdTarget", "") + "|" + p.getString("obdProto", Obd.STD);
         if (key.equals(applied) && (obd != null || "off".equals(mode))) return;
         applied = key;
@@ -75,12 +79,23 @@ public final class ObdHub implements Obd.Listener {
         ok = false;
         status = "off".equals(mode) ? "" : "OBD: hazırlanıyor…";
         if (Obd.WIFI.equals(mode) || Obd.BT.equals(mode)) {
+            Obd.ctx = app;
             obd = new Obd(this);
+            obd.rpmOnly = true;   // first version: engine rpm only (read-only 010C)
             obd.start(mode, p.getString("obdTarget", ""), p.getString("obdProto", Obd.STD));
         }
     }
 
     private volatile long phoneAt;
+
+    /** Motor screen: "ble" = connect a BLE adapter directly, "auto" = only a paired one / the phone. */
+    public void setMode(String m) {
+        cp().edit().putString("obd", m).apply();
+        applied = "";
+        apply();
+    }
+
+    public String mode() { return cp().getString("obd", "auto"); }
 
     public void readDtc() {
         Obd o = obd;
@@ -154,7 +169,7 @@ public final class ObdHub implements Obd.Listener {
     public JSONObject json() {
         JSONObject o = new JSONObject();
         try {
-            o.put("on", obd != null || System.currentTimeMillis() - phoneAt < 10000).put("ok", connected()).put("st", status);
+            o.put("on", obd != null || System.currentTimeMillis() - phoneAt < 10000).put("ok", connected()).put("st", status).put("mode", mode());
             JSONObject v = new JSONObject();
             float r = rpm();
             if (r >= 0) v.put("rpm", Math.round(r));

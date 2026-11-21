@@ -98,6 +98,69 @@ public final class Obd {
 
     public Obd(Listener l) { this.l = l; }
 
+    /** Bridge mode: only mode 01 PID 0C (engine rpm) is ever sent to the ECU. */
+    public volatile boolean rpmOnly = true;
+
+    /**
+     * Engine rpm only: "010C" (read-only, standard OBD-II). Protocol 6 (ISO 15765-4 CAN 11/500,
+     * the DS4's) first, else the adapter's automatic search. Reports when the ECU stops answering
+     * (ignition off) and carries on by itself when it answers again.
+     */
+    private void rpmLoop(InputStream in, OutputStream out) throws Exception {
+        int[] b = data(cmd(in, out, "010C", 4000), 0x0C, 2);
+        if (b == null) {
+            cmd(in, out, "ATSP0", 1500);
+            b = data(cmd(in, out, "010C", 10000), 0x0C, 2);
+        }
+        int miss = b == null ? 5 : 0;
+        if (b != null) { l.onStatus("ECU bağlı", true); l.onRpm(((b[0] << 8) | b[1]) / 4f); }
+        else l.onStatus("ECU yanıt vermiyor (kontak açık mı?)", false);
+        while (run) {
+            String r = cmd(in, out, "010C1", 800);
+            b = data(r, 0x0C, 2);
+            if (b != null) {
+                if (miss >= 5) l.onStatus("ECU bağlı", true);
+                miss = 0;
+                l.onRpm(((b[0] << 8) | b[1]) / 4f);
+            } else if (++miss == 5) {
+                l.onStatus("ECU yanıt vermiyor (kontak açık mı?)", false);
+            }
+            if (miss >= 5) Thread.sleep(700); // ignition off: ask slowly until it answers again
+        }
+    }
+
+    /** Scans for a BLE ELM327 whose name matches (or any known adapter name). */
+    @SuppressLint("MissingPermission")
+    private static BluetoothDevice bleScan(BluetoothAdapter a, final String want, long ms) {
+        final BluetoothDevice[] found = new BluetoothDevice[1];
+        final Object lock = new Object();
+        android.bluetooth.le.BluetoothLeScanner sc = a.getBluetoothLeScanner();
+        if (sc == null) return null;
+        android.bluetooth.le.ScanCallback cb = new android.bluetooth.le.ScanCallback() {
+            @Override public void onScanResult(int type, android.bluetooth.le.ScanResult r) {
+                BluetoothDevice d = r.getDevice();
+                String n = d.getName();
+                if (n == null && r.getScanRecord() != null) n = r.getScanRecord().getDeviceName();
+                if (n == null) return;
+                String low = n.toLowerCase(Locale.ROOT);
+                if (want != null ? low.contains(want) : looksLikeAdapter(low)) {
+                    synchronized (lock) { if (found[0] == null) { found[0] = d; lock.notifyAll(); } }
+                }
+            }
+        };
+        try {
+            sc.startScan(cb);
+            synchronized (lock) { if (found[0] == null) lock.wait(ms); }
+        } catch (Throwable ignored) {
+        } finally {
+            try { sc.stopScan(cb); } catch (Throwable ignored) { }
+        }
+        return found[0];
+    }
+
+    /** For BLE adapters (GATT needs a context). */
+    public static volatile android.content.Context ctx;
+
     /** mode: "wifi" (host:port, default 192.168.0.10:35000) or "bt" (paired device name contains target, default OBD/ELM/Vlink). */
     public synchronized void start(final String mode, final String target, String proto) {
         stop();
@@ -158,13 +221,42 @@ public final class Obd {
                 String n = d.getName() == null ? "" : d.getName().toLowerCase(Locale.ROOT);
                 if (want != null ? n.contains(want) : looksLikeAdapter(n)) { dev = d; break; }
             }
-            if (dev == null) throw new Exception("eşleşmiş OBD adaptörü bulunamadı");
+            // BLE adapters (VehiConn…) need no pairing: look for one nearby.
+            if (dev == null && ctx != null) {
+                l.onStatus("OBD: BLE adaptör aranıyor…", false);
+                dev = bleScan(a, want, 8000);
+            }
+            if (dev == null) throw new Exception("OBD adaptörü bulunamadı (eşleşmiş ya da yakında BLE yok)");
             l.onStatus("OBD: " + dev.getName() + " bağlanıyor…", false);
-            BluetoothSocket s = dev.createInsecureRfcommSocketToServiceRecord(SPP);
-            socket = s;
-            s.connect();
-            in = s.getInputStream();
-            out = s.getOutputStream();
+            a.cancelDiscovery();
+            Object[] io = null;
+            Exception last = null;
+            // Classic serial first (unless it is a BLE-only adapter), three ways, then BLE.
+            if (dev.getType() != BluetoothDevice.DEVICE_TYPE_LE) {
+                for (int k = 0; k < 3 && io == null && run; k++) {
+                    try {
+                        BluetoothSocket s = k == 0 ? dev.createInsecureRfcommSocketToServiceRecord(SPP)
+                                : k == 1 ? dev.createRfcommSocketToServiceRecord(SPP)
+                                : (BluetoothSocket) dev.getClass().getMethod("createRfcommSocket", int.class).invoke(dev, 1);
+                        socket = s;
+                        s.connect();
+                        io = new Object[]{s.getInputStream(), s.getOutputStream()};
+                    } catch (Exception e) {
+                        last = e;
+                        close();
+                    }
+                }
+            }
+            if (io == null && ctx != null && dev.getType() != BluetoothDevice.DEVICE_TYPE_CLASSIC) {
+                l.onStatus("OBD: " + dev.getName() + " (BLE) bağlanıyor…", false);
+                BleSerial b = new BleSerial();
+                socket = b;
+                b.connect(ctx, dev);
+                io = new Object[]{b.in, b.out};
+            }
+            if (io == null) throw new Exception("adaptöre bağlanılamadı (başka bir OBD uygulaması bağlı olabilir)" + (last == null ? "" : ""));
+            in = (InputStream) io[0];
+            out = (OutputStream) io[1];
         } else {
             String host = "192.168.0.10";
             int port = 35000;
@@ -185,6 +277,7 @@ public final class Obd {
         for (String c : new String[]{"ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATAT2", "ATSP6"}) {
             cmd(in, out, c, c.equals("ATZ") ? 2500 : 1500);
         }
+        if (rpmOnly) { rpmLoop(in, out); return; }
         // DS4 / C4 B7 (AEE2010): ISO 15765-4 CAN, 11 bit, 500 kbit/s = protocol 6. Else let the adapter search.
         String first = cmd(in, out, "0100", 4000);
         if (!first.contains("41")) {
@@ -379,6 +472,7 @@ public final class Obd {
         try {
             if (s instanceof Socket) ((Socket) s).close();
             if (s instanceof BluetoothSocket) ((BluetoothSocket) s).close();
+            if (s instanceof BleSerial) ((BleSerial) s).close();
         } catch (Exception ignored) {
         }
     }

@@ -99,7 +99,7 @@ public final class Obd {
     public Obd(Listener l) { this.l = l; }
 
     /** Bridge mode: only mode 01 PID 0C (engine rpm) is ever sent to the ECU. */
-    volatile boolean rpmOnly = true;
+    public volatile boolean rpmOnly = true;
 
     /**
      * Engine rpm only: "010C" (read-only, standard OBD-II). Protocol 6 (ISO 15765-4 CAN 11/500,
@@ -129,8 +129,37 @@ public final class Obd {
         }
     }
 
+    /** Scans for a BLE ELM327 whose name matches (or any known adapter name). */
+    @SuppressLint("MissingPermission")
+    private static BluetoothDevice bleScan(BluetoothAdapter a, final String want, long ms) {
+        final BluetoothDevice[] found = new BluetoothDevice[1];
+        final Object lock = new Object();
+        android.bluetooth.le.BluetoothLeScanner sc = a.getBluetoothLeScanner();
+        if (sc == null) return null;
+        android.bluetooth.le.ScanCallback cb = new android.bluetooth.le.ScanCallback() {
+            @Override public void onScanResult(int type, android.bluetooth.le.ScanResult r) {
+                BluetoothDevice d = r.getDevice();
+                String n = d.getName();
+                if (n == null && r.getScanRecord() != null) n = r.getScanRecord().getDeviceName();
+                if (n == null) return;
+                String low = n.toLowerCase(Locale.ROOT);
+                if (want != null ? low.contains(want) : looksLikeAdapter(low)) {
+                    synchronized (lock) { if (found[0] == null) { found[0] = d; lock.notifyAll(); } }
+                }
+            }
+        };
+        try {
+            sc.startScan(cb);
+            synchronized (lock) { if (found[0] == null) lock.wait(ms); }
+        } catch (Throwable ignored) {
+        } finally {
+            try { sc.stopScan(cb); } catch (Throwable ignored) { }
+        }
+        return found[0];
+    }
+
     /** For BLE adapters (GATT needs a context). */
-    static volatile android.content.Context ctx;
+    public static volatile android.content.Context ctx;
 
     /** mode: "wifi" (host:port, default 192.168.0.10:35000) or "bt" (paired device name contains target, default OBD/ELM/Vlink). */
     public synchronized void start(final String mode, final String target, String proto) {
@@ -192,7 +221,12 @@ public final class Obd {
                 String n = d.getName() == null ? "" : d.getName().toLowerCase(Locale.ROOT);
                 if (want != null ? n.contains(want) : looksLikeAdapter(n)) { dev = d; break; }
             }
-            if (dev == null) throw new Exception("eşleşmiş OBD adaptörü bulunamadı");
+            // BLE adapters (VehiConn…) need no pairing: look for one nearby.
+            if (dev == null && ctx != null) {
+                l.onStatus("OBD: BLE adaptör aranıyor…", false);
+                dev = bleScan(a, want, 8000);
+            }
+            if (dev == null) throw new Exception("OBD adaptörü bulunamadı (eşleşmiş ya da yakında BLE yok)");
             l.onStatus("OBD: " + dev.getName() + " bağlanıyor…", false);
             a.cancelDiscovery();
             Object[] io = null;

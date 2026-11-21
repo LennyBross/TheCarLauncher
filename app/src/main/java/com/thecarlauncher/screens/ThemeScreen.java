@@ -667,6 +667,10 @@ public class ThemeScreen extends Screen {
             } catch (Throwable t) { return ""; }
         }
 
+        /** OBD adapter mode from the Motor screen: "ble" (direct) or "auto". */
+        @JavascriptInterface
+        public void obdMode(String m) { com.thecarlauncher.util.ObdHub h = com.thecarlauncher.util.ObdHub.get(); if (h != null) h.setMode("ble".equals(m) ? "ble" : "auto"); }
+
         /** The phone's address typed by the driver ("" = find it by itself). */
         @JavascriptInterface
         public void phoneAddr(String a) { Prefs.put(act, com.thecarlauncher.util.PhoneLink.P_ADDR, a == null ? "" : a.trim()); }
