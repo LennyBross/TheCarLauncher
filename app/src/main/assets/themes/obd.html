@@ -81,6 +81,7 @@ body.day.t-stock .card{background:#fff}
     <span class="n" style="font-size:3vh">1.6 e-HDi</span>
     <div class="sp"></div>
     <button class="key chip" id="mil" aria-label="Arıza kodları"><svg class="ic" viewBox="0 0 24 24"><path d="M4 10h2V8h3V6h6v2h2l2 3h2v5h-2l-2 3H9l-2-3H4z"/></svg><span id="milT">—</span></button>
+    <button class="key chip" id="cAdp" aria-label="Adaptör"><svg class="ic" viewBox="0 0 24 24"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg><span>Adaptör</span></button>
     <button class="key chip" id="cWifi" aria-label="Telefon bağlantısı"><i></i><svg class="ic" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg><span id="tWifi">Telefon</span></button>
     <span class="chip" id="st"><i></i><span id="stT">ECU</span></span>
   </div>
@@ -101,9 +102,9 @@ body.day.t-stock .card{background:#fff}
 
 <div id="none">
   <svg class="ic big" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="10" rx="2"/><path d="M7 16v3h10v-3M8 9h8M8 12h5"/><path d="M19 2l-2 2M5 2l2 2"/></svg>
-  <b id="noneT">Telefon köprüsü bekleniyor</b>
-  <p id="noneP">Adaptörü telefon okur: S26'da MYDS Köprü'yü başlat, mobil erişim noktasını aç ve bu ekranı o ağa bağla. MYDS telefonu kendisi bulur; bulamazsa adresi gir.</p>
-  <button class="key" id="setup">Telefon adresi</button>
+  <b id="noneT">OBD adaptörü bağlı değil</b>
+  <p id="noneP">Car Scanner gibi: "Adaptörü ara"ya bas, listeden OBDII'yi (ya da VehiConn) seç. Eşleşmemiş olsa da MyDS kendisi eşleştirir (PIN 1234). Ya da telefondaki MYDS Köprü ile bağlan.</p>
+  <div style="display:flex;gap:2vh"><button class="key" id="setupA">Adaptörü ara</button><button class="key" id="setup" style="background:var(--chip);color:var(--fg)">Telefon adresi</button></div>
 </div>
 
 <div id="addrM" style="position:fixed;right:2.4vh;top:11vh;z-index:6;display:none;flex-direction:column;gap:1.6vh;width:66vh;padding:2.4vh" class="card">
@@ -112,6 +113,18 @@ body.day.t-stock .card{background:#fff}
   <span id="addrS" style="font-size:1.9vh;color:var(--mut)"></span>
   <button class="key chip" id="bleB" style="justify-content:center">Adaptöre doğrudan bağlan (BLE)</button>
   <div style="display:flex;gap:1.6vh"><button class="key chip" id="addrAuto" style="flex:1;justify-content:center">Otomatik</button><button class="key chip" id="addrOk" style="flex:1;justify-content:center;background:var(--a);color:#111">Kaydet</button></div>
+</div>
+
+<div id="adpM" style="position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;padding:2.4vh 3vh;gap:1.6vh;z-index:7">
+  <div style="display:flex;align-items:center;gap:1.6vh">
+    <button class="key rb" id="adpX" aria-label="Kapat"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <span class="n" style="font-size:3vh;flex:1">OBD adaptörü</span>
+    <span style="font-size:2vh;color:var(--mut)">PIN</span>
+    <input id="adpPin" type="text" inputmode="numeric" maxlength="8" style="width:14vh;height:6.4vh;border-radius:1.6vh;border:none;background:var(--chip);color:var(--fg);font-size:2.6vh;text-align:center;font-family:inherit;box-shadow:inset 0 0 0 1px var(--line)">
+    <button class="key chip" id="adpScan" style="background:var(--a);color:#111;height:6.4vh;padding:0 3vh">Ara</button>
+  </div>
+  <div id="adpSt" style="font-size:2.2vh;color:var(--mut)"></div>
+  <div id="adpL" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1.2vh"></div>
 </div>
 
 <div id="sheet">
@@ -201,10 +214,40 @@ function showCodes(list) {
 }
 
 $('back').onclick = function () { call('open', 'themehome'); };
+// Adapter search on the unit itself (like Car Scanner: unpaired devices too, classic or BLE).
+$('cAdp').onclick = function () { $('adpM').style.display = 'flex'; $('adpPin').value = (car.s.obd && car.s.obd.pin) || '1234'; if (!(car.s.obd && car.s.obd.devs && car.s.obd.devs.length)) call('obdScan'); };
+$('adpX').onclick = function () { $('adpM').style.display = 'none'; };
+$('adpScan').onclick = function () { call('obdScan'); };
+$('adpPin').onchange = function () { call('obdPin', this.value); };
+var adpKey = '';
+function adpList(o) {
+  var l = (o.devs || []).slice().sort(function (a, b) { return (b.obd - a.obd) || (b.rssi - a.rssi); });
+  var tg = (o.target || '').toUpperCase(), key = JSON.stringify(l) + tg;
+  if (key === adpKey) return;
+  adpKey = key;
+  $('adpL').innerHTML = '';
+  l.forEach(function (d) {
+    var row = document.createElement('div'); row.className = 'card code'; row.style.padding = '1.6vh 2.4vh';
+    var sel = tg.indexOf(d.addr.toUpperCase()) === 0;
+    row.innerHTML = '<span style="flex:1"><b style="width:auto;font-size:2.6vh;' + (d.obd ? 'color:var(--a)' : 'color:var(--fg)') + '">' + d.name + '</b><small>' + d.addr +
+      (d.classic ? ' · Klasik' : '') + (d.le ? ' · BLE' : '') + (d.bonded ? ' · eşleşmiş' : '') + (sel ? ' · SEÇİLİ' : '') + '</small></span>';
+    function btn(t, le) {
+      var b = document.createElement('button'); b.className = 'key chip'; b.textContent = t; b.style.height = '6.4vh';
+      if (sel && (le === (tg.indexOf('|LE') > 0))) { b.style.background = 'var(--a)'; b.style.color = '#111'; }
+      b.onclick = function () { call('obdPick', d.addr, le); };
+      row.appendChild(b);
+    }
+    if (d.classic || !d.le) btn('Bağlan', false);
+    if (d.le) btn('BLE ile bağlan', true);
+    $('adpL').appendChild(row);
+  });
+  if (!l.length) $('adpL').innerHTML = '<div style="font-size:2.2vh;color:var(--mut);padding:2vh 0">Liste boş. Kontak açık olsun, telefondaki köprü ve Car Scanner kapalı olsun, sonra "Ara".</div>';
+}
 $('cWifi').onclick = function (e) { e.stopPropagation(); var m = $('addrM'), on = m.style.display !== 'flex'; m.style.display = on ? 'flex' : 'none'; if (on) $('addrI').value = (car.s.link && car.s.link.manual) || ''; };
 $('bleB').onclick = function () { var on = !(car.s.obd && car.s.obd.mode === 'ble'); call('obdMode', on ? 'ble' : 'auto'); $('addrM').style.display = 'none'; };
 $('addrOk').onclick = function () { call('phoneAddr', $('addrI').value); $('addrM').style.display = 'none'; };
 $('addrAuto').onclick = function () { $('addrI').value = ''; call('phoneAddr', ''); $('addrM').style.display = 'none'; };
+$('setupA').onclick = function () { $('cAdp').onclick(); };
 $('setup').onclick = function (e) { $('cWifi').onclick(e); };
 $('mil').onclick = function () { $('sheet').classList.add('on'); };
 $('close').onclick = function () { $('sheet').classList.remove('on'); };
@@ -215,6 +258,8 @@ car.on(function (s) {
   document.body.classList.toggle('day', s.night === false);
   var o = s.obd || {}, v = o.v || {}, ok = !!o.ok;
   var ln = s.link || {}, ecuLive = v.rpm !== undefined;
+  $('adpSt').textContent = (o.scan ? 'Aranıyor… ' : '') + (ecuLive ? 'ECU canlı · ' + v.rpm + ' d/d' : (o.st || ''));
+  adpList(o);
   // Two separate lights: the Wi-Fi link to the phone, and fresh data from the ECU.
   $('cWifi').classList.toggle('ok', !!ln.wifi);
   $('tWifi').textContent = ln.wifi ? 'Telefon' : 'Telefon yok';
@@ -225,7 +270,7 @@ car.on(function (s) {
   $('bleB').textContent = ble ? 'Doğrudan BLE bağlantıyı kapat' : 'Adaptöre doğrudan bağlan (BLE)';
   if (ble && !ln.wifi && !ecuLive) $('stT').textContent = (o.st || 'BLE aranıyor').replace(/^OBD:?\s*/, '');
   var bridge = !!(ln.wifi || ln.addr || ln.manual);
-  var none = !o.on && !ok && !bridge && o.mode !== 'ble';
+  var none = !o.on && !ok && !bridge && o.mode !== 'ble' && !o.target && !o.scan;
   $('none').classList.toggle('on', none);
   $('main').style.visibility = none ? 'hidden' : 'visible';
   if (!o.on && o.st) { $('noneT').textContent = 'OBD bağlanamadı'; }

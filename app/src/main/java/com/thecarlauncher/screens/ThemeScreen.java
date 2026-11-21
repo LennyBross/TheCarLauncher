@@ -671,6 +671,16 @@ public class ThemeScreen extends Screen {
         @JavascriptInterface
         public void obdMode(String m) { com.thecarlauncher.util.ObdHub h = com.thecarlauncher.util.ObdHub.get(); if (h != null) h.setMode("ble".equals(m) ? "ble" : "auto"); }
 
+        /** Adapter search on the unit (classic + BLE, unpaired too). */
+        @JavascriptInterface
+        public void obdScan() { com.thecarlauncher.util.ObdHub h = com.thecarlauncher.util.ObdHub.get(); if (h != null) h.scan(); }
+
+        @JavascriptInterface
+        public void obdPick(String addr, boolean le) { com.thecarlauncher.util.ObdHub h = com.thecarlauncher.util.ObdHub.get(); if (h != null) h.pick(addr, le); }
+
+        @JavascriptInterface
+        public void obdPin(String pin) { com.thecarlauncher.util.ObdHub h = com.thecarlauncher.util.ObdHub.get(); if (h != null) h.setPin(pin); }
+
         /** The phone's address typed by the driver ("" = find it by itself). */
         @JavascriptInterface
         public void phoneAddr(String a) { Prefs.put(act, com.thecarlauncher.util.PhoneLink.P_ADDR, a == null ? "" : a.trim()); }

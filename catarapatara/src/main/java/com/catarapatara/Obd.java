@@ -129,6 +129,75 @@ public final class Obd {
         }
     }
 
+    /** PIN for in-app pairing of classic adapters (1234 on most ELM327s). */
+    public volatile String pin = "1234";
+    private Exception lastErr;
+
+    private static String name(BluetoothDevice d) {
+        String n = d.getName();
+        return n == null || n.isEmpty() ? d.getAddress() : n;
+    }
+
+    /** Four ways to open the serial port; null if none worked. */
+    private Object[] classic(BluetoothDevice dev) {
+        for (int k = 0; k < 4 && run; k++) {
+            try {
+                BluetoothSocket s = k == 0 ? dev.createInsecureRfcommSocketToServiceRecord(SPP)
+                        : k == 1 ? dev.createRfcommSocketToServiceRecord(SPP)
+                        : (BluetoothSocket) dev.getClass().getMethod(k == 2 ? "createInsecureRfcommSocket" : "createRfcommSocket", int.class).invoke(dev, 1);
+                socket = s;
+                s.connect();
+                return new Object[]{s.getInputStream(), s.getOutputStream()};
+            } catch (Exception e) {
+                lastErr = e;
+                close();
+                try { Thread.sleep(300); } catch (InterruptedException ignored) { }
+            }
+        }
+        return null;
+    }
+
+    /** Pairs from inside the app and answers the PIN request itself. */
+    @SuppressLint("MissingPermission")
+    private boolean bond(final BluetoothDevice dev) {
+        final Object lock = new Object();
+        final int[] state = {dev.getBondState()};
+        android.content.BroadcastReceiver r = new android.content.BroadcastReceiver() {
+            @Override public void onReceive(android.content.Context c, android.content.Intent i) {
+                BluetoothDevice d = i.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if (d == null || !d.getAddress().equals(dev.getAddress())) return;
+                if (BluetoothDevice.ACTION_PAIRING_REQUEST.equals(i.getAction())) {
+                    int v = i.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT, -1);
+                    try {
+                        if (v == BluetoothDevice.PAIRING_VARIANT_PIN || v == 5 /* PIN_16_DIGITS */) d.setPin(pin.getBytes());
+                        else d.setPairingConfirmation(true);
+                        abortBroadcast();
+                    } catch (Throwable ignored) {
+                    }
+                } else {
+                    synchronized (lock) { state[0] = i.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, -1); lock.notifyAll(); }
+                }
+            }
+        };
+        android.content.IntentFilter f = new android.content.IntentFilter(BluetoothDevice.ACTION_PAIRING_REQUEST);
+        f.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        f.setPriority(android.content.IntentFilter.SYSTEM_HIGH_PRIORITY - 1);
+        try {
+            ctx.registerReceiver(r, f);
+            if (!dev.createBond()) return dev.getBondState() == BluetoothDevice.BOND_BONDED;
+            long end = System.currentTimeMillis() + 20000;
+            synchronized (lock) {
+                while (run && System.currentTimeMillis() < end && state[0] != BluetoothDevice.BOND_BONDED
+                        && !(state[0] == BluetoothDevice.BOND_NONE && System.currentTimeMillis() > end - 19000)) lock.wait(500);
+            }
+            return dev.getBondState() == BluetoothDevice.BOND_BONDED;
+        } catch (Throwable t) {
+            return false;
+        } finally {
+            try { ctx.unregisterReceiver(r); } catch (Throwable ignored) { }
+        }
+    }
+
     /** Scans for a BLE ELM327 whose name matches (or any known adapter name). */
     @SuppressLint("MissingPermission")
     private static BluetoothDevice bleScan(BluetoothAdapter a, final String want, long ms) {
@@ -216,8 +285,15 @@ public final class Obd {
             BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
             if (a == null) throw new Exception("Bluetooth yok");
             BluetoothDevice dev = null;
+            boolean forceLe = false;
             String want = target == null || target.isEmpty() ? null : target.toLowerCase(Locale.ROOT);
-            for (BluetoothDevice d : a.getBondedDevices()) {
+            // A picked device by address ("AA:BB:CC:DD:EE:FF" or "…|le"): no pairing needed for it to be found.
+            if (want != null && want.matches("^([0-9a-f]{2}:){5}[0-9a-f]{2}(\\|le)?$")) {
+                forceLe = want.endsWith("|le");
+                dev = a.getRemoteDevice(want.substring(0, 17).toUpperCase(Locale.ROOT));
+                want = null;
+            }
+            if (dev == null) for (BluetoothDevice d : a.getBondedDevices()) {
                 String n = d.getName() == null ? "" : d.getName().toLowerCase(Locale.ROOT);
                 if (want != null ? n.contains(want) : looksLikeAdapter(n)) { dev = d; break; }
             }
@@ -227,34 +303,29 @@ public final class Obd {
                 dev = bleScan(a, want, 8000);
             }
             if (dev == null) throw new Exception("OBD adaptörü bulunamadı (eşleşmiş ya da yakında BLE yok)");
-            l.onStatus("OBD: " + dev.getName() + " bağlanıyor…", false);
+            l.onStatus("OBD: " + name(dev) + " bağlanıyor…", false);
             a.cancelDiscovery();
             Object[] io = null;
             Exception last = null;
-            // Classic serial first (unless it is a BLE-only adapter), three ways, then BLE.
-            if (dev.getType() != BluetoothDevice.DEVICE_TYPE_LE) {
-                for (int k = 0; k < 3 && io == null && run; k++) {
-                    try {
-                        BluetoothSocket s = k == 0 ? dev.createInsecureRfcommSocketToServiceRecord(SPP)
-                                : k == 1 ? dev.createRfcommSocketToServiceRecord(SPP)
-                                : (BluetoothSocket) dev.getClass().getMethod("createRfcommSocket", int.class).invoke(dev, 1);
-                        socket = s;
-                        s.connect();
-                        io = new Object[]{s.getInputStream(), s.getOutputStream()};
-                    } catch (Exception e) {
-                        last = e;
-                        close();
-                    }
+            // Classic serial first (unless it is a BLE-only adapter), the way Car Scanner / AndrOBD do it:
+            // insecure SPP works even without pairing on many adapters; if not, pair from inside the
+            // app with the PIN (the unit's own Bluetooth app may be unable to), then the fallbacks.
+            if (!forceLe && dev.getType() != BluetoothDevice.DEVICE_TYPE_LE) {
+                io = classic(dev);
+                if (io == null && run && ctx != null && dev.getBondState() != BluetoothDevice.BOND_BONDED) {
+                    l.onStatus("OBD: " + name(dev) + " eşleştiriliyor (" + pin + ")…", false);
+                    if (bond(dev)) io = classic(dev);
                 }
+                if (io == null) last = lastErr;
             }
-            if (io == null && ctx != null && dev.getType() != BluetoothDevice.DEVICE_TYPE_CLASSIC) {
-                l.onStatus("OBD: " + dev.getName() + " (BLE) bağlanıyor…", false);
+            if (io == null && ctx != null && (forceLe || dev.getType() != BluetoothDevice.DEVICE_TYPE_CLASSIC)) {
+                l.onStatus("OBD: " + name(dev) + " (BLE) bağlanıyor…", false);
                 BleSerial b = new BleSerial();
                 socket = b;
                 b.connect(ctx, dev);
                 io = new Object[]{b.in, b.out};
             }
-            if (io == null) throw new Exception("adaptöre bağlanılamadı (başka bir OBD uygulaması bağlı olabilir)" + (last == null ? "" : ""));
+            if (io == null) throw new Exception("adaptöre bağlanılamadı (başka bir uygulama bağlı olabilir)" + (last == null || last.getMessage() == null ? "" : ": " + last.getMessage()));
             in = (InputStream) io[0];
             out = (OutputStream) io[1];
         } else {
