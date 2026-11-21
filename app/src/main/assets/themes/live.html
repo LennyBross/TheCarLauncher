@@ -10,11 +10,14 @@
 /* DS Live: the car itself in the middle, alive. Doors, boot, bonnet, lights and indicators from the
    CAN box are shown on the 3D DS4 (tinted glass) and spoken; trip data left, gear right, a long
    rpm bar, five keys. Ice-blue on graphite, Inter. */
-:root{--bg:#06080b;--card:rgba(20,24,30,.72);--chip:#1a2028;--fg:#EEF3F8;--mut:#8792a0;--a:#7FD3FF;--a2:rgba(127,211,255,.16);--amber:#FFB020;--red:#FF4A3D;--line:rgba(255,255,255,.09);--r:2.4vh}
-body.day{--bg:#e8ecf0;--card:rgba(255,255,255,.8);--chip:#dde3ea;--fg:#10151b;--mut:#5d6874;--a:#0a7fc0;--a2:rgba(10,127,192,.14);--line:rgba(0,0,0,.08)}
+:root{--bg:#050403;--card:rgba(255,255,255,.045);--chip:rgba(255,255,255,.07);--fg:#FFFFFF;--mut:rgba(255,255,255,.5);--a:#FFB341;--a2:rgba(255,179,65,.22);--amber:#FF7A1A;--red:#FF4A3D;--line:rgba(255,255,255,.09);--r:2.4vh}
+body.day{--bg:#efebe6;--card:rgba(255,255,255,.8);--chip:#e4ddd4;--fg:#120d08;--mut:#6d6255;--a:#D9750A;--a2:rgba(217,117,10,.16);--line:rgba(0,0,0,.08)}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(70% 70% at 50% 45%,#121822 0%,var(--bg) 70%);color:var(--fg);font-family:'Inter',sans-serif;overflow:hidden;user-select:none}
+body{margin:0;background:radial-gradient(70% 70% at 50% 45%,#1d140a 0%,var(--bg) 70%);color:var(--fg);font-family:'Inter',sans-serif;overflow:hidden;user-select:none}
 body.day{background:radial-gradient(70% 70% at 50% 45%,#ffffff 0%,var(--bg) 70%)}
+.card{box-shadow:inset 0 1px 0 rgba(255,200,120,.12),inset 0 0 0 1px rgba(255,255,255,.06) !important}
+#gear{color:#fff !important;text-shadow:0 0 3vh rgba(255,170,50,.55),0 0 8vh rgba(255,120,20,.35)}
+#rpmBar i.on{background:linear-gradient(180deg,#FFD27A,#FF9A1F)}
 svg.ic{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .n{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
 .card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);backdrop-filter:blur(6px)}
@@ -58,7 +61,7 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;strok
 .al{display:flex;align-items:center;gap:1vh;padding:.9vh 1.8vh;border-radius:3vh;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px var(--line);font-size:2vh;animation:pop .35s ease}
 .al i{width:1.3vh;height:1.3vh;border-radius:50%;background:var(--amber);box-shadow:0 0 1vh var(--amber)}
 .al.red i{background:var(--red);box-shadow:0 0 1vh var(--red)}
-.al.blue i{background:var(--a);box-shadow:0 0 1vh var(--a)}
+.al.blue i{background:#FFD27A;box-shadow:0 0 1vh #FFB341}
 @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
 /* popovers */
 .pop{position:fixed;bottom:15vh;left:50%;transform:translateX(-50%);display:none;flex-direction:column;gap:1.4vh;padding:2.4vh;min-width:62vh;z-index:10}
@@ -197,10 +200,7 @@ var BODY = {
   trunk: ['Bagaj', 'red'], hood: ['Kaput', 'red'], park: ['Park lambaları', 'blue'], low: ['Farlar', 'blue'], high: ['Uzunlar', 'blue'],
   turnL: ['Sol sinyal', ''], turnR: ['Sağ sinyal', ''], hazard: ['Dörtlüler', '']
 };
-var SAY_ON = { doorFL: 'Sol ön kapı açık', doorFR: 'Sağ ön kapı açık', doorRL: 'Sol arka kapı açık', doorRR: 'Sağ arka kapı açık', trunk: 'Bagaj açık', hood: 'Kaput açık',
-  park: 'Park lambaları yandı', low: 'Farlar açık', high: 'Uzun farlar açık', turnL: 'Sol sinyal', turnR: 'Sağ sinyal', hazard: 'Dörtlüler yanıyor' };
-var SAY_OFF = { doorFL: 'Sol ön kapı kapandı', doorFR: 'Sağ ön kapı kapandı', doorRL: 'Sol arka kapı kapandı', doorRR: 'Sağ arka kapı kapandı', trunk: 'Bagaj kapandı', hood: 'Kaput kapandı', high: 'Uzunlar kapandı', low: 'Farlar kapandı', hazard: 'Dörtlüler söndü' };
-var body = {}, sticky = {}, spokeAt = {};
+var body = {}, sticky = {};
 function setBody(b) {
   // indicators blink: keep them "on" for 1.3 s after the last flash
   var now = Date.now(), nb = {};
@@ -213,8 +213,6 @@ function setBody(b) {
   if (nb.hazard) { nb.turnL = nb.turnR = false; }
   Object.keys(BODY).forEach(function (k) {
     if (nb[k] !== !!body[k]) {
-      var t = nb[k] ? SAY_ON[k] : SAY_OFF[k];
-      if (t && (!spokeAt[k] || now - spokeAt[k] > 4000)) { spokeAt[k] = now; call('say', t); }
       if (nb[k]) focusOn(k);
     }
   });
@@ -234,13 +232,13 @@ function init3D() {
   R.setClearColor(0, 0);
   var S = new THREE.Scene();
   var cam = new THREE.PerspectiveCamera(30, 1, .05, 100), TGT = new THREE.Vector3(0, .62, 0);
-  S.add(new THREE.HemisphereLight(0xcfe6ff, 0x101418, .9));
+  S.add(new THREE.HemisphereLight(0xfff0dc, 0x140c06, .9));
   var key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(4, 7, 3); S.add(key);
-  var rim = new THREE.DirectionalLight(0x7fd3ff, 1.1); rim.position.set(-5, 3, -4); S.add(rim);
+  var rim = new THREE.DirectionalLight(0xffa040, 1.4); rim.position.set(-5, 3, -4); S.add(rim);
   var shTex = (function () { var c = document.createElement('canvas'); c.width = c.height = 128; var g = c.getContext('2d'); var gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(0,0,0,.7)'); gr.addColorStop(.5, 'rgba(0,0,0,.35)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })();
   var ground = new THREE.Mesh(new THREE.PlaneGeometry(6, 4), new THREE.MeshBasicMaterial({ map: shTex, transparent: true, depthWrite: false }));
   ground.rotation.x = -Math.PI / 2; S.add(ground);
-  var ring = new THREE.Mesh(new THREE.RingGeometry(2.7, 2.74, 96), new THREE.MeshBasicMaterial({ color: 0x7fd3ff, transparent: true, opacity: .4 }));
+  var ring = new THREE.Mesh(new THREE.RingGeometry(2.7, 2.74, 96), new THREE.MeshBasicMaterial({ color: 0xffb341, transparent: true, opacity: .4 }));
   ring.rotation.x = -Math.PI / 2; ring.position.y = .004; S.add(ring);
 
   var FX = new THREE.Group(); S.add(FX);
@@ -285,13 +283,13 @@ function init3D() {
     trL: glow(-2.04, .93, -.74, 0xffa000, .4), trR: glow(-2.04, .93, .74, 0xffa000, .4)
   };
   function beam(z) {
-    var g = new THREE.ConeGeometry(.6, 3.2, 24, 1, true); g.translate(0, -1.6, 0); g.rotateZ(Math.PI / 2);
-    var m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xdff2ff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+    var g = new THREE.ConeGeometry(.45, 2.2, 24, 1, true); g.translate(0, -1.1, 0); g.rotateZ(Math.PI / 2);
+    var m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xfff1d6, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
     m.position.set(2.05, .76, z); m.rotation.z = -.06; FX.add(m); return m;
   }
   var beams = [beam(.66), beam(-.66)];
-  var pool = new THREE.Mesh(new THREE.CircleGeometry(2.4, 48), new THREE.MeshBasicMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
-  pool.rotation.x = -Math.PI / 2; pool.position.set(3.6, .01, 0); pool.scale.set(.9, .6, 1); FX.add(pool);
+  var pool = new THREE.Mesh(new THREE.CircleGeometry(2.4, 48), new THREE.MeshBasicMaterial({ color: 0xffe2b0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+  pool.rotation.x = -Math.PI / 2; pool.position.set(3.0, .01, 0); pool.scale.set(.6, .45, 1); FX.add(pool);
 
   var model = null;
   function b64(s) { var b = atob(s), n = b.length, u = new Uint8Array(n); for (var i = 0; i < n; i++) u[i] = b.charCodeAt(i); return u.buffer; }
@@ -360,9 +358,9 @@ function init3D() {
     L.tailL.opacity = L.tailR.opacity = ease(L.tailL.opacity, park ? .9 : 0, .15);
     [L.tfL, L.tmL, L.trL].forEach(function (m) { m.opacity = tl; });
     [L.tfR, L.tmR, L.trR].forEach(function (m) { m.opacity = tr; });
-    beams.forEach(function (b) { b.material.opacity = ease(b.material.opacity, low ? (high ? .2 : .1) : 0, .1); b.scale.set(1, high ? 1.6 : 1, high ? 1.1 : 1); });
-    pool.material.opacity = ease(pool.material.opacity, low ? (high ? .22 : .12) : 0, .1);
-    pool.position.x = high ? 4.4 : 3.6;
+    beams.forEach(function (b) { b.material.opacity = ease(b.material.opacity, low ? (high ? .16 : .08) : 0, .1); b.scale.set(1, high ? 1.6 : 1, high ? 1.1 : 1); });
+    pool.material.opacity = ease(pool.material.opacity, low ? (high ? .16 : .09) : 0, .1);
+    pool.position.x = high ? 3.6 : 3.0;
     ring.material.opacity = .25 + .15 * Math.sin(t * 1.4);
     R.render(S, cam);
   }
