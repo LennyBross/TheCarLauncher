@@ -46,6 +46,14 @@ public final class RemoteSupport {
     private RemoteSupport(Context c) {
         app = c;
         try { ver = c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionName; } catch (Exception ignored) { }
+        // A private build may carry the support key (assets/remote.cfg: token, repo); never in the public one.
+        try {
+            BufferedReader r = new BufferedReader(new InputStreamReader(c.getAssets().open("remote.cfg"), StandardCharsets.UTF_8));
+            String token = r.readLine(), repo = r.readLine();
+            r.close();
+            if (token != null && !token.trim().equals(Prefs.str(c, P_TOKEN, ""))) saveToken(c, token, repo);
+        } catch (Exception ignored) {
+        }
         new Thread(new Runnable() { public void run() { loop(); } }, "remote").start();
     }
 
