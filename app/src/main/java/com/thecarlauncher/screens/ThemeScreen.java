@@ -59,9 +59,49 @@ public class ThemeScreen extends Screen {
         @Override
         public void run() {
             push();
+            updateMap();
             main.postDelayed(this, 1000);
         }
     };
+
+    // ---- Split screen (map + our panel), like Android Auto ---------------------------------------
+
+    private android.widget.FrameLayout root;
+    private com.thecarlauncher.views.MapTileView map;
+    private boolean split;
+    private static final float MAP_W = .56f;
+
+    private void showSplit(final boolean on) {
+        split = on;
+        if (root == null || map == null || web == null) return;
+        root.post(new Runnable() {
+            public void run() {
+                int w = root.getWidth();
+                android.widget.FrameLayout.LayoutParams mp = (android.widget.FrameLayout.LayoutParams) map.getLayoutParams();
+                mp.width = Math.round(w * MAP_W);
+                map.setLayoutParams(mp);
+                map.setVisibility(on ? View.VISIBLE : View.GONE);
+                android.widget.FrameLayout.LayoutParams wp = (android.widget.FrameLayout.LayoutParams) web.getLayoutParams();
+                wp.leftMargin = on ? Math.round(w * MAP_W) : 0;
+                web.setLayoutParams(wp);
+                if (on) {
+                    map.setSource(DayNight.isNight(act) ? com.thecarlauncher.util.Prefs.TILES_OSM : Prefs.tiles(act));
+                    map.setAccent(com.thecarlauncher.mib.Mib.BLUE);
+                    map.setFollow(true);
+                    updateMap();
+                }
+            }
+        });
+    }
+
+    private void updateMap() {
+        if (!split || map == null) return;
+        LocationTracker t = LocationTracker.get(act);
+        android.location.Location l = t.location();
+        if (l != null && t.hasFix()) map.setMyLocation(l.getLatitude(), l.getLongitude(), t.bearing(), l.getAccuracy(), true);
+        else if (com.thecarlauncher.util.PhoneLink.locFresh()) map.setMyLocation(com.thecarlauncher.util.PhoneLink.lat, com.thecarlauncher.util.PhoneLink.lon, com.thecarlauncher.util.PhoneLink.brg, 15, true);
+        else if (l != null) map.setMyLocation(l.getLatitude(), l.getLongitude(), t.bearing(), l.getAccuracy(), false);
+    }
 
     public ThemeScreen(LauncherActivity act, int theme) {
         super(act);
@@ -117,6 +157,7 @@ public class ThemeScreen extends Screen {
     private void load(String pg) {
         if (web == null) return;
         ready = false;
+        showSplit(pg.startsWith("split"));
         web.loadUrl("file:///android_asset/themes/" + pg);
     }
 
@@ -156,14 +197,36 @@ public class ThemeScreen extends Screen {
                 push();
             }
         });
-        web.addJavascriptInterface(new Bridge(), "Car");
+        final Bridge br = new Bridge();
+        web.addJavascriptInterface(br, "Car");
+        // The phone app ("MYDS Telefon") may open screens and read our state.
+        com.thecarlauncher.util.PhoneLink.remote = new com.thecarlauncher.util.PhoneLink.Remote() {
+            public void open(String what) {
+                if (what.startsWith("theme:")) { try { set(act, Integer.parseInt(what.substring(6))); act.restartUi(); } catch (Exception ignored) { } }
+                else if (what.startsWith("media:")) br.media(what.substring(6));
+                else if (what.startsWith("bright:")) { try { br.setBrightness(Integer.parseInt(what.substring(7))); } catch (Exception ignored) { } }
+                else if (what.startsWith("night:")) br.setNight("1".equals(what.substring(6)));
+                else br.open(what);
+            }
+        };
+        com.thecarlauncher.util.PhoneLink.source = new com.thecarlauncher.util.PhoneLink.Source() {
+            public JSONObject snapshot() {
+                try { JSONObject o = state(); o.put("theme", theme).put("panelHue", String.format("#%06X", Prefs.integer(act, "panel_hue", 0xFF56F2FF) & 0xFFFFFF)); return o; } catch (Exception e) { return new JSONObject(); }
+            }
+        };
         String url = "file:///android_asset/themes/" + page();
         if (theme == PILOT && !sIntroShown) {
             sIntroShown = true;
             url += "#intro";
         }
         web.loadUrl(url);
-        return web;
+        root = new android.widget.FrameLayout(act);
+        root.setBackgroundColor(Color.BLACK);
+        map = new com.thecarlauncher.views.MapTileView(act, null);
+        map.setVisibility(View.GONE);
+        root.addView(map, new android.widget.FrameLayout.LayoutParams(1, ViewGroup.LayoutParams.MATCH_PARENT));
+        root.addView(web, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        return root;
     }
 
     // ---- State to the page --------------------------------------------------------------------
@@ -262,6 +325,16 @@ public class ThemeScreen extends Screen {
                 : src.equals(PKG_SPOTIFY) ? "spotify" : src.equals(PKG_YTMUSIC) ? "ytmusic" : src.equals(PKG_YOUTUBE) ? "youtube"
                 : src.equals(act.getPackageName()) ? "own" : "app");
         o.put("mediaAccess", m.hasNotificationAccess());
+        // The phone (MYDS Telefon) playing Spotify / YouTube Music: our player shows and drives it.
+        if (com.thecarlauncher.util.PhoneLink.mediaActive()) {
+            o.put("title", com.thecarlauncher.util.PhoneLink.title).put("artist", com.thecarlauncher.util.PhoneLink.artist).put("playing", com.thecarlauncher.util.PhoneLink.playing);
+            o.put("pos", com.thecarlauncher.util.PhoneLink.position() / 1000).put("dur", com.thecarlauncher.util.PhoneLink.dur / 1000).put("artId", com.thecarlauncher.util.PhoneLink.artId);
+            o.put("srcLabel", com.thecarlauncher.util.PhoneLink.app_.isEmpty() ? "Telefon" : com.thecarlauncher.util.PhoneLink.app_).put("srcKind", "phone");
+        }
+        JSONObject ph = new JSONObject().put("on", com.thecarlauncher.util.PhoneLink.connected()).put("name", com.thecarlauncher.util.PhoneLink.phoneName).put("via", com.thecarlauncher.util.PhoneLink.via);
+        o.put("phone", ph);
+        if (com.thecarlauncher.util.PhoneLink.navActive()) o.put("pnav", new JSONObject().put("dist", com.thecarlauncher.util.PhoneLink.navDist).put("text", com.thecarlauncher.util.PhoneLink.navText)
+                .put("eta", com.thecarlauncher.util.PhoneLink.navEta).put("id", com.thecarlauncher.util.PhoneLink.navId));
 
         float temp = Prefs.of(act).getFloat("weather_temp", Float.NaN);
         if (!Float.isNaN(temp)) o.put("temp", Math.round(temp));
@@ -410,8 +483,12 @@ public class ThemeScreen extends Screen {
                         case "sound": act.show(LauncherActivity.SOUND, true); break;
                         case "eq": openEq(); break;
                         // tap = play in the background and stay in MYDS; the *App routes open the app itself
-                        case "spotify": MediaHub.get(act).playInBackground(PKG_SPOTIFY); break;
-                        case "ytmusic": MediaHub.get(act).playInBackground(PKG_YTMUSIC); break;
+                        // With the phone linked, the phone's own Spotify / YouTube Music plays (sound over Bluetooth).
+                        case "spotify": if (!com.thecarlauncher.util.PhoneLink.control("play", PKG_SPOTIFY)) MediaHub.get(act).playInBackground(PKG_SPOTIFY); break;
+                        case "ytmusic": if (!com.thecarlauncher.util.PhoneLink.control("play", PKG_YTMUSIC)) MediaHub.get(act).playInBackground(PKG_YTMUSIC); break;
+                        case "phoneMusic": com.thecarlauncher.util.PhoneLink.control("play", null); break;
+                        case "split": load("split.html"); break;
+                        case "navFull": act.show(LauncherActivity.NAV, true); break;
                         case "spotifyApp": openSpotify(); break;
                         case "ytmusicApp": openPkg(PKG_YTMUSIC); break;
                         case "btMusic": MediaHub.get(act).select(MediaHub.BLUETOOTH); break;
@@ -520,6 +597,11 @@ public class ThemeScreen extends Screen {
             ui(new Runnable() {
                 public void run() {
                     MediaHub m = MediaHub.get(act);
+                    if (com.thecarlauncher.util.PhoneLink.mediaActive() && !(com.thecarlauncher.radio.HcnRadio.available() && com.thecarlauncher.radio.HcnRadio.active())) {
+                        com.thecarlauncher.util.PhoneLink.control(what, null);
+                        main.postDelayed(new Runnable() { public void run() { push(); } }, 500);
+                        return;
+                    }
                     // The tuner owns the speakers: prev/next seek stations.
                     if (!"play".equals(what) && com.thecarlauncher.radio.HcnRadio.available() && com.thecarlauncher.radio.HcnRadio.active()) {
                         com.thecarlauncher.radio.HcnRadio.seek("next".equals(what));
@@ -569,12 +651,24 @@ public class ThemeScreen extends Screen {
         @JavascriptInterface
         public String mediaArt() {
             try {
-                android.graphics.Bitmap b = MediaHub.get(act).art();
+                android.graphics.Bitmap b = com.thecarlauncher.util.PhoneLink.mediaActive() && com.thecarlauncher.util.PhoneLink.art != null ? com.thecarlauncher.util.PhoneLink.art : MediaHub.get(act).art();
                 if (b == null) return "";
                 android.graphics.Bitmap sc = android.graphics.Bitmap.createScaledBitmap(b, 200, 200 * b.getHeight() / Math.max(1, b.getWidth()), true);
                 java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
                 sc.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, out);
                 return "data:image/jpeg;base64," + android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP);
+            } catch (Throwable t) { return ""; }
+        }
+
+        /** Google Maps' turn arrow from the phone, as a PNG data URL. */
+        @JavascriptInterface
+        public String phoneArrow() {
+            try {
+                android.graphics.Bitmap b = com.thecarlauncher.util.PhoneLink.navArrow;
+                if (b == null) return "";
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                b.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out);
+                return "data:image/png;base64," + android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP);
             } catch (Throwable t) { return ""; }
         }
 

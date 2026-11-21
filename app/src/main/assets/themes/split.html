@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta id="stockcss">
+<title>Harita + Müzik</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* The right-hand panel beside the map (the map itself is native, on the left): the next turn
+   from the phone's Google Maps, the music (phone Spotify / YouTube Music, radio, Bluetooth) and
+   a few keys. Like Android Auto's split screen, in the home theme's own look. */
+:root{--bg:#07080a;--card:#121418;--chip:#1b1e23;--fg:#EEEAE2;--mut:#8f8a80;--a:#E8D5B0;--on:#111;--line:rgba(255,255,255,.1);--r:2.6vh}
+body{background:var(--bg);color:var(--fg);font-family:'Montserrat',sans-serif;overflow:hidden;user-select:none}
+body.t-stock{background:linear-gradient(180deg,#141518,#060607)}
+body.t-ds4{--bg:#0B0E13;--card:#161B23;--chip:#1E252F;--fg:#F3F5F7;--mut:#A3ADBA;--a:#5CC8B0;font-family:'Inter',sans-serif}
+body.t-panel{--bg:#030608;--card:transparent;--chip:#0b1114;--fg:var(--pv,#56F2FF);--mut:var(--pv2,#2a8f98);--a:var(--pv,#56F2FF);--on:#031014;--line:rgba(var(--pvr,86,242,255),.25);--r:1.2vh;font-family:'Share Tech Mono',monospace}
+body.day{--bg:#EEECE8;--card:#fff;--chip:#e4e1dc;--fg:#17181b;--mut:#6c6860;--line:rgba(0,0,0,.1)}
+body.day.t-stock{background:#EEECE8;--a:#8a6f3e;--on:#fff}body.day.t-ds4{--a:#1F8F78;--on:#fff}body.day.t-panel{--a:#007f8c;--fg:#007f8c;--mut:#5f9aa0;--on:#fff}
+svg.ic{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.n{font-variant-numeric:tabular-nums;font-weight:600}
+body.t-stock .n{font-style:italic}
+body.t-ds4 .n{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700}
+body.t-panel .n{font-weight:400;text-shadow:0 0 1vh currentColor}
+.card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line)}
+body.t-stock .card{background:linear-gradient(180deg,rgba(34,35,38,.95),rgba(14,14,16,.95));box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 1px 0 rgba(255,255,255,.16)}
+body.day.t-stock .card{background:#fff}
+.w{position:fixed;inset:0;display:flex;flex-direction:column;gap:1.8vh;padding:2.2vh 2.2vh 2.2vh 1.8vh}
+/* next turn / speed */
+#turn{display:flex;align-items:center;gap:2vh;padding:2vh 2.4vh;min-height:20vh}
+#arrow{width:13vh;height:13vh;flex-shrink:0;border-radius:2vh;background:var(--a);display:flex;align-items:center;justify-content:center;overflow:hidden}
+#arrow img{width:86%;height:86%;object-fit:contain;filter:brightness(0)}
+body.t-panel #arrow{background:transparent;box-shadow:inset 0 0 0 1px var(--a)}
+body.t-panel #arrow img{filter:none}
+#arrow svg{width:8vh;height:8vh;color:var(--on)}
+body.t-panel #arrow svg{color:var(--a)}
+#tDist{font-size:7vh;line-height:1}
+#tText{font-size:2.4vh;color:var(--mut);margin-top:.6vh;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#tEta{font-size:2vh;color:var(--a);margin-top:.6vh}
+/* music */
+#music{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:1.6vh;padding:2.4vh}
+.mrow{display:flex;align-items:center;gap:2.2vh;min-width:0}
+#cover{width:17vh;height:17vh;border-radius:1.6vh;object-fit:cover;background:var(--chip);flex-shrink:0;box-shadow:0 1vh 2.4vh rgba(0,0,0,.35)}
+#mt{font-size:3.4vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ma{font-size:2.3vh;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.4vh}
+#src{display:inline-flex;align-items:center;gap:.8vh;font-size:1.8vh;color:var(--a);margin-top:1vh}
+#src svg{width:2.4vh;height:2.4vh}
+#bar{height:.7vh;border-radius:.35vh;background:var(--line);overflow:hidden}
+#bar i{display:block;height:100%;width:0;background:var(--a)}
+.ctl{display:flex;justify-content:center;gap:3vh}
+.ctl button{width:10vh;height:10vh;border-radius:50%;border:none;background:var(--chip);color:var(--fg);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--line)}
+.ctl button svg{width:4.4vh;height:4.4vh}
+.ctl button.pp{width:12vh;height:12vh;background:var(--a);color:var(--on)}
+body.t-panel .ctl button.pp{background:transparent;color:var(--a);box-shadow:inset 0 0 0 1.5px var(--a),0 0 1.6vh rgba(var(--pvr,86,242,255),.35)}
+/* sources + keys */
+.keys{display:flex;gap:1.4vh}
+.keys button{flex:1;height:9vh;border-radius:var(--r);border:none;background:var(--card);color:var(--fg);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--line)}
+.keys button svg{width:4vh;height:4vh}
+.keys button.on{color:var(--a);box-shadow:inset 0 0 0 1.5px var(--a)}
+#phoneDot{position:absolute;right:2.4vh;top:2.4vh;width:1.4vh;height:1.4vh;border-radius:50%;background:var(--mut)}
+#phoneDot.on{background:#7CD992;box-shadow:0 0 1vh #7CD992}
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="card" id="turn" style="position:relative">
+    <div id="arrow"><svg class="ic" viewBox="0 0 24 24"><path d="M21 3 3 10.5l7.5 3L14 21z"/></svg></div>
+    <div style="min-width:0;flex:1">
+      <div class="n" id="tDist">—</div>
+      <div id="tText"></div>
+      <div id="tEta"></div>
+    </div>
+    <i id="phoneDot" aria-label="Telefon"></i>
+  </div>
+
+  <div class="card" id="music">
+    <div class="mrow">
+      <img id="cover" alt="">
+      <div style="min-width:0;flex:1">
+        <div id="mt">—</div>
+        <div id="ma"></div>
+        <div id="src"></div>
+      </div>
+    </div>
+    <div id="bar"><i></i></div>
+    <div class="ctl">
+      <button class="key" id="prev" aria-label="Önceki"><svg class="ic" viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M19 5 9 12l10 7z"/></svg></button>
+      <button class="key pp" id="play" aria-label="Çal / duraklat"><svg class="ic" id="playI" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="key" id="next" aria-label="Sonraki"><svg class="ic" viewBox="0 0 24 24"><path d="M18 5v14"/><path d="M5 5l10 7-10 7z"/></svg></button>
+    </div>
+  </div>
+
+  <div class="keys" id="keys"></div>
+</div>
+<script src="common.js"></script>
+<script>
+var TH = call('theme') || 8;
+document.body.classList.add(TH === 7 ? 't-ds4' : TH === 4 ? 't-panel' : 't-stock');
+var IC = {
+  home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  spotify: '<circle cx="12" cy="12" r="9"/><path d="M7.5 9.5c3-1 6.5-.7 9 .8M8 12.6c2.5-.7 5.2-.4 7.3.8M8.6 15.5c2-.5 4-.3 5.6.6"/>',
+  ytmusic: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M11 10.2v3.6l3-1.8z"/>',
+  phone: '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/>',
+  radio: '<rect x="2" y="8" width="20" height="13" rx="2"/><path d="M6 8l12-5"/><circle cx="8" cy="14.5" r="2.5"/><path d="M14 13h4M14 16h4"/>',
+  map: '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+  aa: '<path d="M12 3 4 20l8-4 8 4z"/>'
+};
+var KEYS = [['home', 'themehome', 'Ana ekran'], ['spotify', 'spotify', 'Spotify'], ['ytmusic', 'ytmusic', 'YouTube Music'], ['radio', 'radio', 'Radyo'], ['map', 'navFull', 'Tam harita'], ['aa', 'aa', 'Android Auto']];
+KEYS.forEach(function (k) {
+  var b = document.createElement('button'); b.className = 'key'; b.id = 'k_' + k[0]; b.setAttribute('aria-label', k[2]);
+  b.innerHTML = '<svg class="ic" viewBox="0 0 24 24">' + IC[k[0]] + '</svg>';
+  b.onclick = function () { call('open', k[1]); };
+  $('keys').appendChild(b);
+});
+$('play').onclick = function () { call('media', 'play'); };
+$('prev').onclick = function () { call('media', 'prev'); };
+$('next').onclick = function () { call('media', 'next'); };
+
+var artId = -1, navId = -1;
+function clock(s) { return s.time || ''; }
+car.on(function (s) {
+  document.body.classList.toggle('day', s.night === false);
+  $('phoneDot').classList.toggle('on', !!(s.phone && s.phone.on));
+  // next turn from the phone's Google Maps, else speed and time
+  var n = s.pnav;
+  if (n) {
+    $('tDist').textContent = n.dist || '—';
+    $('tText').textContent = n.text || '';
+    $('tEta').textContent = n.eta || '';
+    if (n.id !== navId) {
+      navId = n.id;
+      var u = call('phoneArrow');
+      $('arrow').innerHTML = u ? '<img src="' + u + '" alt="">' : '<svg class="ic" viewBox="0 0 24 24"><path d="M12 20V6M6 11l6-6 6 6"/></svg>';
+    }
+  } else {
+    navId = -1;
+    $('arrow').innerHTML = '<svg class="ic" viewBox="0 0 24 24"><path d="M21 3 3 10.5l7.5 3L14 21z"/></svg>';
+    $('tDist').textContent = s.gps === 'ok' ? Math.round(s.speed || 0) + ' km/h' : clock(s);
+    $('tText').textContent = s.navActive ? (s.nextName || s.navDest || '') : (s.gps === 'ok' ? clock(s) : '');
+    $('tEta').textContent = s.navActive ? Math.round(s.navMin) + ' dk · ' + num(s.navKm, 1) + ' km · ' + (s.navArrive || '') : '';
+  }
+  // music
+  var tun = s.tuner && s.khz;
+  $('mt').textContent = tun ? (s.rdsPs || (s.khz / 1000).toFixed(1).replace('.', ',') + ' MHz') : (s.title || '—');
+  $('ma').textContent = tun ? (s.rdsRt || 'Radyo') : (s.artist || '');
+  var kind = tun ? 'radio' : s.srcKind === 'phone' ? 'phone' : s.srcKind;
+  var lab = tun ? 'Radyo' : s.srcKind === 'phone' ? 'Telefon · ' + (s.srcLabel || '') : (s.srcLabel || '');
+  $('src').innerHTML = lab ? '<svg class="ic" viewBox="0 0 24 24">' + (IC[kind] || IC.phone) + '</svg>' + lab : '';
+  $('playI').innerHTML = s.playing ? '<path d="M8 5v14M16 5v14" stroke-width="2.4"/>' : '<path d="M8 5v14l11-7z"/>';
+  $('bar').firstChild.style.width = s.dur > 0 ? Math.min(100, s.pos / s.dur * 100) + '%' : '0';
+  if (s.artId !== artId) { artId = s.artId; var u = artId ? call('mediaArt') : ''; $('cover').src = u || ''; $('cover').style.visibility = u ? 'visible' : 'hidden'; }
+  var app = (s.srcLabel || '').toLowerCase();
+  $('k_spotify').classList.toggle('on', app.indexOf('spotify') >= 0);
+  $('k_ytmusic').classList.toggle('on', app.indexOf('youtube') >= 0);
+  $('k_radio').classList.toggle('on', !!tun);
+});
+</script>
+</body>
+</html>

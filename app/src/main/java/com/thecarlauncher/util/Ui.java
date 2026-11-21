@@ -33,6 +33,7 @@ public final class Ui {
     public static boolean start(Context c, Intent i) {
         try {
             if (!(c instanceof android.app.Activity)) i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            AutoReturn.markOwn();
             c.startActivity(i);
             return true;
         } catch (Exception e) {

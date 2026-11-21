@@ -140,7 +140,7 @@ K.forEach(function (k) {
   b.innerHTML = '<svg class="ic" viewBox="0 0 24 24">' + k[1] + '</svg>';
   b.onclick = function () {
     var w = k[0];
-    if (w === 'nav') w = hasMaps ? 'gmaps' : 'nav';
+    if (w === 'nav') w = 'split';
     if (w === 'srcPick') w = 'spotify';
     if (w === 'engine') { if (cpOn !== null) { call('open', 'cpToggle'); return; } }
     call('open', w);

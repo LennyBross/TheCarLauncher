@@ -35,6 +35,8 @@ public class KeepAlive extends Service {
     public void onCreate() {
         super.onCreate();
         try { ObdHub.start(this); } catch (Throwable ignored) { }
+        try { PhoneLink.start(this); } catch (Throwable ignored) { }
+        try { AutoReturn.ensureAccess(this); } catch (Throwable ignored) { }
         try {
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             Notification.Builder b;

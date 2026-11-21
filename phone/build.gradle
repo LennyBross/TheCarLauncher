@@ -1,0 +1,49 @@
+plugins {
+    id 'com.android.application'
+}
+
+// "MYDS Telefon": the phone side of MYDS (Samsung / any Android 8+ phone). Sends the phone's
+// music (Spotify, YouTube Music…), Google Maps' next turn and its position to the head unit,
+// and is a remote control for it. Same key as MYDS.
+android {
+    namespace 'com.thecarlauncher.phone'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.thecarlauncher.phone'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    signingConfigs {
+        release {
+            def ks = System.getenv('RELEASE_KEYSTORE')
+            storeFile ks ? file(ks) : rootProject.file('keystore/release.jks')
+            storePassword System.getenv('RELEASE_STORE_PASSWORD') ?: 'carlauncher'
+            keyAlias System.getenv('RELEASE_KEY_ALIAS') ?: 'carlauncher'
+            keyPassword System.getenv('RELEASE_KEY_PASSWORD') ?: 'carlauncher'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}

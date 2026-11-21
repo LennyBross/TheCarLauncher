@@ -429,6 +429,13 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         }
     }
 
+    /** A touch in MYDS: whatever opens next was the driver's choice (see AutoReturn). */
+    @Override
+    public void onUserInteraction() {
+        super.onUserInteraction();
+        com.thecarlauncher.util.AutoReturn.markOwn();
+    }
+
     @Override
     protected void onStop() {
         main.removeCallbacks(clock);
@@ -440,6 +447,7 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         MediaHub.get(this).removeListener(this);
         PhoneStatus.get(this).removeListener(this);
         StreetName.get(this).removeListener(this);
+        com.thecarlauncher.util.AutoReturn.launcherStopped(this);
         super.onStop();
     }
 
