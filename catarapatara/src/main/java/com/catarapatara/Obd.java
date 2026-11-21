@@ -327,7 +327,11 @@ public final class Obd {
         int i = h.indexOf("43");
         if (i < 0) return "";
         h = h.substring(i + 2);
-        if ((h.length() / 2) % 2 == 1) h = h.substring(2); // CAN: first byte = number of codes
+        // CAN (the DS4): the first byte is the number of codes, the rest may be padding.
+        int bytes = h.length() / 2, cnt = bytes > 0 ? Integer.parseInt(h.substring(0, 2), 16) : 0;
+        if (bytes % 2 == 1 || (cnt > 0 && 1 + 2 * cnt <= bytes)) {
+            h = h.substring(2, Math.min(h.length(), 2 + cnt * 4));
+        }
         StringBuilder out = new StringBuilder();
         for (int k = 0; k + 4 <= h.length(); k += 4) {
             int a = Integer.parseInt(h.substring(k, k + 2), 16), b = Integer.parseInt(h.substring(k + 2, k + 4), 16);
