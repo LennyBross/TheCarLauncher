@@ -83,6 +83,7 @@ public final class LinkService extends Service implements LocationListener, Obd.
         foreground();
         run = true;
         new Thread(new Runnable() { public void run() { loop(); } }, "link").start();
+        new Thread(new Runnable() { public void run() { listen(); } }, "link-in").start();
         discover();
         startLocation();
         startObd();
@@ -172,15 +173,48 @@ public final class LinkService extends Service implements LocationListener, Obd.
 
     // ---- connection
 
+    static final int PHONE_PORT = 47322;
+    private volatile boolean inbound;
+
+    /** The unit on this phone's hotspot calls in here (the unit's Bluetooth cannot carry the link). */
+    private void listen() {
+        while (run) {
+            try (java.net.ServerSocket ss = new java.net.ServerSocket(PHONE_PORT)) {
+                while (run) {
+                    Socket s = ss.accept();
+                    s.setTcpNoDelay(true);
+                    inbound = true;
+                    close();
+                    sock = s;
+                    out = s.getOutputStream();
+                    via = "Wi-Fi";
+                    try {
+                        write(new JSONObject().put("t", "hello").put("name", Build.MODEL));
+                        status = "Bağlı · Wi-Fi";
+                        MediaWatch.resend();
+                        read(s.getInputStream(), true);
+                    } catch (Throwable ignored) {
+                    } finally {
+                        inbound = false;
+                        close();
+                    }
+                }
+            } catch (Throwable e) {
+                sleep(5000);
+            }
+        }
+    }
+
     private void loop() {
         while (run) {
+            if (inbound) { sleep(2000); continue; }
             try {
                 if (wifiHost != null && prefs(this).getString("code", "").length() == 4) session(true);
                 else session(false);
             } catch (Throwable e) {
                 status = "Bağlanamadı: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
             }
-            close();
+            if (!inbound) close();
             sleep(5000);
         }
     }
@@ -193,6 +227,7 @@ public final class LinkService extends Service implements LocationListener, Obd.
             Socket s = new Socket();
             sock = s;
             s.connect(new InetSocketAddress(wifiHost, wifiPort), 4000);
+            if (inbound) { s.close(); return; }
             s.setTcpNoDelay(true);
             in = s.getInputStream();
             out = s.getOutputStream();
@@ -208,6 +243,7 @@ public final class LinkService extends Service implements LocationListener, Obd.
             sock = s;
             a.cancelDiscovery();
             s.connect();
+            if (inbound) { s.close(); return; }
             in = s.getInputStream();
             out = s.getOutputStream();
             via = "Bluetooth";
@@ -217,6 +253,10 @@ public final class LinkService extends Service implements LocationListener, Obd.
         write(h);
         status = "Bağlı · " + via;
         MediaWatch.resend();
+        read(in, wifi);
+    }
+
+    private void read(InputStream in, boolean wifi) throws Exception {
         BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8), 65536);
         String line;
         while (run && (line = r.readLine()) != null) {
@@ -240,7 +280,7 @@ public final class LinkService extends Service implements LocationListener, Obd.
                     break;
             }
             // Bluetooth is up but the unit is also on our Wi-Fi: Wi-Fi is faster (covers).
-            if (!wifi && wifiHost != null && prefs(this).getString("code", "").length() == 4) break;
+            if (!wifi && (inbound || (wifiHost != null && prefs(this).getString("code", "").length() == 4))) break;
         }
     }
 

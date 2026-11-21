@@ -86,6 +86,7 @@ public final class PhoneLink {
         code(c);
         new Thread(new Runnable() { public void run() { btLoop(); } }, "phone-bt").start();
         new Thread(new Runnable() { public void run() { tcpLoop(); } }, "phone-tcp").start();
+        new Thread(new Runnable() { public void run() { dialLoop(); } }, "phone-dial").start();
         main.postDelayed(tick, 1000);
     }
 
@@ -156,7 +157,7 @@ public final class PhoneLink {
                         final BluetoothSocket s = ss.accept();
                         final String name = s.getRemoteDevice() == null ? "" : s.getRemoteDevice().getName();
                         new Thread(new Runnable() {
-                            public void run() { serve(new Session(s, "bt", name)); }
+                            public void run() { serve(new Session(s, "bt", name), true); }
                         }, "phone-bt-s").start();
                     }
                 } finally {
@@ -178,11 +179,39 @@ public final class PhoneLink {
                     if (ra != null && !(ra.isSiteLocalAddress() || ra.isLinkLocalAddress() || ra.isLoopbackAddress())) { s.close(); continue; }
                     s.setTcpNoDelay(true);
                     new Thread(new Runnable() {
-                        public void run() { serve(new Session(s, "wifi", "")); }
+                        public void run() { serve(new Session(s, "wifi", ""), false); }
                     }, "phone-tcp-s").start();
                 }
             } catch (Throwable e) {
                 try { Thread.sleep(8000); } catch (InterruptedException ie) { return; }
+            }
+        }
+    }
+
+    public static final int PHONE_PORT = 47322;
+    public static volatile String dialStatus = "";
+
+    /**
+     * The unit on the phone's hotspot: the phone is the gateway and listens on 47322, so MYDS
+     * calls it (no discovery needed; the unit's own Bluetooth cannot carry the link).
+     */
+    @SuppressWarnings("deprecation")
+    private void dialLoop() {
+        while (true) {
+            try { Thread.sleep(4000); } catch (InterruptedException e) { return; }
+            if (connected()) continue;
+            try {
+                android.net.wifi.WifiManager wm = (android.net.wifi.WifiManager) app.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                int g = wm == null || !wm.isWifiEnabled() ? 0 : wm.getDhcpInfo().gateway;
+                if (g == 0) { dialStatus = "Wi-Fi yok"; continue; }
+                String ip = (g & 255) + "." + ((g >> 8) & 255) + "." + ((g >> 16) & 255) + "." + ((g >> 24) & 255);
+                Socket s = new Socket();
+                s.connect(new java.net.InetSocketAddress(ip, PHONE_PORT), 2500);
+                s.setTcpNoDelay(true);
+                dialStatus = "Telefon: " + ip;
+                serve(new Session(s, "wifi", ""), true);
+            } catch (Throwable e) {
+                dialStatus = "Telefon bulunamadı";
             }
         }
     }
@@ -208,8 +237,7 @@ public final class PhoneLink {
         }
     }
 
-    private void serve(Session s) {
-        boolean trusted = "bt".equals(s.kind);
+    private void serve(Session s, boolean trusted) {
         try {
             BufferedReader r = new BufferedReader(new InputStreamReader(s.in, StandardCharsets.UTF_8), 65536);
             if (trusted) {

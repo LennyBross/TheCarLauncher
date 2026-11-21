@@ -127,7 +127,7 @@ public final class Obd {
     }
 
     @SuppressLint("MissingPermission")
-    static final String[] NAMES = {"obd", "elm", "vlink", "v-link", "vgate", "icar", "konnwei", "kw9", "viecar", "obdlink", "carista", "veepeak", "scan"};
+    static final String[] NAMES = {"obd", "elm", "vlink", "v-link", "vgate", "icar", "konnwei", "kw9", "viecar", "obdlink", "carista", "veepeak", "scan", "vehiconn", "obdii", "obd2"};
 
     static boolean looksLikeAdapter(String name) {
         String n = name == null ? "" : name.toLowerCase(Locale.ROOT);
