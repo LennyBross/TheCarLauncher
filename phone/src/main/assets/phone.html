@@ -99,6 +99,12 @@ input[type=text]{width:90px;height:42px;border-radius:12px;border:none;backgroun
   <div class="grp">MOTOR</div>
   <div class="card gs" id="gs"></div>
 
+  <div class="grp">OBD (ELM327 TELEFONDAN)</div>
+  <div class="card">
+    <div class="row"><span id="obdSt">—</span><button class="sw on" id="obdOn"></button></div>
+    <div id="obdDevs" style="font-size:13px;color:var(--mut)">Adaptör seç:</div>
+  </div>
+
   <div class="grp">TEMA VE IŞIK</div>
   <div class="card">
     <div class="seg" id="themes"></div>
@@ -171,12 +177,23 @@ GS.forEach(function (g) {
   $('gs').appendChild(d);
 });
 
+function obdDevices(sel) {
+  var l = J(P.devices()), box = $('obdDevs'); box.innerHTML = 'Adaptör seç:';
+  l.forEach(function (d) {
+    var b = document.createElement('button'); b.className = 'dev' + (d.name === sel ? ' on' : ''); b.textContent = d.name;
+    b.onclick = function () { P.pickObd(d.name); obdDevices(d.name); };
+    box.appendChild(b);
+  });
+}
+var obdOn = true;
+$('obdOn').onclick = function () { obdOn = !obdOn; this.classList.toggle('on', obdOn); P.setObd(obdOn); };
 var shownDevs = false, theme = 0;
 function tick() {
   var s = J(P.state()), c = s.car || {};
   $('dot').classList.toggle('on', !!s.connected);
   $('st').textContent = s.connected ? (s.unit || 'Araç') + ' · ' + s.via : s.status || 'Bağlı değil';
-  if (!shownDevs) { shownDevs = true; devices(s.unit); }
+  if (!shownDevs) { shownDevs = true; devices(s.unit); obdDevices(''); obdOn = s.obd !== false; $('obdOn').classList.toggle('on', obdOn); }
+  $('obdSt').textContent = !obdOn ? 'Kapalı' : s.obdOk ? 'Bağlı · ' + (s.obdRpm >= 0 ? s.obdRpm + ' d/d' : '') : (s.obdSt || 'Bekleniyor…');
   $('s1').className = s.connected ? 'ok' : ''; $('s1').textContent = s.connected ? '✓' : '1';
   $('s2').className = s.notif ? 'ok' : ''; $('s2').textContent = s.notif ? '✓' : '2';
   $('s3').className = s.via === 'Wi-Fi' ? 'ok' : ''; $('s3').textContent = s.via === 'Wi-Fi' ? '✓' : '3';

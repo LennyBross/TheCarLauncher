@@ -295,6 +295,12 @@ public final class PhoneLink {
                 if (r != null && !what.isEmpty()) main.post(new Runnable() { public void run() { r.open(what); } });
                 break;
             }
+            case "obd": {
+                // The ELM327 read by the phone (the unit's Bluetooth does not see it).
+                ObdHub h = ObdHub.get();
+                if (h != null) h.fromPhone(o);
+                break;
+            }
             case "pref":
                 // a few switches the phone may flip
                 String k = o.optString("key");

@@ -46,7 +46,7 @@ import java.util.UUID;
  * the unit anyway). Sends media, cover, Google Maps' next turn and the position; receives the
  * unit's state for the remote-control screen and media keys for the phone's players.
  */
-public final class LinkService extends Service implements LocationListener {
+public final class LinkService extends Service implements LocationListener, Obd.Listener {
     static final UUID UUID_LINK = UUID.fromString("6d796473-7068-6f6e-6500-000000000001");
     static final int PORT = 47321;
     private static final String CH = "myds_link";
@@ -85,6 +85,50 @@ public final class LinkService extends Service implements LocationListener {
         new Thread(new Runnable() { public void run() { loop(); } }, "link").start();
         discover();
         startLocation();
+        startObd();
+    }
+
+    // ---- OBD relay: the head unit's Bluetooth cannot see the ELM327, the phone can.
+
+    private Obd obd;
+    static volatile String obdStatus = "";
+    static volatile boolean obdOk;
+    static volatile float obdRpm = -1;
+
+    void startObd() {
+        if (obd != null) obd.stop();
+        obd = null;
+        obdStatus = "";
+        obdOk = false;
+        if (!prefs(this).getBoolean("obd", true)) return;
+        if (Obd.pairedAdapter() == null && prefs(this).getString("obdName", "").isEmpty()) { obdStatus = "OBD adaptörü eşleşmemiş"; return; }
+        obd = new Obd(this);
+        obd.start(Obd.BT, prefs(this).getString("obdName", ""), Obd.STD);
+    }
+
+    private void obdSend(String k, float v) {
+        try { send(new JSONObject().put("t", "obd").put("k", k).put("v", v)); } catch (Exception ignored) { }
+    }
+
+    private long rpmSentAt;
+
+    @Override public void onRpm(float r) {
+        obdRpm = r;
+        long now = System.currentTimeMillis();
+        if (now - rpmSentAt < 60) return;
+        rpmSentAt = now;
+        obdSend("rpm", r);
+    }
+    @Override public void onPedal(float p) { obdSend("pedal", p); }
+    @Override public void onSpeed(float kmh) { obdSend("speed", kmh); }
+    @Override public void onPid(String k, float v) { obdSend(k, v); }
+    @Override public void onStatus(String t, boolean ok) {
+        obdStatus = t;
+        obdOk = ok;
+        try { send(new JSONObject().put("t", "obd").put("st", t).put("ok", ok)); } catch (Exception ignored) { }
+    }
+    @Override public void onDtc(String codes) {
+        try { send(new JSONObject().put("t", "obd").put("dtc", codes == null ? "" : codes)); } catch (Exception ignored) { }
     }
 
     @Override
@@ -96,6 +140,7 @@ public final class LinkService extends Service implements LocationListener {
         close();
         try { if (disco != null) ((NsdManager) getSystemService(NSD_SERVICE)).stopServiceDiscovery(disco); } catch (Exception ignored) { }
         try { ((LocationManager) getSystemService(LOCATION_SERVICE)).removeUpdates(this); } catch (Exception ignored) { }
+        if (obd != null) obd.stop();
         sInstance = null;
         super.onDestroy();
     }
@@ -185,6 +230,9 @@ public final class LinkService extends Service implements LocationListener {
                 case "state":
                     unitState = o;
                     stateAt = System.currentTimeMillis();
+                    break;
+                case "dtc":
+                    if (obd != null) obd.readDtc();
                     break;
                 case "ctl":
                     final String a = o.optString("a"), pkg = o.has("pkg") ? o.optString("pkg") : null;

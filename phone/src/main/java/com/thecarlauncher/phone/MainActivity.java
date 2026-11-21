@@ -70,6 +70,8 @@ public final class MainActivity extends Activity {
                 o.put("notif", MediaWatch.enabled(MainActivity.this));
                 o.put("unit", LinkService.prefs(MainActivity.this).getString("unitName", ""));
                 o.put("code", LinkService.prefs(MainActivity.this).getString("code", ""));
+                o.put("obd", LinkService.prefs(MainActivity.this).getBoolean("obd", true)).put("obdSt", LinkService.obdStatus).put("obdOk", LinkService.obdOk)
+                        .put("obdRpm", Math.round(LinkService.obdRpm));
                 JSONObject u = LinkService.unitState;
                 if (u != null && System.currentTimeMillis() - LinkService.stateAt < 5000) o.put("car", u);
                 return o.toString();
@@ -97,6 +99,21 @@ public final class MainActivity extends Activity {
             LinkService.prefs(MainActivity.this).edit().putString("unit", addr).putString("unitName", name).apply();
             stopService(new Intent(MainActivity.this, LinkService.class));
             LinkService.start(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void setObd(boolean on) {
+            LinkService.prefs(MainActivity.this).edit().putBoolean("obd", on).apply();
+            LinkService s = LinkService.sInstance;
+            if (s != null) s.startObd(); else LinkService.start(MainActivity.this);
+        }
+
+        /** Choose the ELM327 by name from the paired list. */
+        @JavascriptInterface
+        public void pickObd(String name) {
+            LinkService.prefs(MainActivity.this).edit().putString("obdName", name).putBoolean("obd", true).apply();
+            LinkService s = LinkService.sInstance;
+            if (s != null) s.startObd(); else LinkService.start(MainActivity.this);
         }
 
         @JavascriptInterface

@@ -80,7 +80,30 @@ public final class ObdHub implements Obd.Listener {
         }
     }
 
-    public void readDtc() { Obd o = obd; if (o != null) o.readDtc(); }
+    private volatile long phoneAt;
+
+    public void readDtc() {
+        Obd o = obd;
+        if (o != null) o.readDtc();
+        else if (System.currentTimeMillis() - phoneAt < 10000) { try { PhoneLink.send(new JSONObject().put("t", "dtc")); } catch (Exception ignored) { } }
+    }
+
+    /** Values from the ELM327 that the phone (MYDS Telefon) reads and passes on. */
+    public void fromPhone(JSONObject o) {
+        phoneAt = System.currentTimeMillis();
+        if (o.has("st")) { onStatus(o.optString("st") + " · telefon", o.optBoolean("ok")); return; }
+        if (o.has("dtc")) { onDtc(o.optString("dtc")); return; }
+        String k = o.optString("k");
+        float v = (float) o.optDouble("v", Double.NaN);
+        if (Float.isNaN(v)) return;
+        if (!ok) { ok = true; status = "OBD · telefon"; }
+        switch (k) {
+            case "rpm": onRpm(v); break;
+            case "pedal": onPedal(v); break;
+            case "speed": onSpeed(v); break;
+            default: onPid(k, v);
+        }
+    }
 
     // ---- from the adapter ----
 
@@ -126,7 +149,7 @@ public final class ObdHub implements Obd.Listener {
     public JSONObject json() {
         JSONObject o = new JSONObject();
         try {
-            o.put("on", obd != null).put("ok", connected()).put("st", status);
+            o.put("on", obd != null || System.currentTimeMillis() - phoneAt < 10000).put("ok", connected()).put("st", status);
             JSONObject v = new JSONObject();
             float r = rpm();
             if (r >= 0) v.put("rpm", Math.round(r));
