@@ -289,7 +289,6 @@ public class ThemeScreen extends Screen {
         return o;
     }
 
-    @Override
     /**
      * Why no trip-computer data shows, in plain words (null when it flows). The chain is:
      * Raise CAN box → factory CAN app (logs every frame) → CataraPatara CAN bridge (reads the log)
@@ -306,6 +305,7 @@ public class ThemeScreen extends Screen {
         return "Kutu yakıt verisi göndermiyor" + (t == null || t.isEmpty() ? "" : " · gelen: " + t);
     }
 
+    @Override
     public void onShow() {
         main.removeCallbacks(tick);
         main.post(tick);
