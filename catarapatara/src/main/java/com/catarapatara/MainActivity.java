@@ -118,7 +118,8 @@ public final class MainActivity extends Activity {
                         .put("obd", p.getString("obd", "auto")).put("gps", p.getBoolean("gps", false)).put("matchRpm", p.getBoolean("matchRpm", true)).put("obdTarget", p.getString("obdTarget", "")).put("obdProto", p.getString("obdProto", "std"))
                         .put("carMax", p.getInt("carMax", 4500)).put("out", p.getString("out", "focus")).put("boot", p.getBoolean("boot", true)).put("duckMusic", p.getBoolean("duckMusic", false))
                         .put("font", getSharedPreferences("launcher", MODE_MULTI_PROCESS).getInt("home_theme", 8) == 7 ? "inter" : "montserrat")
-                        .put("theme", getSharedPreferences("launcher", MODE_MULTI_PROCESS).getInt("home_theme", 8)).put("duckAmt", p.getInt("duckAmt", 40))
+                        .put("theme", getSharedPreferences("launcher", MODE_MULTI_PROCESS).getInt("home_theme", 8))
+                        .put("accent", String.format("#%06X", getSharedPreferences("launcher", MODE_MULTI_PROCESS).getInt("panel_hue", 0xFF56F2FF) & 0xFFFFFF)).put("duckAmt", p.getInt("duckAmt", 40))
                         .put("eq", new org.json.JSONArray().put(p.getInt("eq0", 0)).put(p.getInt("eq1", 0)).put(p.getInt("eq2", 0)).put(p.getInt("eq3", 0)).put(p.getInt("eq4", 0))).toString();
             } catch (Exception e) {
                 return "{}";

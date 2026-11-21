@@ -70,7 +70,7 @@ public final class Mib {
         if (was != sStock || !fam.equals(sFamily)) sRegular = sSemibold = sBold = null;
         sFamily = fam;
         if (sStock) { BLUE = 0xFFE2CBA2; return; }
-        if (Prefs.integer(c, "home_theme", 8) == 4) { BLUE = 0xFF56F2FF; return; }   // Panel 80: VFD cyan
+        if (Prefs.integer(c, "home_theme", 8) == 4) { BLUE = Prefs.integer(c, "panel_hue", 0xFF56F2FF); return; }   // Panel 80: chosen display colour
         BLUE = shade(Prefs.integer(c, Prefs.AMBIENT, DEFAULT_AMBIENT),
                 Prefs.integer(c, Prefs.AMBIENT_LEVEL, 100) / 100f, 0xFF);
     }

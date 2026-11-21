@@ -82,3 +82,24 @@ var eco = (function () {
     }
   } catch (e) {}
 })();
+
+// Panel 80: the display colour the driver picked (VFD cyan, amber, phosphor green, ...), on every page.
+var PANEL_COLORS = [['#56F2FF', 'Camgöbeği'], ['#FFB347', 'Amber'], ['#7CFF6B', 'Fosfor yeşili'], ['#FF4FD8', 'Magenta'], ['#FF4A3D', 'Kırmızı'], ['#E8F1FF', 'Buz beyazı']];
+function panelLook(hex) {
+  try {
+    if (hex) store('panel.hue', hex);
+    hex = store('panel.hue') || '#56F2FF';
+    var n = parseInt(hex.slice(1), 16), r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255;
+    var d = function (v) { return Math.round(v * .5); };
+    var s = document.documentElement.style;
+    s.setProperty('--pv', hex);
+    s.setProperty('--pvr', r + ',' + g + ',' + b);
+    s.setProperty('--pv2', 'rgb(' + d(r) + ',' + d(g) + ',' + d(b) + ')');
+    s.setProperty('--vfd', hex);
+    s.setProperty('--vfd2', 'rgb(' + d(r) + ',' + d(g) + ',' + d(b) + ')');
+    s.setProperty('--off', 'rgba(' + r + ',' + g + ',' + b + ',.09)');
+    s.setProperty('--edge', 'rgba(' + r + ',' + g + ',' + b + ',.22)');
+  } catch (e) {}
+  return hex;
+}
+try { if (window.Car && Car.theme && Car.theme() === 4) panelLook(); } catch (e) {}

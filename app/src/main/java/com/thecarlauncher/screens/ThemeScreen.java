@@ -520,6 +520,16 @@ public class ThemeScreen extends Screen {
             });
         }
 
+        /** Panel 80 display colour (#RRGGBB): kept for native screens and CataraPatara too. */
+        @JavascriptInterface
+        public void panelColor(final String hex) {
+            try {
+                int c = 0xFF000000 | Integer.parseInt(hex.replace("#", ""), 16);
+                com.thecarlauncher.util.Prefs.put(act, "panel_hue", c);
+                ui(new Runnable() { public void run() { com.thecarlauncher.mib.Mib.loadAmbient(act); } });
+            } catch (Exception ignored) { }
+        }
+
         @JavascriptInterface
         public void setAutoNight() {
             ui(new Runnable() { public void run() { DayNight.setMode(act, DayNight.AUTO); push(); } });

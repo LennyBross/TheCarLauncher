@@ -75,6 +75,16 @@ public final class SoundPacks {
      * with packs the user imports.
      */
     public static void syncAssets(Context c) {
+        // 4.38: the recorded packs that came with the app (and from GitHub) were removed; clear them once.
+        try {
+            android.content.SharedPreferences pp = c.getSharedPreferences("packs", Context.MODE_PRIVATE);
+            if (!pp.getBoolean("purged438", false)) {
+                File[] ds = root(c).listFiles();
+                if (ds != null) for (File d : ds) if (d.getName().startsWith("b-")) deleteDir(d);
+                pp.edit().clear().putBoolean("purged438", true).apply();
+            }
+        } catch (Exception ignored) {
+        }
         try {
             String[] zips = c.getAssets().list("packs");
             if (zips == null) return;

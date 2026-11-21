@@ -158,6 +158,11 @@ var cfg = J(has ? CP.config() : '{}', {}), PROFILES = J(has ? CP.profiles() : '[
 function set(k, v) { if (has) CP.set(k, String(v)); }
 var th = +cfg.theme || 8;
 document.body.classList.add(th === 7 ? 't-ds4' : th === 4 ? 't-panel' : 't-stock');
+if (th === 4 && /^#[0-9A-F]{6}$/i.test(cfg.accent || '')) {
+  var hn = parseInt(cfg.accent.slice(1), 16), rgb = (hn >> 16 & 255) + ',' + (hn >> 8 & 255) + ',' + (hn & 255);
+  var bs = document.body.style; bs.setProperty('--a', cfg.accent); bs.setProperty('--ink', cfg.accent);
+  bs.setProperty('--a2', 'rgba(' + rgb + ',.12)'); bs.setProperty('--line', 'rgba(' + rgb + ',.22)'); bs.setProperty('--muted', 'rgba(' + rgb + ',.55)');
+}
 
 PROFILES.forEach(function (p) {
   var b = document.createElement('button'); b.className = 'key eng'; b.setAttribute('data-id', p.id);

@@ -41,11 +41,11 @@ body.t-stock .card,body.t-stock .tile,body.t-stock .chip{background:linear-gradi
 body.t-stock .chip.on{background:linear-gradient(180deg,#f3e6cc,#cdb58b);color:#111}
 body.t-stock .sg,body.t-stock .tile b{font-family:'Montserrat',sans-serif;font-style:italic;font-weight:600}
 /* Panel 80 skin */
-body.t-panel{--a:#56F2FF;--bg:#030608;--card:#0b1114;--chip:#0f181c;--muted:#2a8f98;--sep:rgba(86,242,255,.18);--fg:#56F2FF;font-family:'Share Tech Mono',monospace}
-body.t-panel #stage{background:#020405;box-shadow:inset 0 0 0 1px rgba(86,242,255,.22);background-image:linear-gradient(rgba(86,242,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(86,242,255,.06) 1px,transparent 1px);background-size:4vh 4vh}
-body.t-panel .card,body.t-panel .tile,body.t-panel .chip{background:transparent;box-shadow:inset 0 0 0 1px rgba(86,242,255,.25);color:var(--fg)}
-body.t-panel .chip.on{background:rgba(86,242,255,.14);color:var(--fg);box-shadow:inset 0 0 0 1px var(--a),0 0 1.6vh rgba(86,242,255,.3)}
-body.t-panel .sg,body.t-panel .tile b{font-family:'Share Tech Mono',monospace;font-weight:400;text-shadow:0 0 1vh rgba(86,242,255,.6)}
+body.t-panel{--a:var(--pv,#56F2FF);--bg:#030608;--card:#0b1114;--chip:#0f181c;--muted:var(--pv2,#2a8f98);--sep:rgba(var(--pvr,86,242,255),.18);--fg:var(--pv,#56F2FF);font-family:'Share Tech Mono',monospace}
+body.t-panel #stage{background:#020405;box-shadow:inset 0 0 0 1px rgba(var(--pvr,86,242,255),.22);background-image:linear-gradient(rgba(var(--pvr,86,242,255),.06) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--pvr,86,242,255),.06) 1px,transparent 1px);background-size:4vh 4vh}
+body.t-panel .card,body.t-panel .tile,body.t-panel .chip{background:transparent;box-shadow:inset 0 0 0 1px rgba(var(--pvr,86,242,255),.25);color:var(--fg)}
+body.t-panel .chip.on{background:rgba(var(--pvr,86,242,255),.14);color:var(--fg);box-shadow:inset 0 0 0 1px var(--a),0 0 1.6vh rgba(var(--pvr,86,242,255),.3)}
+body.t-panel .sg,body.t-panel .tile b{font-family:'Share Tech Mono',monospace;font-weight:400;text-shadow:0 0 1vh rgba(var(--pvr,86,242,255),.6)}
 #sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:5}
 #sheet .box{width:min(110vh,92vw);max-height:92vh;overflow:auto;border-radius:3.33vh;background:var(--card);padding:3.33vh}
 #sheet label{display:flex;flex-direction:column;gap:.83vh;font-size:1.94vh;color:var(--muted)}
