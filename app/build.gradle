@@ -11,7 +11,7 @@ android {
         minSdk 21
         targetSdk 34
         versionCode 119
-        versionName "4.37.0"
+        versionName '4.37.0'
     }
 
     // One build per head-unit family (same app id, so a unit can switch between them).
