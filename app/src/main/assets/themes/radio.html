@@ -206,7 +206,8 @@ var srcOk = true;
 function poll() {
   var info = {}; try { info = JSON.parse(R('radioInfo') || '{}'); } catch (e) {}
   var ps = info.ps || '', rt = info.rt || '';
-  $('hint').textContent = info.ok ? (ps + (rt ? ' · ' + rt : '')) : 'Bu ünitede tuner bulunamadı.';
+  var diag = info.how === 'app' ? 'Fabrika radyosu üzerinden ayarlandı' : info.how === 'key' ? 'Radyo tuşlarıyla arandı' : (info.tunerKhz === -1 ? 'Tuner yanıt vermiyor, fabrika radyosu deneniyor' : '');
+  $('hint').textContent = info.ok ? ((ps + (rt ? ' · ' + rt : '')) || diag) : 'Bu ünitede tuner bulunamadı.';
   if (ps !== curPs) { curPs = ps; if (TH === 8) drawArc(); }
   if (info.khz && info.khz !== cur) { cur = info.khz; paint(); }
   $('stereo').style.display = info.stereo ? 'inline' : 'none';

@@ -147,6 +147,91 @@ public final class HcnRadio {
         return false;
     }
 
+    // ---- tuning that survives firmwares where RadioPlayer calls from MYDS do nothing ----
+    private static volatile int sWant;            // last frequency asked for (kHz), shown while the tuner catches up
+    private static volatile String sHow = "";     // which way worked last: "player", "app", "key"
+    public static int wanted() { return sWant; }
+    public static String how() { return sHow; }
+
+    private static boolean near(int a, int b) { return a > 0 && Math.abs(a - b) <= 60; }
+
+    /**
+     * Tunes and checks. 1) RadioPlayer.setUibandIndexFreq (what the factory CAN app calls);
+     * 2) if the tuner did not move, the factory CAN app's own way: open RadioMain with the extra
+     * "com.hcn.autoradio.toitem" = MHz×10 (985 = 98.5 MHz), then come straight back to MYDS.
+     */
+    public static void tuneSmart(final android.content.Context c, final int khz) {
+        sWant = khz;
+        try { c.startService(new android.content.Intent().setClassName(RADIO_PKG, RADIO_PKG + ".service.FMPlugService")); } catch (Throwable ignored) { }
+        ensure();
+        tune(khz);
+        final android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+        h.postDelayed(new Runnable() {
+            public void run() {
+                int[] i = info();
+                if (i != null && near(i[0], khz)) { sHow = "player"; return; }
+                viaApp(c, khz);
+            }
+        }, 700);
+    }
+
+    private static void viaApp(final android.content.Context c, int khz) {
+        sHow = "app";
+        try {
+            android.content.Intent it = new android.content.Intent(android.content.Intent.ACTION_MAIN)
+                    .addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+                    .setClassName(RADIO_PKG, RADIO_PKG + ".RadioMain")
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION);
+            it.putExtra(RADIO_PKG + ".toitem", khz > 30000 ? Math.round(khz / 100f) : khz);
+            c.startActivity(it);
+        } catch (Throwable t) {
+            return;
+        }
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+            public void run() { com.thecarlauncher.util.BringBack.toLauncher(c); }
+        }, 1100);
+    }
+
+    /** Seek: RadioPlayer, then the radio's media keys, then a plain step. */
+    public static void seekSmart(final android.content.Context c, final boolean up) {
+        final int[] before = info();
+        ensure();
+        seek(up);
+        final android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+        h.postDelayed(new Runnable() {
+            public void run() {
+                int[] now = info();
+                if (before != null && now != null && now[0] != before[0]) { sHow = "player"; sWant = now[0]; return; }
+                try {
+                    android.media.AudioManager am = (android.media.AudioManager) c.getSystemService(android.content.Context.AUDIO_SERVICE);
+                    int code = up ? android.view.KeyEvent.KEYCODE_MEDIA_NEXT : android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS;
+                    am.dispatchMediaKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, code));
+                    am.dispatchMediaKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, code));
+                } catch (Throwable ignored) { }
+                h.postDelayed(new Runnable() {
+                    public void run() {
+                        int[] n2 = info();
+                        if (before != null && n2 != null && n2[0] != before[0]) { sHow = "key"; sWant = n2[0]; return; }
+                        int base = sWant > 0 ? sWant : before != null ? before[0] : 87500;
+                        int f = base + (up ? 100 : -100);
+                        if (f > 108000) f = 87500; if (f < 87500) f = 108000;
+                        tuneSmart(c, f);
+                    }
+                }, 1500);
+            }
+        }, 1500);
+    }
+
+    public static void stepSmart(android.content.Context c, boolean up) {
+        int[] i = info();
+        int base = sWant > 0 ? sWant : i != null ? i[0] : 87500;
+        if (i != null && sWant > 0 && near(i[0], sWant)) base = i[0];
+        boolean fm = base > 30000;
+        int f = base + (up ? (fm ? 100 : 9) : -(fm ? 100 : 9));
+        if (fm) { if (f > 108000) f = 87500; if (f < 87500) f = 108000; }
+        tuneSmart(c, f);
+    }
+
     /** Stations stored in the firmware for the current band (kHz). */
     public static int[] presets() {
         Object p = player();

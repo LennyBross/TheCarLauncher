@@ -379,6 +379,12 @@ public final class RemoteSupport {
             } catch (Throwable t) {
                 sb.append("Bluetooth: ").append(t).append('\n');
             }
+            try {
+                sb.append("Radyo: kaynak=").append(com.thecarlauncher.radio.HcnRadio.source()).append(" yol=").append(com.thecarlauncher.radio.HcnRadio.how())
+                        .append(" istenen=").append(com.thecarlauncher.radio.HcnRadio.wanted()).append('\n').append(com.thecarlauncher.radio.HcnRadio.describe());
+            } catch (Throwable t) {
+                sb.append("Radyo: ").append(t).append('\n');
+            }
             String[] perms = {"android.permission.ACCESS_FINE_LOCATION", "android.permission.BLUETOOTH_ADMIN", "android.permission.BLUETOOTH_PRIVILEGED", "android.permission.READ_LOGS"};
             for (String p : perms) sb.append(p.substring(19)).append(": ").append(c.checkSelfPermission(p) == 0 ? "var" : "YOK").append('\n');
             try {
