@@ -29,14 +29,14 @@ html.noir svg [fill="#5CC8B0"]{fill:#FFFFFF}
 /* Gündüz: white frosted glass, black type (follows the home screen's day mode) */
 html.noir body.day{
   --a:#0A0A0A;--as:rgba(0,0,0,.08);--a2:rgba(0,0,0,.08);--on:#FFFFFF;--hot:#D0302A;
-  --bg:#ECECEC;--fg:#0A0A0A;--text:#0A0A0A;--ink:#0A0A0A;--card:rgba(255,255,255,.6);--inner:rgba(255,255,255,.5);--chip:rgba(0,0,0,.06);
+  --bg:#F6F6F6;--fg:#0A0A0A;--text:#0A0A0A;--ink:#0A0A0A;--card:#FFFFFF;--inner:#F2F2F2;--chip:rgba(0,0,0,.06);
   --muted:rgba(0,0,0,.5);--mut:rgba(0,0,0,.5);--sub:rgba(0,0,0,.5);--sep:rgba(0,0,0,.08);--line:rgba(0,0,0,.1);--track:rgba(0,0,0,.08);--stage:transparent;--glass:rgba(250,250,250,.9);
-  background:radial-gradient(60vw 60vh at 78% 25%,#fff,transparent 70%),repeating-linear-gradient(135deg,rgba(0,0,0,.025) 0 2px,transparent 2px 7px),#ECECEC !important;color:var(--fg);
+  background:#F6F6F6 !important;color:var(--fg);
 }
 html.noir body.day .c,html.noir body.day .card,html.noir body.day .panel,html.noir body.day .tile,html.noir body.day .sheet,html.noir body.day .dock{
-  background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.45)) !important;
-  box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(0,0,0,.06),0 2vh 4vh rgba(0,0,0,.10) !important;
+  background:#FFFFFF !important;
+  box-shadow:0 0 0 1px rgba(0,0,0,.05),0 1.2vh 3.6vh rgba(0,0,0,.08) !important;
 }
 html.noir body.day .chip{background:rgba(0,0,0,.05) !important;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08) !important}
 html.noir body.day .chip.on,html.noir body.day .seg button.on,html.noir body.day .tabs button.on,html.noir body.day .opt.on{background:#0A0A0A !important;color:#fff !important}
-html.noir body.day::after{opacity:.08}
+html.noir body.day::after{opacity:0}

@@ -40,24 +40,21 @@ body.day #carBox{box-shadow:inset 0 0 0 1px #E3E8EE}
 
 /* ---- Noir: deep black with grain, frosted glass, white light. Day = the same in white. ---- */
 :root{--a:#FFFFFF;--as:rgba(255,255,255,.12);--bg:#050505;--fg:#F5F5F5;--card:rgba(255,255,255,.055);--muted:rgba(255,255,255,.52);--track:rgba(255,255,255,.10);--stage:rgba(255,255,255,.03);--sep:rgba(255,255,255,.08);--edge:rgba(255,255,255,.14);--glow:rgba(255,255,255,.10)}
-body.day{--a:#0A0A0A;--as:rgba(0,0,0,.08);--bg:#ECECEC;--fg:#0A0A0A;--card:rgba(255,255,255,.55);--muted:rgba(0,0,0,.5);--track:rgba(0,0,0,.08);--stage:rgba(255,255,255,.35);--sep:rgba(0,0,0,.08);--edge:rgba(255,255,255,.9);--glow:rgba(0,0,0,.06)}
+body.day{--a:#0A0A0A;--as:rgba(0,0,0,.06);--bg:#F6F6F6;--fg:#0A0A0A;--card:#FFFFFF;--muted:rgba(0,0,0,.48);--track:rgba(0,0,0,.07);--stage:transparent;--sep:rgba(0,0,0,.07);--edge:#FFFFFF;--glow:rgba(0,0,0,.07)}
 html{background:var(--bg)}
 body{background:
   radial-gradient(60vw 60vh at 78% 30%,rgba(255,255,255,.075),transparent 70%),
   radial-gradient(50vw 50vh at 12% 95%,rgba(255,255,255,.05),transparent 70%),
   repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 7px),
   var(--bg) !important}
-body.day{background:
-  radial-gradient(60vw 60vh at 78% 30%,rgba(255,255,255,.9),transparent 70%),
-  radial-gradient(50vw 50vh at 12% 95%,rgba(0,0,0,.05),transparent 70%),
-  repeating-linear-gradient(135deg,rgba(0,0,0,.025) 0 2px,transparent 2px 7px),
-  var(--bg) !important}
+body.day{background:radial-gradient(60vw 60vh at 78% 30%,#FFFFFF,transparent 70%),#F6F6F6 !important}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.16;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E")}
 .c,.dock,#carBox{background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 45%,rgba(255,255,255,.035)) ,var(--card) !important;
   -webkit-backdrop-filter:blur(18px) saturate(120%);backdrop-filter:blur(18px) saturate(120%);
   box-shadow:inset 0 1px 0 var(--edge),inset 0 0 0 1px rgba(255,255,255,.06),0 2vh 5vh rgba(0,0,0,.45) !important}
-body.day .c,body.day .dock,body.day #carBox{background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.45)) !important;box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(0,0,0,.06),0 2vh 4vh rgba(0,0,0,.10) !important}
+body.day .c,body.day .dock,body.day #carBox{background:#FFFFFF !important;box-shadow:0 0 0 1px rgba(0,0,0,.05),0 1.2vh 3.6vh rgba(0,0,0,.08) !important}
+body.day::after{opacity:.05}
 #carBox::before{content:'';position:absolute;left:10%;right:10%;bottom:8%;height:18%;border-radius:50%;background:radial-gradient(closest-side,var(--glow),transparent);pointer-events:none}
 .seg button.on{background:var(--fg) !important;color:var(--bg) !important}
 #start .arc{filter:drop-shadow(0 0 1vh rgba(255,255,255,.55))}
@@ -66,7 +63,8 @@ body.day .c,body.day .dock,body.day #carBox{background:linear-gradient(160deg,rg
 body.day #start .cap{background:radial-gradient(circle at 50% 22%,#fff,rgba(255,255,255,.6) 62%) !important}
 .db i{background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.04)) !important;color:#fff !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 1px rgba(255,255,255,.08)}
 .db i svg{stroke:#fff !important;color:#fff}
-body.day .db i{background:linear-gradient(160deg,#1a1a1a,#000) !important}
+body.day .db i{background:#FFFFFF !important;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 .8vh 2vh rgba(0,0,0,.08) !important}
+body.day .db i svg{stroke:#0A0A0A !important;color:#0A0A0A}
 .db span{display:none}
 #clock{font-family:'Inter',sans-serif !important;font-weight:200 !important;letter-spacing:-.2vh !important}
 #temp,#pct{font-family:'Inter',sans-serif !important;font-weight:300 !important}
