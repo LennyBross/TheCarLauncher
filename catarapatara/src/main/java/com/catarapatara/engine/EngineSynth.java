@@ -180,7 +180,10 @@ public final class EngineSynth {
     private final float[] mLp = new float[2], tLp = new float[2], cutLp = new float[2], cutLp2 = new float[2], radPrev = new float[2], env = new float[2];
     private final Biquad[] blockM = {new Biquad(), new Biquad(), new Biquad()};
     private final Biquad plen = new Biquad(), inRun = new Biquad(), inNoise = new Biquad(), rasp = new Biquad(), rasp2 = new Biquad(),
-            bovRes = new Biquad(), cabin = new Biquad();
+            bovRes = new Biquad(), cabin = new Biquad(), cabin2 = new Biquad(), turboN = new Biquad(), starterN = new Biquad(), popRasp = new Biquad();
+    // one filter per signal: a biquad fed two different signals in the same sample turns into a
+    // broadband hiss generator (that was the "ssss" under every profile)
+    private final Biquad[] raspS = {new Biquad(), new Biquad()}, rasp2S = {new Biquad(), new Biquad()};
     private int banks;
     private int[][] members;
     private float dcX, dcY;
@@ -240,9 +243,11 @@ public final class EngineSynth {
         inNoise.bandpass(sr, 1400, .8f);
         rasp.bandpass(sr, 1900 + exhaust * 500, .7f);
         rasp2.bandpass(sr, 4200, 1.1f);
+        for (int b = 0; b < 2; b++) { raspS[b].bandpass(sr, 1500 + exhaust * 350, 1.1f); rasp2S[b].bandpass(sr, 3000, 1.6f); }
+        turboN.bandpass(sr, 1400, .8f); starterN.bandpass(sr, 1400, .8f); popRasp.bandpass(sr, 1900 + exhaust * 500, .7f);
         bovRes.bandpass(sr, 2600, 1.4f);
         knockM[0].bandpass(sr, 1650, 6f); knockM[1].bandpass(sr, 2950, 8f); knockM[2].bandpass(sr, 4300, 5f);
-        cabin.lowpass(sr, 4500, .7f);
+        cabin.lowpass(sr, 3600, .7f); cabin2.lowpass(sr, 3600, .7f);   // 24 dB/oct: nothing fizzy above
     }
 
     private int len(float metres) { return Math.max(2, Math.round(metres / C * sr)); }
@@ -372,15 +377,17 @@ public final class EngineSynth {
                 radPrev[s] = tp;
                 env[s] += (Math.abs(tp) - env[s]) * .02f;
                 float nz = noise() * env[s];
-                rad += (rasp.run(nz) * .45f + rasp2.run(nz) * .2f * (.3f + camK)) * raspK * (.15f + ld) * (.5f + rn);
+                // rasp only when the engine is working: none at idle / light cruise, rising with load²
+                float work = ld * ld * (.35f + .65f * rn);
+                rad += (raspS[s].run(nz) * .32f + rasp2S[s].run(nz) * .08f * (.3f + camK)) * raspK * work;
                 y += rad;
             }
             y *= exG * (sides == 2 ? .8f : 1f) * 12f;
 
             // ---- intake roar and induction hiss
             inEnv += (Math.abs(intakeSum) - inEnv) * .01f;
-            float hiss = inNoise.run(noise() * inEnv) * (.4f + rn);
-            float intake = (plen.run(intakeSum) * 1.2f + inRun.run(intakeSum) * .5f + hiss * .8f) * p.intake * (.5f + .5f * ld) * (1 + camK * .9f) * .4f;
+            float hiss = inNoise.run(noise() * inEnv) * ld * (.2f + rn);
+            float intake = (plen.run(intakeSum) * 1.2f + inRun.run(intakeSum) * .5f + hiss * .35f) * p.intake * (.5f + .5f * ld) * (1 + camK * .9f) * .4f;
             y += intake;
 
             // ---- engine block: combustion knock-on and valvetrain
@@ -389,9 +396,10 @@ public final class EngineSynth {
 
             // ---- diesel clatter: the sharp pressure rise of compression ignition rings the block
             if (knockEnv > .001f) {
-                float kn = noise() * knockEnv;
-                y += (knockM[0].run(kn) * 1.1f + knockM[1].run(kn) * .9f + knockM[2].run(kn) * .5f) * 1.1f;
-                knockEnv *= .965f;
+                // a short, mostly deterministic tick rings the block modes: clatter without the "tsss"
+                float kn = (.75f + .25f * noise()) * knockEnv;
+                y += (knockM[0].run(kn) * 1.0f + knockM[1].run(kn) * .45f + knockM[2].run(kn) * .1f) * .9f;
+                knockEnv *= .9f;
             }
 
             // ---- turbo: whistle with boost, blow-off and flutter when the throttle shuts on boost
@@ -401,7 +409,7 @@ public final class EngineSynth {
                 if (lastLoad > .5f && ld < .15f && boost > .35f && bovEnv < .1f) { bovEnv = boost; flutter = 1f; }
                 turboPh += (float) (2 * Math.PI * (2400 + 5600 * boost) / sr);
                 if (turboPh > 6.2832f) turboPh -= 6.2832f;
-                y += ((float) Math.sin(turboPh) * .04f + inNoise.run(noise()) * .02f) * boost * p.turbo;
+                y += ((float) Math.sin(turboPh) * .04f + turboN.run(noise()) * .008f) * boost * p.turbo;
                 if (bovEnv > .001f) {
                     float fl = flutter > .01f ? .55f + .45f * (float) Math.sin(theta * .09) : 1f;
                     y += bovRes.run(noise() * bovEnv) * .8f * p.turbo * fl;
@@ -420,14 +428,14 @@ public final class EngineSynth {
                 if (starterPh >= 1f) starterPh -= 1f;
                 float saw = starterPh * 2 - 1;
                 float strain = .6f + .4f * (float) Math.cos(Math.toRadians(theta * n / 2f));
-                y += inNoise.run(saw * .7f + noise() * .5f) * starter * strain * .5f + saw * starter * strain * .03f;
+                y += starterN.run(saw * .7f + noise() * .2f) * starter * strain * .5f + saw * starter * strain * .03f;
             }
             lastLoad = ld;
 
             // ---- level, gentle saturation, DC block
             y *= p.gain * (1.9f - 1.1f * Math.min(1f, rn));
-            y = cabin.run(y);
-            y = tanh(y * 1.3f) / 1.3f * 1.25f;
+            y = tanh(y * 1.3f) / 1.3f * 1.25f;   // saturate first, then filter: the clipping edges are smoothed too
+            y = cabin2.run(cabin.run(y));
             float dc = y - dcX + .993f * dcY;
             dcX = y; dcY = dc;
             out[off + i] = dc;
@@ -441,7 +449,7 @@ public final class EngineSynth {
             if (load < .08f && rpm > 2400 && rnd.nextFloat() < EX_POP[exhaust] * .09f * firingsPerSample) pop(.35f + rnd.nextFloat() * .55f);
             if (popEnv > .001f) {
                 float burst = noise() * popEnv * popLevel;
-                out[off + i] += (rasp.run(burst) * 3f + burst * .6f) * level;
+                out[off + i] += (popRasp.run(burst) * 3f + burst * .25f) * level;
                 popEnv *= .9975f;
             }
         }
