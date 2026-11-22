@@ -77,6 +77,8 @@ public class LoadingBanner extends FrameLayout {
     }
 
     public static void start(final String key, final String message) {
+        // Software updates work silently in the background: no banner over the screen for them.
+        if (key != null && key.startsWith("update")) return;
         MAIN.post(new Runnable() {
             @Override
             public void run() {

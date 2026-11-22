@@ -520,7 +520,8 @@ public final class Updater {
                 boolean instant = Prefs.bool(c, P_INSTANT, true) && stationary(c) && mayInstall(c);
                 for (Companion k : COMPANIONS) {
                     // Missing companions are installed too: CataraPatara and its CAN bridge are part of MYDS.
-                    if (companionNewer(c, k, true)) {
+                    // Only companions already on the unit are kept up to date: no install prompts out of nowhere.
+                    if (companionNewer(c, k, false)) {
                         if (instant && !busy) {
                             sAutoAt = 0; // look again right after this one, for the next update
                             installCompanion(c, k);

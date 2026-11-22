@@ -236,8 +236,9 @@ public class SettingsScreen extends Screen {
     // ---- Pages -------------------------------------------------------------------------------
 
     private void buildRoot() {
-        sub(s("Ekran", "Screen"), new Page() { public void build() { buildDisplay(); } });
-        LinearLayout amb = sub(s("Ambijentalno osvetljenje", "Ambient lighting"), new Page() { public void build() { buildAmbient(); } });
+        section(s("Izgled", "Look"));
+        sub(R.drawable.ui_ic_split, s("Ekran", "Screen"), s("Tema, dan / noć, svetlina", "Theme, day / night, brightness"), new Page() { public void build() { buildDisplay(); } });
+        LinearLayout amb = sub(R.drawable.ic_palette, s("Ambijentalno osvetljenje", "Ambient lighting"), s("Boja osvetljenja", "Lighting colour"), new Page() { public void build() { buildAmbient(); } });
         // The factory-style page with the interior picture and colour slider replaces the list.
         amb.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -245,32 +246,40 @@ public class SettingsScreen extends Screen {
                 act.show(LauncherActivity.AMBIENT, true);
             }
         });
-        sub(s("Vreme i datum", "Time and date"), new Page() { public void build() { buildTime(); } });
-        LinearLayout lang = sub(s("Jezik/Language", "Language/Jezik"), new Page() { public void build() { buildLanguage(); } });
-        addLeading(lang, flag());
-        sub(s("Jedinice", "Units"), new Page() { public void build() { buildUnits(); } });
-        sub(s("Navigacija", "Navigation"), new Page() { public void build() { buildNav(); } });
-        LinearLayout sound = sub(s("Zvuk", "Sound"), new Page() { public void build() { buildMedia(); } });
+        sub(R.drawable.ui_ic_clock, s("Vreme i datum", "Time and date"), null, new Page() { public void build() { buildTime(); } });
+        sub(R.drawable.ui_ic_globe, s("Jezik/Language", "Language/Jezik"), null, new Page() { public void build() { buildLanguage(); } });
+        sub(R.drawable.ui_ic_speedo, s("Jedinice", "Units"), s("km, °C, l/100 km", "km, °C, l/100 km"), new Page() { public void build() { buildUnits(); } });
+
+        section(s("Zvuk i mediji", "Sound and media"));
+        LinearLayout sound = sub(R.drawable.ui_ic_eq, s("Zvuk", "Sound"), s("Jačina, ekvilajzer", "Volume, equaliser"), new Page() { public void build() { buildMedia(); } });
         sound.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 act.show(LauncherActivity.SOUND, true);
             }
         });
-        sub(s("Mediji", "Media"), new Page() { public void build() { buildMedia(); } });
-        sub("Radio", new Page() { public void build() { buildRadio(); } });
-        sub("Bluetooth audio", new Page() { public void build() { buildBluetooth(); } });
-        sub("App-Connect", new Page() { public void build() { buildAppConnect(); } });
-        sub(s("Telefon i radio", "Phone and radio"), new Page() { public void build() { buildPhoneRadio(); } });
-        sub(s("Vozilo", "Vehicle"), new Page() { public void build() { buildVehicle(); } });
-        sub(s("Povezivanje pri pokretanju", "Start-up connections"), new Page() { public void build() { buildStartup(); } });
-        sub("Wi-Fi", new Page() { public void build() { buildWifi(); } });
-        sub(s("Hotspot", "Hotspot"), new Page() { public void build() { buildHotspot(); } });
-        sub(s("Android sistem", "Android system"), new Page() { public void build() { buildAndroid(); } });
-        sub(s("Informacije o sistemu", "System information"), new Page() { public void build() { buildAbout(); } });
-        action(s("Ažuriranje softvera", "Software update"), Updater.isNewer(act, Updater.lastFound())
-                ? s("dostupna ", "available: ") + Updater.lastFound().versionName : null, new Runnable() {
-            public void run() { act.show(LauncherActivity.SOFTWARE, true); }
+        sub(R.drawable.ui_ic_note, s("Mediji", "Media"), null, new Page() { public void build() { buildMedia(); } });
+        sub(R.drawable.ui_ic_radio, "Radio", null, new Page() { public void build() { buildRadio(); } });
+        sub(R.drawable.ui_ic_bt, "Bluetooth audio", null, new Page() { public void build() { buildBluetooth(); } });
+        sub(R.drawable.ui_ic_phone, s("Telefon i radio", "Phone and radio"), null, new Page() { public void build() { buildPhoneRadio(); } });
+
+        section(s("Vozilo i veze", "Car and connections"));
+        sub(R.drawable.ui_ic_nav, s("Navigacija", "Navigation"), null, new Page() { public void build() { buildNav(); } });
+        sub(R.drawable.ui_ic_car_s, s("Vozilo", "Vehicle"), s("OBD, CAN, motor", "OBD, CAN, engine"), new Page() { public void build() { buildVehicle(); } });
+        sub(R.drawable.ui_ic_appconnect_s, "App-Connect", s("Android Auto, CarPlay", "Android Auto, CarPlay"), new Page() { public void build() { buildAppConnect(); } });
+        sub(R.drawable.ic_tune, s("Povezivanje pri pokretanju", "Start-up connections"), null, new Page() { public void build() { buildStartup(); } });
+        sub(R.drawable.ui_ic_wlan, "Wi-Fi", null, new Page() { public void build() { buildWifi(); } });
+        sub(R.drawable.ic_wifi, s("Hotspot", "Hotspot"), null, new Page() { public void build() { buildHotspot(); } });
+
+        section(s("Sistem", "System"));
+        sub(R.drawable.ui_ic_apps, s("Android sistem", "Android system"), null, new Page() { public void build() { buildAndroid(); } });
+        sub(R.drawable.ui_ic_info, s("Informacije o sistemu", "System information"), null, new Page() { public void build() { buildAbout(); } });
+        final boolean upd = Updater.isNewer(act, Updater.lastFound());
+        LinearLayout u = bar(R.drawable.ui_ic_refresh, s("Ažuriranje softvera", "Software update"),
+                upd ? s("Nova verzija", "New version") + " " + Updater.lastFound().versionName : s("Najnovija verzija", "Up to date"), null, true);
+        u.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { act.show(LauncherActivity.SOFTWARE, true); }
         });
     }
 
@@ -1943,13 +1952,41 @@ public class SettingsScreen extends Screen {
 
     // ---- Bar builders ------------------------------------------------------------------------
 
-    private LinearLayout bar(String text, String value) {
+    private LinearLayout bar(String text, String value) { return bar(0, text, null, value, false); }
+
+    /** Section caption above a group of rows on the main list. */
+    private void section(String text) {
+        TextView t = Mib.text(act, text.toUpperCase(java.util.Locale.forLanguageTag("tr")), 19, Mib.semibold(act), 0xFF8A8B93);
+        t.setLetterSpacing(.12f);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.leftMargin = Mib.px(act, 34);
+        lp.topMargin = Mib.px(act, content.getChildCount() == 0 ? 4 : 22);
+        lp.bottomMargin = Mib.px(act, 10);
+        content.addView(t, lp);
+    }
+
+    /** One list row: optional icon, title with an optional line under it, value, chevron. */
+    private LinearLayout bar(int icon, String text, String subtitle, String value, boolean chevron) {
         LinearLayout row = new LinearLayout(act);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setBackground(Mib.settingsBar(act));
-        row.setPadding(Mib.px(act, 26), 0, Mib.px(act, 22), 0);
-        TextView t = Mib.text(act, text, 30, Mib.regular(act), Mib.BAR_TEXT);
-        row.addView(t, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.setPadding(Mib.px(act, 24), 0, Mib.px(act, 18), 0);
+        if (icon != 0) {
+            FrameLayout ib = new FrameLayout(act);
+            GradientDrawable ibg = new GradientDrawable();
+            ibg.setColor(0xFF22232A); ibg.setCornerRadius(Mib.px(act, 12));
+            ib.setBackground(ibg);
+            ib.addView(Mib.icon(act, icon, Mib.BLUE), new FrameLayout.LayoutParams(Mib.px(act, 32), Mib.px(act, 32), Gravity.CENTER));
+            LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(Mib.px(act, 52), Mib.px(act, 52));
+            il.rightMargin = Mib.px(act, 20);
+            row.addView(ib, il);
+        }
+        LinearLayout col = new LinearLayout(act);
+        col.setOrientation(LinearLayout.VERTICAL);
+        TextView t = Mib.text(act, text, 28, Mib.regular(act), Mib.BAR_TEXT);
+        col.addView(t);
+        if (subtitle != null) col.addView(Mib.text(act, subtitle, 19, Mib.regular(act), Mib.BAR_VALUE));
+        row.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         if (value != null) {
             TextView v = Mib.text(act, value, 24, Mib.regular(act), Mib.BAR_VALUE);
             v.setGravity(Gravity.RIGHT);
@@ -1959,7 +1996,12 @@ public class SettingsScreen extends Screen {
             v.setMaxWidth(Mib.px(act, 380));
             row.addView(v, vl);
         }
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Mib.px(act, 78));
+        if (chevron) {
+            LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(Mib.px(act, 30), Mib.px(act, 30));
+            cl.leftMargin = Mib.px(act, 12);
+            row.addView(Mib.icon(act, R.drawable.ic_chevron_right, 0xFF6C6D75), cl);
+        }
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Mib.px(act, subtitle != null ? 92 : 78));
         lp.leftMargin = Mib.px(act, 26);
         lp.rightMargin = Mib.px(act, 58);
         lp.bottomMargin = Mib.px(act, 8);
@@ -1967,9 +2009,11 @@ public class SettingsScreen extends Screen {
         return row;
     }
 
-    private LinearLayout sub(String text, final Page p) {
+    private LinearLayout sub(String text, final Page p) { return sub(0, text, null, p); }
+
+    private LinearLayout sub(int icon, String text, String subtitle, final Page p) {
         final String t = text;
-        LinearLayout row = bar(text, null);
+        LinearLayout row = bar(icon, text, subtitle, null, true);
         row.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -2047,7 +2091,7 @@ public class SettingsScreen extends Screen {
 
     /** Factory checkbox glyph, drawn dark on the light bars. */
     private View checkbox(LinearLayout row, boolean on) {
-        ImageView box = Mib.icon(act, R.drawable.ui_ic_check_off, 0xFF1C1C22);
+        ImageView box = Mib.icon(act, R.drawable.ui_ic_check_off, Mib.BAR_TEXT);
         row.addView(box, new LinearLayout.LayoutParams(Mib.px(act, 46), Mib.px(act, 46)));
         setChecked(box, on);
         return box;

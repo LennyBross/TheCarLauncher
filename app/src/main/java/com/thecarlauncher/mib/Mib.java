@@ -93,8 +93,8 @@ public final class Mib {
     public static final int BG_BOTTOM = 0xFF131318;
     public static final int TILE_TOP = 0xFF4C4D59;
     public static final int TILE_BOTTOM = 0xFF2A2B34;
-    public static final int BAR_TEXT = 0xFF1C1C22;
-    public static final int BAR_VALUE = 0xFF4A4B55;
+    public static final int BAR_TEXT = 0xFFF2F2F4;
+    public static final int BAR_VALUE = 0xFF9A9BA3;
 
     private static Typeface sRegular, sSemibold, sBold;
     private static boolean sStock;
@@ -306,12 +306,16 @@ public final class Mib {
 
     /** Light settings bar (Podešavanje sistema list rows). */
     public static Drawable settingsBar(Context c) {
-        float r = px(c, 3);
-        GradientDrawable n = grad(0xFFE9E9EC, 0xFFC5C6CC);
+        // dark, calm rows: a quiet card on black, the ambient colour only while pressed
+        float r = px(c, 14);
+        GradientDrawable n = new GradientDrawable();
+        n.setColor(0xFF15161A);
         n.setCornerRadius(r);
-        n.setStroke(Math.max(1, px(c, 1)), 0xFFF4F4F6);
-        GradientDrawable p = grad(shade(BLUE, 1.1f, 0xFF), shade(BLUE, 0.7f, 0xFF));
+        n.setStroke(Math.max(1, px(c, 1)), 0xFF25262C);
+        GradientDrawable p = new GradientDrawable();
+        p.setColor(shade(BLUE, 0.35f, 0xFF));
         p.setCornerRadius(r);
+        p.setStroke(Math.max(1, px(c, 1.5f)), BLUE);
         StateListDrawable s = new StateListDrawable();
         s.addState(new int[]{android.R.attr.state_pressed}, p);
         s.addState(new int[]{}, n);
