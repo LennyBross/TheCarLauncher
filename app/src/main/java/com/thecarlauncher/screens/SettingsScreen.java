@@ -236,7 +236,7 @@ public class SettingsScreen extends Screen {
     // ---- Pages -------------------------------------------------------------------------------
 
     private void buildRoot() {
-        section(s("Izgled", "Look"));
+        group(s("Izgled", "Look"));
         sub(R.drawable.ui_ic_split, s("Ekran", "Screen"), s("Tema, dan / noć, svetlina", "Theme, day / night, brightness"), new Page() { public void build() { buildDisplay(); } });
         LinearLayout amb = sub(R.drawable.ic_palette, s("Ambijentalno osvetljenje", "Ambient lighting"), s("Boja osvetljenja", "Lighting colour"), new Page() { public void build() { buildAmbient(); } });
         // The factory-style page with the interior picture and colour slider replaces the list.
@@ -250,7 +250,7 @@ public class SettingsScreen extends Screen {
         sub(R.drawable.ui_ic_globe, s("Jezik/Language", "Language/Jezik"), null, new Page() { public void build() { buildLanguage(); } });
         sub(R.drawable.ui_ic_speedo, s("Jedinice", "Units"), s("km, °C, l/100 km", "km, °C, l/100 km"), new Page() { public void build() { buildUnits(); } });
 
-        section(s("Zvuk i mediji", "Sound and media"));
+        group(s("Zvuk i mediji", "Sound and media"));
         LinearLayout sound = sub(R.drawable.ui_ic_eq, s("Zvuk", "Sound"), s("Jačina, ekvilajzer", "Volume, equaliser"), new Page() { public void build() { buildMedia(); } });
         sound.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -263,7 +263,7 @@ public class SettingsScreen extends Screen {
         sub(R.drawable.ui_ic_bt, "Bluetooth audio", null, new Page() { public void build() { buildBluetooth(); } });
         sub(R.drawable.ui_ic_phone, s("Telefon i radio", "Phone and radio"), null, new Page() { public void build() { buildPhoneRadio(); } });
 
-        section(s("Vozilo i veze", "Car and connections"));
+        group(s("Vozilo i veze", "Car and connections"));
         sub(R.drawable.ui_ic_nav, s("Navigacija", "Navigation"), null, new Page() { public void build() { buildNav(); } });
         sub(R.drawable.ui_ic_car_s, s("Vozilo", "Vehicle"), s("OBD, CAN, motor", "OBD, CAN, engine"), new Page() { public void build() { buildVehicle(); } });
         sub(R.drawable.ui_ic_appconnect_s, "App-Connect", s("Android Auto, CarPlay", "Android Auto, CarPlay"), new Page() { public void build() { buildAppConnect(); } });
@@ -271,7 +271,7 @@ public class SettingsScreen extends Screen {
         sub(R.drawable.ui_ic_wlan, "Wi-Fi", null, new Page() { public void build() { buildWifi(); } });
         sub(R.drawable.ic_wifi, s("Hotspot", "Hotspot"), null, new Page() { public void build() { buildHotspot(); } });
 
-        section(s("Sistem", "System"));
+        group(s("Sistem", "System"));
         sub(R.drawable.ui_ic_apps, s("Android sistem", "Android system"), null, new Page() { public void build() { buildAndroid(); } });
         sub(R.drawable.ui_ic_info, s("Informacije o sistemu", "System information"), null, new Page() { public void build() { buildAbout(); } });
         final boolean upd = Updater.isNewer(act, Updater.lastFound());
@@ -1955,7 +1955,7 @@ public class SettingsScreen extends Screen {
     private LinearLayout bar(String text, String value) { return bar(0, text, null, value, false); }
 
     /** Section caption above a group of rows on the main list. */
-    private void section(String text) {
+    private void group(String text) {
         TextView t = Mib.text(act, text.toUpperCase(java.util.Locale.forLanguageTag("tr")), 19, Mib.semibold(act), 0xFF8A8B93);
         t.setLetterSpacing(.12f);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
