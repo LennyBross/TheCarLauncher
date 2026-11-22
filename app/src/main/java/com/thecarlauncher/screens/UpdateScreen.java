@@ -354,7 +354,7 @@ public class UpdateScreen extends Screen implements Updater.Progress {
     }
 
     private void button(String text, final Runnable r) {
-        TextView b = Mib.text(act, text, 30, Mib.regular(act), Mib.BAR_TEXT);
+        TextView b = Mib.text(act, text, 30, Mib.regular(act), Mib.barText(act));
         b.setGravity(Gravity.CENTER_VERTICAL);
         b.setPadding(Mib.px(act, 26), 0, Mib.px(act, 22), 0);
         b.setBackground(Mib.settingsBar(act));
@@ -372,7 +372,7 @@ public class UpdateScreen extends Screen implements Updater.Progress {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setBackground(Mib.settingsBar(act));
         row.setPadding(Mib.px(act, 26), 0, Mib.px(act, 22), 0);
-        row.addView(Mib.text(act, text, 30, Mib.regular(act), Mib.BAR_TEXT), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(Mib.text(act, text, 30, Mib.regular(act), Mib.barText(act)), new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         final ImageView box = Mib.icon(act, Prefs.bool(act, key, def) ? R.drawable.ui_ic_check_on : R.drawable.ui_ic_check_off, 0xFF1C1C22);
         row.addView(box, new LinearLayout.LayoutParams(Mib.px(act, 46), Mib.px(act, 46)));
         row.setOnClickListener(new View.OnClickListener() {

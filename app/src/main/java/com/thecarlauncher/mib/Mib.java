@@ -95,6 +95,9 @@ public final class Mib {
     public static final int TILE_BOTTOM = 0xFF2A2B34;
     public static final int BAR_TEXT = 0xFFF2F2F4;
     public static final int BAR_VALUE = 0xFF9A9BA3;
+    /** Text on settings bars: dark on the white day bars, light on the dark night bars. */
+    public static int barText(Context c) { return com.thecarlauncher.util.DayNight.isNight(c) ? BAR_TEXT : 0xFF16171B; }
+    public static int barValue(Context c) { return com.thecarlauncher.util.DayNight.isNight(c) ? BAR_VALUE : 0xFF5E6068; }
 
     private static Typeface sRegular, sSemibold, sBold;
     private static boolean sStock;
@@ -308,10 +311,11 @@ public final class Mib {
     public static Drawable settingsBar(Context c) {
         // dark, calm rows: a quiet card on black, the ambient colour only while pressed
         float r = px(c, 14);
+        boolean day = !com.thecarlauncher.util.DayNight.isNight(c);
         GradientDrawable n = new GradientDrawable();
-        n.setColor(0xFF15161A);
+        n.setColor(day ? 0xFFFFFFFF : 0xFF15161A);
         n.setCornerRadius(r);
-        n.setStroke(Math.max(1, px(c, 1)), 0xFF25262C);
+        n.setStroke(Math.max(1, px(c, 1)), day ? 0xFFDCDAD5 : 0xFF25262C);
         GradientDrawable p = new GradientDrawable();
         p.setColor(shade(BLUE, 0.35f, 0xFF));
         p.setCornerRadius(r);

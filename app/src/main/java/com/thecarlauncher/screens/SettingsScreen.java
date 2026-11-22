@@ -66,18 +66,24 @@ public class SettingsScreen extends Screen {
 
     private String s(String sr, String en) { return Mib.t(act, sr, en); }
 
+    // ---- day / night: the settings follow the same Gündüz / Gece as the home screen ----
+    private boolean day() { return !com.thecarlauncher.util.DayNight.isNight(act); }
+    private int fg() { return day() ? 0xFF16171B : Mib.BAR_TEXT; }
+    private int sub() { return day() ? 0xFF5E6068 : Mib.BAR_VALUE; }
+
     @Override
     protected View create(ViewGroup parent) {
         LinearLayout r = new LinearLayout(act);
         r.setOrientation(LinearLayout.VERTICAL);
         r.setPadding(0, Mib.px(act, 14), 0, 0);
+        if (day()) r.setBackgroundColor(0xFFEDEBE7);
 
         LinearLayout head = new LinearLayout(act);
         head.setGravity(Gravity.CENTER_VERTICAL);
         head.setPadding(Mib.px(act, 30), 0, Mib.px(act, 30), Mib.px(act, 10));
         FrameLayout backBox = new FrameLayout(act);
         backBox.setBackground(Mib.box(act));
-        backBox.addView(Mib.icon(act, R.drawable.ui_ic_back, Mib.WHITE),
+        backBox.addView(Mib.icon(act, R.drawable.ui_ic_back, fg()),
                 new FrameLayout.LayoutParams(Mib.px(act, 30), Mib.px(act, 30), Gravity.CENTER));
         backBox.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -89,7 +95,7 @@ public class SettingsScreen extends Screen {
         LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(Mib.px(act, 62), Mib.px(act, 54));
         bl.rightMargin = Mib.px(act, 18);
         head.addView(backBox, bl);
-        title = Mib.text(act, "", 40, Mib.semibold(act), Mib.WHITE);
+        title = Mib.text(act, "", 40, Mib.semibold(act), fg());
         head.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         r.addView(head);
 
@@ -433,11 +439,11 @@ public class SettingsScreen extends Screen {
         row.setClickable(false);
         for (int i = 0; i < 2; i++) {
             final Runnable r = i == 0 ? minus : plus;
-            TextView k = Mib.text(act, i == 0 ? "−" : "+", 34, Mib.semibold(act), Mib.BAR_TEXT);
+            TextView k = Mib.text(act, i == 0 ? "−" : "+", 34, Mib.semibold(act), fg());
             k.setGravity(Gravity.CENTER);
             GradientDrawable g = new GradientDrawable();
             g.setColor(0x00000000);
-            g.setStroke(Math.max(1, Mib.px(act, 1.5f)), Mib.BAR_VALUE);
+            g.setStroke(Math.max(1, Mib.px(act, 1.5f)), sub());
             g.setCornerRadius(Mib.px(act, 4));
             k.setBackground(g);
             Mib.pressText(k);
@@ -560,15 +566,15 @@ public class SettingsScreen extends Screen {
                 p.setStrokeWidth(h * 0.1f);
                 p.setStrokeCap(android.graphics.Paint.Cap.ROUND);
                 for (int i = 1; i <= 3; i++) {
-                    p.setColor(level >= i + 1 ? Mib.BAR_TEXT : 0x55303038);
+                    p.setColor(level >= i + 1 ? fg() : 0x55303038);
                     float r = h * 0.28f * i;
                     c.drawArc(new android.graphics.RectF(cx - r, by - r, cx + r, by + r), 225, 90, false, p);
                 }
                 p.setStyle(android.graphics.Paint.Style.FILL);
-                p.setColor(level >= 1 ? Mib.BAR_TEXT : 0x55303038);
+                p.setColor(level >= 1 ? fg() : 0x55303038);
                 c.drawCircle(cx, by - h * 0.04f, h * 0.08f, p);
                 if (secure) {
-                    p.setColor(Mib.BAR_VALUE);
+                    p.setColor(sub());
                     c.drawRect(w * 0.78f, h * 0.55f, w * 0.98f, h * 0.85f, p);
                 }
             }
@@ -1188,7 +1194,7 @@ public class SettingsScreen extends Screen {
                                 action(s("Pošalji na telefon", "Send to phone"), s("kratak link, 7 dana", "short link, 7 days"), new Runnable() {
                                     public void run() { uploadReport(text); }
                                 });
-                                TextView t = Mib.text(act, reportText, 18, Mib.regular(act), Mib.WHITE);
+                                TextView t = Mib.text(act, reportText, 18, Mib.regular(act), fg());
                                 t.setSingleLine(false);
                                 t.setMaxLines(Integer.MAX_VALUE);
                                 t.setEllipsize(null);
@@ -1220,7 +1226,7 @@ public class SettingsScreen extends Screen {
                         ? s("Otvorite ovaj link na telefonu ili ga pošaljite:", "Open this link on your phone, download the file and send it in the chat:")
                         : s("Slanje nije uspelo. Proverite internet (hotspot telefona) i pokušajte ponovo.",
                         "Upload failed. Check the internet (phone hotspot) and try again.");
-                TextView a = Mib.text(act, msg, 22, Mib.regular(act), Mib.WHITE);
+                TextView a = Mib.text(act, msg, 22, Mib.regular(act), fg());
                 a.setSingleLine(false);
                 a.setMaxLines(4);
                 a.setPadding(Mib.px(act, 30), Mib.px(act, 20), Mib.px(act, 30), Mib.px(act, 10));
@@ -1849,8 +1855,8 @@ public class SettingsScreen extends Screen {
         LinearLayout box = new LinearLayout(act);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(Mib.px(act, 30), Mib.px(act, 10), Mib.px(act, 60), Mib.px(act, 10));
-        box.addView(Mib.text(act, label, 28, Mib.regular(act), Mib.WHITE));
-        TextView v = Mib.text(act, value == null || value.isEmpty() ? "—" : value, 28, Mib.regular(act), Mib.WHITE);
+        box.addView(Mib.text(act, label, 28, Mib.regular(act), fg()));
+        TextView v = Mib.text(act, value == null || value.isEmpty() ? "—" : value, 28, Mib.regular(act), fg());
         v.setSingleLine(false);
         v.setMaxLines(3);
         v.setGravity(Gravity.RIGHT);
@@ -1974,7 +1980,7 @@ public class SettingsScreen extends Screen {
         if (icon != 0) {
             FrameLayout ib = new FrameLayout(act);
             GradientDrawable ibg = new GradientDrawable();
-            ibg.setColor(0xFF22232A); ibg.setCornerRadius(Mib.px(act, 12));
+            ibg.setColor(day() ? 0xFFECEEF1 : 0xFF22232A); ibg.setCornerRadius(Mib.px(act, 12));
             ib.setBackground(ibg);
             ib.addView(Mib.icon(act, icon, Mib.BLUE), new FrameLayout.LayoutParams(Mib.px(act, 32), Mib.px(act, 32), Gravity.CENTER));
             LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(Mib.px(act, 52), Mib.px(act, 52));
@@ -1983,12 +1989,12 @@ public class SettingsScreen extends Screen {
         }
         LinearLayout col = new LinearLayout(act);
         col.setOrientation(LinearLayout.VERTICAL);
-        TextView t = Mib.text(act, text, 28, Mib.regular(act), Mib.BAR_TEXT);
+        TextView t = Mib.text(act, text, 28, Mib.regular(act), fg());
         col.addView(t);
-        if (subtitle != null) col.addView(Mib.text(act, subtitle, 19, Mib.regular(act), Mib.BAR_VALUE));
+        if (subtitle != null) col.addView(Mib.text(act, subtitle, 19, Mib.regular(act), sub()));
         row.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         if (value != null) {
-            TextView v = Mib.text(act, value, 24, Mib.regular(act), Mib.BAR_VALUE);
+            TextView v = Mib.text(act, value, 24, Mib.regular(act), sub());
             v.setGravity(Gravity.RIGHT);
             LinearLayout.LayoutParams vl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -1999,7 +2005,7 @@ public class SettingsScreen extends Screen {
         if (chevron) {
             LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(Mib.px(act, 30), Mib.px(act, 30));
             cl.leftMargin = Mib.px(act, 12);
-            row.addView(Mib.icon(act, R.drawable.ic_chevron_right, 0xFF6C6D75), cl);
+            row.addView(Mib.icon(act, R.drawable.ic_chevron_right, day() ? 0xFF9A9CA3 : 0xFF6C6D75), cl);
         }
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Mib.px(act, subtitle != null ? 92 : 78));
         lp.leftMargin = Mib.px(act, 26);
@@ -2091,7 +2097,7 @@ public class SettingsScreen extends Screen {
 
     /** Factory checkbox glyph, drawn dark on the light bars. */
     private View checkbox(LinearLayout row, boolean on) {
-        ImageView box = Mib.icon(act, R.drawable.ui_ic_check_off, Mib.BAR_TEXT);
+        ImageView box = Mib.icon(act, R.drawable.ui_ic_check_off, fg());
         row.addView(box, new LinearLayout.LayoutParams(Mib.px(act, 46), Mib.px(act, 46)));
         setChecked(box, on);
         return box;

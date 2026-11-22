@@ -2,7 +2,17 @@
 window.car = {
   s: {},
   fns: [],
-  update: function (st) { this.s = st || {}; for (var i = 0; i < this.fns.length; i++) this.fns[i](this.s); },
+  update: function (st) {
+    this.s = st || {};
+    for (var i = 0; i < this.fns.length; i++) this.fns[i](this.s);
+    // One day / night for every page: whatever the home screen chose (Gündüz / Gece / Oto) arrives
+    // here as s.night, and every page follows it the same way.
+    if (this.s.night !== undefined && document.body) {
+      var day = this.s.night === false;
+      document.body.classList.toggle('day', day);
+      document.documentElement.classList.toggle('isday', day);
+    }
+  },
   on: function (fn) { this.fns.push(fn); }
 };
 function call(name) {

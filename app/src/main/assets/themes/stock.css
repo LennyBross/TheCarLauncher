@@ -1,6 +1,6 @@
 /* Stock theme skin for every MYDS page (radio, vehicle, engine, driving…).
    Loaded automatically by common.js when the Stock theme is active. */
-html.stock body,html.stock body.day{
+html.stock body{
   --a:#E6D2AE;--as:rgba(230,210,174,.14);--hot:#D3242E;
   --bg:#050506;--fg:#F1EEE8;--text:#F1EEE8;--card:#111215;--inner:#17181C;--chip:#1A1B1F;
   --muted:#9C9890;--sub:#9C9890;--sep:#26272B;--track:#232428;--stage:#050506;--glass:rgba(14,15,18,.94);
@@ -16,3 +16,17 @@ html.stock .seg button.on,html.stock .tabs button.on{color:#111 !important;backg
 html.stock .key{border-color:rgba(230,210,174,.25)}
 html.stock #stage{background:transparent !important}
 html.stock input[type=range]::-webkit-slider-thumb{background:#f3e6cc}
+
+/* Gündüz: the same light look as the Stock home screen in day mode */
+html.stock body.day{
+  --a:#8A6A3A;--as:rgba(138,106,58,.14);--hot:#C0202A;
+  --bg:#E9E6E0;--fg:#1C1C1F;--text:#1C1C1F;--ink:#1C1C1F;--card:#FFFFFF;--inner:#F3F1ED;--chip:#ECE9E3;
+  --muted:#6B665D;--mut:#6B665D;--sub:#6B665D;--sep:#D6D2CA;--line:#D6D2CA;--track:#D9D5CE;--stage:transparent;--glass:rgba(248,246,242,.96);
+  background:radial-gradient(70% 60% at 50% 42%,#f7f5f1 0%,#e4e1db 55%,#cfcbc4 100%) !important;color:var(--fg);
+}
+html.stock body.day .c,html.stock body.day .card,html.stock body.day .panel{
+  background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(238,235,230,.97)) !important;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),inset 0 1px 0 #fff,0 1.4vh 3.4vh rgba(0,0,0,.14) !important;
+}
+html.stock body.day .key{border-color:rgba(138,106,58,.35)}
+html.stock body.day input[type=range]::-webkit-slider-thumb{background:#8A6A3A}

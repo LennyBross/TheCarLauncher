@@ -270,16 +270,16 @@ public class BtDevicesScreen extends Screen implements BtDevices.Listener {
         row.setPadding(Mib.px(act, 18), 0, Mib.px(act, 22), 0);
         ImageView lead = new ImageView(act);
         lead.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        if (checked) lead.setImageDrawable(new Tick(Mib.BAR_TEXT));
-        else if (icon != 0) lead.setImageDrawable(Mib.icon(act, icon, Mib.BAR_TEXT).getDrawable());
+        if (checked) lead.setImageDrawable(new Tick(Mib.barText(act)));
+        else if (icon != 0) lead.setImageDrawable(Mib.icon(act, icon, Mib.barText(act)).getDrawable());
         LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(Mib.px(act, 40), Mib.px(act, 40));
         il.rightMargin = Mib.px(act, 16);
         row.addView(lead, il);
-        TextView t = Mib.text(act, text, 30, checked ? Mib.semibold(act) : Mib.regular(act), Mib.BAR_TEXT);
+        TextView t = Mib.text(act, text, 30, checked ? Mib.semibold(act) : Mib.regular(act), Mib.barText(act));
         t.setSingleLine(true);
         row.addView(t, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         if (value != null) {
-            TextView v = Mib.text(act, value, 24, Mib.regular(act), Mib.BAR_VALUE);
+            TextView v = Mib.text(act, value, 24, Mib.regular(act), Mib.barValue(act));
             LinearLayout.LayoutParams vl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             vl.leftMargin = Mib.px(act, 16);
