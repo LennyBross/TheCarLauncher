@@ -499,6 +499,17 @@ public class ThemeScreen extends Screen {
         if (fuelObd.has("avg100")) { o.put("avg100", fuelObd.optDouble("avg100")); o.put("avgL100", fuelObd.optDouble("avg100")); }
         if (fuelObd.has("avg1000")) o.put("avg1000", fuelObd.optDouble("avg1000"));
         if (fuelObd.has("tripAvg")) { o.put("tripAvg", fuelObd.optDouble("tripAvg")); o.put("tripL", fuelObd.optDouble("tripL")); o.put("tripKm", fuelObd.optDouble("tripKm")); }
+        // No tank sensor on OBD (PSA diesels rarely answer PID 2F): the car's own range from CAN is
+        // computed by the BSI from the real fuel gauge, so range × average consumption = litres left.
+        boolean tankSensor = ob != null && ob.json().optJSONObject("v") != null && ob.json().optJSONObject("v").has("fuelPct");
+        if (o.has("canRange") && !tankSensor) {
+            double use = fuelObd.has("avg100") ? fuelObd.optDouble("avg100") : avg;
+            if (use > 2 && use < 20) {
+                double l = o.optDouble("canRange") * use / 100.0;
+                o.put("fuelLeft", Math.min(CarData.get(act).tank(), l));
+                o.put("fuelSrc", "can");
+            }
+        }
         if (!o.has("canRange") && o.has("fuelLeft")) {
             double use = fuelObd.has("avg100") ? fuelObd.optDouble("avg100") : avg;
             if (use > 2) o.put("range", o.optDouble("fuelLeft") / use * 100.0);
