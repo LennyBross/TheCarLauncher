@@ -91,7 +91,9 @@ public final class Tone {
     public synchronized boolean focus(String f) {
         focus = "driver".equals(f) ? "driver" : "all";
         Prefs.of(app).edit().putString("hifi_focus", focus).apply();
-        return applyFocus();
+        boolean ok = applyFocus();
+        amp();
+        return ok || bridge();
     }
     private boolean applyFocus() {
         try {
@@ -113,10 +115,10 @@ public final class Tone {
     // ---- speed-dependent volume (Hıza bağlı ses): +1 step per N km/h above 40 ----
     private int svc;          // 0 off, 1..3
     private int added = 0, lastSet = -1;
-    public synchronized void svc(int level) { svc = Math.max(0, Math.min(3, level)); Prefs.of(app).edit().putInt("hifi_svc", svc).apply(); }
+    public synchronized void svc(int level) { svc = Math.max(0, Math.min(3, level)); Prefs.of(app).edit().putInt("hifi_svc", svc).apply(); amp(); }
     public synchronized void speed(float kmh) {
         android.media.AudioManager am = (android.media.AudioManager) app.getSystemService(Context.AUDIO_SERVICE);
-        if (am == null) return;
+        if (am == null || bridge()) return;   // with the CAN bridge the amplifier does speed volume itself
         int cur = am.getStreamVolume(android.media.AudioManager.STREAM_MUSIC);
         if (lastSet >= 0 && cur != lastSet) added = 0;          // the driver turned the knob: that is the new base
         int want = 0;
@@ -163,6 +165,15 @@ public final class Tone {
         } catch (Exception ignored) {
         }
         if (!flat()) attachGlobal();
+        try {
+            android.content.BroadcastReceiver ack = new android.content.BroadcastReceiver() {
+                @Override public void onReceive(Context c, android.content.Intent i) {
+                    ampSt = i.getBooleanExtra("ok", false) ? "Denon amfisi ayarlandı" : "Amfi: " + i.getStringExtra("st");
+                }
+            };
+            android.content.IntentFilter af = new android.content.IntentFilter("com.thecarlauncher.AMP_ACK");
+            if (android.os.Build.VERSION.SDK_INT >= 33) c.registerReceiver(ack, af, Context.RECEIVER_EXPORTED); else c.registerReceiver(ack, af);
+        } catch (Exception ignored) { }
     }
 
     private android.content.BroadcastReceiver sessions() {
@@ -180,6 +191,8 @@ public final class Tone {
     /** Called at launcher start: with a tone set, the whole output (Bluetooth music too) gets it. */
     public void init() {
         if (!flat()) attachGlobal();
+        // the amplifier forgets nothing, but a new canbox session may: send our state once after start
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() { public void run() { if (!flat() || !"all".equals(focus)) amp(); } }, 8000);
     }
 
     public int bass() { return bass; }
@@ -203,6 +216,7 @@ public final class Tone {
             attachGlobal();
         }
         apply();
+        amp();
     }
 
     public void reset() { set(0, 0, 0); }
@@ -233,7 +247,7 @@ public final class Tone {
                     .put("boost", boost).put("width", width).put("loud", loud)
                     .put("bass", bass).put("mid", mid).put("treble", treble)
                     .put("hasBoost", !bbs.isEmpty()).put("hasWidth", !vzs.isEmpty()).put("hasLoud", !lds.isEmpty())
-                    .put("sessions", sessions.size()).put("focus", focus).put("hasFocus", hasFocus()).put("svc", svc);
+                    .put("sessions", sessions.size()).put("focus", focus).put("hasFocus", hasFocus()).put("svc", svc).put("amp", bridge()).put("ampSt", ampSt);
         } catch (Exception ignored) { }
         return o;
     }
@@ -261,6 +275,43 @@ public final class Tone {
         save();
     }
 
+    // ---- the real Denon amplifier: its own DSP, set over CAN through the CataraPatara CAN bridge ----
+    public static final String PKG_BRIDGE = "com.catarapatara.canbridge";
+    private volatile String ampSt = "";
+    private static int amp7(double v) { return (int) Math.max(0, Math.min(14, Math.round(7 + v))); }
+    private static int ambience(String id) {   // the amp's own sound ambiences
+        switch (id) {
+            case "classic": case "acoustic": return 1;
+            case "jazz": case "blues": return 2;
+            case "rock": case "pop": case "live": case "turkish": return 3;
+            case "vocal": return 4;
+            case "electronic": case "hiphop": return 5;
+            default: return 0;
+        }
+    }
+    public boolean bridge() {
+        try { app.getPackageManager().getPackageInfo(PKG_BRIDGE, 0); return true; } catch (Exception e) { return false; }
+    }
+    /** Sends the whole sound state to the amplifier (Raise 0xC5, same frame as the factory EQ page). */
+    public synchronized void amp() {
+        if (!bridge()) { ampSt = "CAN köprüsü yüklü değil"; return; }
+        double lo = (curve[0] + curve[1] + curve[2]) / 3.0, mi = (curve[4] + curve[5] + curve[6]) / 3.0, hi = (curve[7] + curve[8] + curve[9]) / 3.0;
+        int bassA = amp7((bass + lo * .75) * 7 / 9.0), trebA = amp7((treble + hi * .75) * 7 / 9.0), midA = amp7((mid + mi * .75) * 7 / 9.0);
+        boolean loudOn = loud > 0 || "night".equals(preset);
+        int sub = Math.max(0, Math.min(6, 3 + Math.round(boost / 34f)));
+        byte[] p = {11, (byte) 0xC5, 7, 7, (byte) bassA, (byte) trebA, (byte) midA,
+                (byte) ((loudOn ? 0x80 : 0) | (svc > 0 ? 0x40 : 0) | ambience(preset)),
+                (byte) (("driver".equals(focus) ? 16 : 0) + sub), 1};
+        try {
+            android.content.Intent i = new android.content.Intent("com.catarapatara.canbridge.AMP")
+                    .setClassName(PKG_BRIDGE, PKG_BRIDGE + ".BridgeService").putExtra("data", p);
+            if (android.os.Build.VERSION.SDK_INT >= 26) app.startForegroundService(i); else app.startService(i);
+            ampSt = "Denon amfisine gönderildi";
+        } catch (Throwable t) {
+            ampSt = "Amfiye gönderilemedi: " + t.getClass().getSimpleName();
+        }
+    }
+
     private void save() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 10; i++) { if (i > 0) sb.append(','); sb.append(curve[i]); }
@@ -273,6 +324,7 @@ public final class Tone {
             attachGlobal();
         }
         apply();
+        amp();
     }
 
     /** dB of the 10-point curve at frequency f (log-linear between points). */

@@ -153,6 +153,7 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;strok
           <span class="cap" style="color:var(--a)">Ses sahnesi</span>
           <h1>Denon Hi-Fi</h1>
           <p>9 hoparlör · 10 × 50 W dijital amfi · bagajda subwoofer</p>
+          <p id="ampS" style="color:var(--a);font-size:1.8vh;letter-spacing:.12em;text-transform:uppercase"></p>
           <div id="car"></div>
           <div class="leg"><span><i style="width:1.4vh;height:1.4vh;border-radius:50%;border:1.5px solid var(--fg)"></i>Tweeter / woofer</span><span><i style="width:2.2vh;height:2.2vh;border-radius:50%;border:1.5px solid var(--fg)"></i>Subwoofer</span></div>
         </div>
@@ -261,7 +262,7 @@ function drawSound() {
     d.innerHTML = '<span class="kr"><span><i class="ptr" style="transform:rotate(' + (v * 13.5) + 'deg)"></i><i class="hub"></i></span></span>'
       + '<div class="kv"><span class="cap">' + k[1] + '</span><b>' + fmt(v) + '</b><div class="pm"><button data-d="-1">−</button><button data-d="1">+</button></div></div>';
     [].forEach.call(d.querySelectorAll('[data-d]'), function (b) {
-      b.onclick = function () { H[k[0]] = Math.max(-9, Math.min(9, v + +b.dataset.d)); call('hifiBT', H.bass || 0, H.treble || 0); drawSound(); };
+      b.onclick = function () { H[k[0]] = Math.max(-9, Math.min(9, v + +b.dataset.d)); call('hifiBT', H.bass || 0, H.treble || 0); setTimeout(hifiLoad, 600); drawSound(); };
     });
     $('knobs').appendChild(d);
   });
@@ -274,6 +275,7 @@ function drawSound() {
   [].forEach.call($('svc').children, function (b) { b.classList.toggle('on', +b.dataset.v === (H.svc || 0)); });
   var pn = (MOODS.filter(function (m) { return m[0] === H.preset; })[0] || ['', 'Kendi ayarın'])[1];
   $('cSesS').textContent = H.preset === 'flat' || H.preset === 'denon' ? 'Denon Hi-Fi · 9 hoparlör' : 'Denon Hi-Fi · ' + pn;
+  $('ampS').textContent = H.amp ? ('Amfi bağlı · ' + (H.ampSt || 'CAN üzerinden')) : 'Amfi için CataraPatara CAN gerekli';
   $('helloSub').textContent = H.focus === 'driver' ? 'Ses sahnesi sürücüye göre ayarlı' : 'Ses tüm yolculara eşit dağılıyor';
 }
 [].forEach.call(document.querySelectorAll('.pre2'), function (b) {

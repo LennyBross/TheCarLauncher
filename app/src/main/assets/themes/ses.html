@@ -75,6 +75,8 @@ function status() {
   if (!H.ok) t = 'Bu ünite Android ses efektlerine izin vermiyor — "Ünitenin EQ\'su" ile fabrika ayarına git.';
   else t = 'Ünite EQ: ' + (H.devBands || []).length + ' bant · ' + (H.devBands || []).map(function (f) { return f >= 1000 ? Math.round(f / 1000) + 'k' : f; }).join(' / ') + ' Hz'
     + (H.hasBoost ? ' · bas' : '') + (H.hasWidth ? ' · sahne' : '') + (H.hasLoud ? ' · dolgunluk' : '');
+  if (H.amp) t = 'Denon amfisi (CAN): bas, tiz, orta, ambiyans, loudness, subwoofer · ' + (H.ampSt || '') + ' — ' + t;
+  else t = 'Denon amfisi için CataraPatara CAN kurulu olmalı · ' + t;
   $('st').textContent = t;
 }
 function presets() {

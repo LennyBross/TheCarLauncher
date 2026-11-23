@@ -19,7 +19,10 @@ import java.util.TreeMap;
  * Follows the raw CAN-box frames that the factory CAN app (com.hcn.autocan) writes to the system
  * log ("CanService: rev: FD…"), decodes the Raise PSA trip computer and passes the values on as
  * broadcasts: com.catarapatara.DATA (for the engine sound) and com.thecarlauncher.CAN (for MYDS).
- * Read-only: the serial port stays with the factory app.
+ * The serial port stays with the factory app. One write exception: the Denon amplifier's sound
+ * settings (Raise command 0xC5: fader, balance, bass, treble, mid, loudness, speed volume, ambience,
+ * driver-centred stage, subwoofer), sent by MYDS's Hi-Fi page — the same frame the factory CAN app's
+ * EQ page sends. Nothing else is ever written.
  */
 public final class BridgeService extends Service {
     static volatile String status = "Başlatılıyor…";
@@ -33,6 +36,33 @@ public final class BridgeService extends Service {
     private Process proc;
     private final byte[] buf = new byte[512];
     private int n;
+
+    static volatile String ampStatus = "";
+
+    /** payload = {len, 0xC5, 8 data bytes}; framed as FD … sum&0xFF like the CAN box expects. */
+    private void amp(byte[] p) {
+        if (p == null || p.length != 10 || (p[0] & 0xFF) != 11 || (p[1] & 0xFF) != 0xC5) { ampStatus = "Amfi: geçersiz komut"; return; }
+        byte[] f = new byte[12];
+        f[0] = (byte) 0xFD;
+        int sum = 0;
+        for (int i = 0; i < 10; i++) { f[i + 1] = p[i]; sum += p[i]; }
+        f[11] = (byte) sum;
+        String[] ports = {"/dev/ttyMT2", "/dev/ttyMT1"};
+        for (String port : ports) {
+            java.io.File d = new java.io.File(port);
+            if (!d.exists()) continue;
+            try (java.io.FileOutputStream o = new java.io.FileOutputStream(d)) {
+                o.write(f);
+                o.flush();
+                ampStatus = "Amfi: gönderildi (" + port + ")";
+                sendBroadcast(new Intent("com.thecarlauncher.AMP_ACK").putExtra("ok", true).putExtra("st", ampStatus));
+                return;
+            } catch (Exception e) {
+                ampStatus = "Amfi: " + e.getMessage();
+            }
+        }
+        sendBroadcast(new Intent("com.thecarlauncher.AMP_ACK").putExtra("ok", false).putExtra("st", ampStatus));
+    }
 
     static void start(Context c) {
         Intent i = new Intent(c, BridgeService.class);
@@ -48,6 +78,7 @@ public final class BridgeService extends Service {
                     .setContentTitle("CataraPatara CAN").setContentText("Araç verisi okunuyor").build());
         }
         grantMediaAccess();
+        if (intent != null && "com.catarapatara.canbridge.AMP".equals(intent.getAction())) amp(intent.getByteArrayExtra("data"));
         if (!run) {
             run = true;
             new Thread(new Runnable() { public void run() { loop(); } }, "can-log").start();
