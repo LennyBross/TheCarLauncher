@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Denon</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* DENON: the "MYDS — DS4 Arayüz Konsepti" boards made live. Three views: 01 home, 02 Denon Hi-Fi
+   sound stage, 03 driver gauges. Near-black, thin Jost titles, Barlow Semi Condensed text,
+   brushed-metal rings. Accent: white or blue backlight (like the DS4's cluster). */
+:root{--bg:#07080A;--fg:#E9ECEF;--mut:#8A9099;--card:#0D0F12;--card2:#14171B;--line:rgba(255,255,255,.10);--line2:rgba(255,255,255,.16);--a:#F2F4F7;--on:#07080A;--metal:conic-gradient(from 210deg,#5B6068,#F4F5F7,#6E737B,#D9DCE0,#4A4E55,#F4F5F7,#5B6068)}
+body.blue{--a:#5AA9FF}
+body.day{--bg:#F3F4F6;--fg:#0B0C0E;--mut:#5F6670;--card:#FFFFFF;--card2:#F0F1F3;--line:rgba(0,0,0,.10);--line2:rgba(0,0,0,.16);--a:#0B0C0E;--on:#FFFFFF;--metal:conic-gradient(from 210deg,#9AA0A8,#FFFFFF,#AEB3BA,#E4E6E9,#8E939A,#FFFFFF,#9AA0A8)}
+body.day.blue{--a:#1F6FD1}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:'Barlow Semi Condensed',sans-serif;user-select:none}
+button{font-family:inherit;color:inherit;cursor:pointer}
+.J{font-family:'Jost',sans-serif}
+.cap{font-size:1.85vh;letter-spacing:.3em;text-transform:uppercase;color:var(--mut)}
+svg.ic{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#app{position:fixed;inset:0;display:flex}
+/* rail */
+#rail{width:11.7vh;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5vh 0 4.4vh}
+#back{width:6.7vh;height:6.7vh;border-radius:50%;border:1px solid var(--line2);background:none;display:flex;align-items:center;justify-content:center}
+#back svg{width:2.6vh;height:2.6vh}
+#letters{display:flex;flex-direction:column;align-items:center;gap:1.7vh;font-family:'Jost';font-weight:300;font-size:2.5vh}
+#num{display:flex;flex-direction:column;align-items:center;gap:1.4vh;font-family:'Jost';font-weight:300;font-size:1.8vh;color:var(--mut);letter-spacing:.1em}
+#num i{width:1px;height:7.8vh;background:var(--line2)}
+/* views */
+#views{flex:1;position:relative;overflow:hidden}
+.v{position:absolute;inset:0;padding:4.4vh 6.6vh 4vh 7.4vh;display:flex;flex-direction:column;transition:transform .45s cubic-bezier(.2,.7,.2,1),opacity .35s}
+.noanim .v{transition:none !important}
+.v.off{opacity:0;pointer-events:none;visibility:hidden;transition:transform .45s,opacity .35s,visibility 0s .35s}
+/* home */
+.topbar{display:flex;align-items:center;gap:4vh;font-size:1.9vh;letter-spacing:.24em;text-transform:uppercase;color:var(--mut)}
+.topbar .sp{flex:1}
+.topbar b{font-family:'Jost';font-weight:300;font-size:3.1vh;letter-spacing:.04em;color:var(--fg)}
+#hello{margin:1.6vh 0 0;font-family:'Jost';font-weight:200;font-size:7.6vh;letter-spacing:.08em;text-transform:uppercase;line-height:1.1}
+#helloSub{margin-top:.8vh;font-family:'Jost';font-weight:300;font-size:2.7vh;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:3.9vh;margin-top:6.4vh}
+.cd{display:flex;align-items:center;gap:3.1vh;padding:2.8vh 3.1vh;border-radius:1.9vh;border:1px solid var(--line);background:var(--card);text-align:left}
+.ring{width:12.5vh;height:12.5vh;flex-shrink:0;border-radius:50%;padding:.5vh;background:var(--metal)}
+.ring>span{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:var(--bg);font-family:'Jost';font-weight:300;font-size:4vh}
+.cd b{display:block;font-family:'Jost';font-weight:400;font-size:2.9vh;letter-spacing:.18em;text-transform:uppercase}
+.cd small{display:block;margin-top:.8vh;font-size:2vh;color:var(--mut)}
+.np{display:flex;align-items:center;gap:3.3vh;margin-top:3.9vh;padding:2.8vh 3vh;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+#art{width:7.8vh;height:7.8vh;border-radius:1.4vh;background:var(--card2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+#art img{width:100%;height:100%;object-fit:cover}#art svg{width:3.3vh;height:3.3vh;color:var(--mut)}
+.npT{flex:1;min-width:0}
+#srcL{font-size:1.7vh;letter-spacing:.3em;text-transform:uppercase;color:var(--mut)}
+#song{margin-top:.6vh;font-family:'Jost';font-size:3.1vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#prog{margin-top:1.2vh;height:.3vh;background:var(--line)}#prog i{display:block;height:100%;width:0;background:var(--fg)}
+.mb{width:6.7vh;height:6.7vh;border-radius:50%;border:1px solid var(--line2);background:none;display:flex;align-items:center;justify-content:center}
+.mb.big{width:7.8vh;height:7.8vh;border-color:var(--fg)}
+.mb svg{width:2.6vh;height:2.6vh}
+.chips{margin-top:auto;display:flex;align-items:center;gap:1.4vh}
+.chip{height:6.1vh;padding:0 2.6vh;border-radius:3.1vh;border:1px solid var(--line2);background:none;font-size:1.9vh;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.chip.on{border-color:var(--fg);color:var(--fg);font-weight:600}
+#dots{margin-left:auto;display:flex;gap:1.1vh}
+#dots i{width:1vh;height:1vh;border-radius:50%;background:var(--line2)}#dots i.on{background:var(--fg)}
+/* sound */
+.sw{display:flex;gap:6.1vh;flex:1;min-height:0}
+.stage{width:52.8vh;flex-shrink:0;display:flex;flex-direction:column}
+.stage h1{margin:1.1vh 0 0;font-family:'Jost';font-weight:200;font-size:5.6vh;letter-spacing:.1em;text-transform:uppercase}
+.stage p{margin:.8vh 0 0;font-size:2.1vh;letter-spacing:.08em;color:var(--mut)}
+#car{position:relative;width:32vh;height:55.6vh;margin:3vh auto 0}
+.leg{margin-top:auto;display:flex;gap:2.5vh;font-size:1.8vh;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.leg span{display:flex;align-items:center;gap:1.1vh}
+.right{flex:1;min-width:0;display:flex;flex-direction:column;gap:3.2vh;padding-top:.6vh}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1.7vh}
+.pre2{min-height:8.9vh;border-radius:1.7vh;border:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:.6vh;padding:0 2.6vh;text-align:left}
+.pre2 b{font-family:'Jost';font-weight:400;font-size:2.4vh;letter-spacing:.18em;text-transform:uppercase}
+.pre2 small{font-size:1.95vh;color:var(--mut)}
+.pre2.on{border-color:var(--a);background:var(--card2)}
+.knob{display:flex;align-items:center;gap:2.8vh;padding:2.5vh 2.8vh;border-radius:1.9vh;border:1px solid var(--line);background:var(--card)}
+.kr{width:15vh;height:15vh;flex-shrink:0;border-radius:50%;padding:.5vh;background:var(--metal);touch-action:none}
+.kr>span{display:block;width:100%;height:100%;border-radius:50%;background:var(--bg);position:relative}
+.kr .ptr{position:absolute;left:50%;top:50%;width:2px;height:5.6vh;margin-left:-1px;margin-top:-5.6vh;background:var(--a);transform-origin:50% 100%}
+.kr .hub{position:absolute;left:50%;top:50%;width:1.4vh;height:1.4vh;margin:-.7vh 0 0 -.7vh;border-radius:50%;background:#2A2E34}
+.kv{display:flex;flex-direction:column;gap:1.3vh;flex:1}
+.kv b{font-family:'Jost';font-weight:200;font-size:5.6vh;line-height:1}
+.pm{display:flex;gap:1.1vh}.pm button{width:6.7vh;height:6.1vh;border-radius:1.4vh;border:1px solid var(--line2);background:none;font-family:'Jost';font-size:3vh;font-weight:300}
+.moods{display:flex;flex-wrap:wrap;gap:1.1vh}
+.mood{min-height:5.6vh;padding:0 2.2vh;border-radius:2.8vh;border:1px solid var(--line2);background:none;color:var(--mut);font-size:1.85vh;font-weight:500;letter-spacing:.2em;text-transform:uppercase}
+.mood.on{border-color:var(--a);color:var(--fg)}
+.svc{display:flex;align-items:center;justify-content:space-between;gap:2.8vh;padding-top:2.5vh;border-top:1px solid var(--line)}
+.svc b{font-family:'Jost';font-weight:400;font-size:2.3vh;letter-spacing:.16em;text-transform:uppercase}
+.svc small{display:block;font-size:1.95vh;color:var(--mut);margin-top:.5vh}
+.seg{display:flex;border:1px solid var(--line2);border-radius:3.1vh;overflow:hidden}
+.seg button{min-width:8.3vh;min-height:6.1vh;border:0;background:none;font-size:1.95vh;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+.seg button.on{background:var(--a);color:var(--on)}
+.link{background:none;border:1px solid var(--line2);border-radius:3vh;height:5.6vh;padding:0 2.4vh;font-size:1.8vh;letter-spacing:.2em;text-transform:uppercase;color:var(--fg)}
+/* gauges */
+.gh{display:flex;align-items:flex-end;justify-content:space-between}
+.gh h1{margin:1.1vh 0 0;font-family:'Jost';font-weight:200;font-size:6.4vh;letter-spacing:.1em;text-transform:uppercase}
+.gw{flex:1;display:flex;align-items:center;justify-content:center;gap:5.6vh}
+.dial{position:relative;border-radius:50%;padding:.6vh;background:var(--metal)}
+.dial>div{width:100%;height:100%;border-radius:50%;background:var(--bg);position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dial svg{position:absolute;inset:0;width:100%;height:100%}
+#spd{font-family:'Jost';font-weight:200;font-size:17vh;line-height:.9}
+.unit{font-size:1.9vh;letter-spacing:.3em;color:var(--mut);margin-top:1.4vh}
+#gear{font-size:1.9vh;letter-spacing:.3em;color:var(--mut);margin-bottom:1vh}
+.side{width:100%;padding:0 6vh}
+.bar{display:flex;justify-content:space-between;font-size:1.7vh;letter-spacing:.2em;color:var(--mut);margin-top:2vh}
+.bar+div{height:.45vh;background:var(--line);margin-top:.8vh}.bar+div i{display:block;height:100%;background:var(--fg);width:0}
+#rng{font-family:'Jost';font-weight:300;font-size:4.7vh;margin-top:3vh;text-align:center}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:3vh;border-top:1px solid var(--line);padding-top:3vh}
+.stats span{display:block;font-size:1.7vh;letter-spacing:.24em;text-transform:uppercase;color:var(--mut)}
+.stats b{display:block;margin-top:1vh;font-family:'Jost';font-weight:300;font-size:3.6vh}
+</style>
+</head>
+<body class="noanim">
+<div id="app">
+  <div id="rail">
+    <button id="back" aria-label="Geri"><svg class="ic" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div id="letters"></div>
+    <div id="num"><i></i><span id="numT">01</span></div>
+  </div>
+  <div id="views">
+    <!-- 01 · Ana ekran -->
+    <section class="v" id="v0">
+      <div class="topbar"><span id="date"></span><span class="sp"></span><span id="btS"></span><span id="outS"></span><b id="clock">--:--</b></div>
+      <div class="cap" style="margin-top:5.2vh">DS 4 · SPORT CHIC</div>
+      <div id="hello">İyi günler.</div>
+      <div id="helloSub"></div>
+      <div class="cards">
+        <button class="cd" id="cSes"><span class="ring"><span>D</span></span><span><b>Ses</b><small id="cSesS">Denon Hi-Fi · 9 hoparlör</small></span></button>
+        <button class="cd" id="cAA"><span class="ring"><span>A</span></span><span><b>Android Auto</b><small id="cAAS">Telefonu bağla</small></span></button>
+        <button class="cd" id="cCar"><span class="ring"><span>V</span></span><span><b>Araç</b><small id="cCarS">Göstergeler · menzil</small></span></button>
+      </div>
+      <div class="np">
+        <div id="art"><svg class="ic" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div>
+        <div class="npT"><div id="srcL">Medya · Denon</div><div id="song">Çalan bir şey yok</div><div id="prog"><i></i></div></div>
+        <button class="mb" data-m="prev"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6L9 12l9 6V6zM6 6v12"/></svg></button>
+        <button class="mb big" data-m="play" id="playB"><svg class="ic" viewBox="0 0 24 24" id="playI"><path d="M8 5v14l11-7z"/></svg></button>
+        <button class="mb" data-m="next"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l9 6-9 6V6zM18 6v12"/></svg></button>
+      </div>
+      <div class="chips" id="chips">
+        <button class="chip" data-o="radio">Radyo</button>
+        <button class="chip" data-o="btMusic">Bluetooth</button>
+        <button class="chip" data-o="usb">USB</button>
+        <button class="chip" data-o="aa">Android Auto</button>
+        <button class="chip" data-o="apps">Uygulamalar</button>
+        <button class="chip" data-o="settings">Ayarlar</button>
+        <span id="dots"><i></i><i></i><i></i></span>
+      </div>
+    </section>
+    <!-- 02 · Denon Hi-Fi -->
+    <section class="v off" id="v1">
+      <div class="sw">
+        <div class="stage">
+          <span class="cap" style="color:var(--a)">Ses sahnesi</span>
+          <h1>Denon Hi-Fi</h1>
+          <p>9 hoparlör · 10 × 50 W dijital amfi · bagajda subwoofer</p>
+          <div id="car"></div>
+          <div class="leg"><span><i style="width:1.4vh;height:1.4vh;border-radius:50%;border:1.5px solid var(--fg)"></i>Tweeter / woofer</span><span><i style="width:2.2vh;height:2.2vh;border-radius:50%;border:1.5px solid var(--fg)"></i>Subwoofer</span></div>
+        </div>
+        <div class="right">
+          <div><div class="cap" style="margin-bottom:1.7vh">Ses dağılımı</div>
+            <div class="two"><button class="pre2" data-f="driver"><b>Sürücü</b><small>Sahne sürücü koltuğuna odaklı</small></button><button class="pre2" data-f="all"><b>Tüm yolcular</b><small>Ses kabine eşit dağılır</small></button></div></div>
+          <div class="two" id="knobs"></div>
+          <div><div style="display:flex;align-items:center;margin-bottom:1.7vh"><span class="cap" style="flex:1">Ambiyans</span><button class="link" id="detail">Detaylı ekolayzer</button></div>
+            <div class="moods" id="moods"></div></div>
+          <div class="svc"><div><b>Hıza bağlı ses</b><small>Hız arttıkça ses otomatik yükselir</small></div>
+            <div class="seg" id="svc"><button data-v="0">Kapalı</button><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button></div></div>
+        </div>
+      </div>
+    </section>
+    <!-- 03 · Göstergeler -->
+    <section class="v off" id="v2">
+      <div class="gh"><div><span class="cap">Sürücü odaklı</span><h1>Göstergeler</h1></div>
+        <div style="display:flex;align-items:center;gap:2.8vh"><span class="cap">Aydınlatma</span><div class="seg" id="bl"><button data-b="white">Beyaz</button><button data-b="blue">● Mavi</button></div></div></div>
+      <div class="gw">
+        <div class="dial" style="width:34.7vh;height:34.7vh"><div><svg id="tach" viewBox="0 0 200 200"></svg></div></div>
+        <div class="dial" style="width:47.2vh;height:47.2vh"><div><svg id="ticks" viewBox="0 0 200 200"></svg><div id="gear">N</div><div id="spd">0</div><div class="unit">KM/S</div></div></div>
+        <div class="dial" style="width:34.7vh;height:34.7vh"><div><div class="side">
+          <div class="bar"><span>YAKIT</span><span id="fuelP">—</span></div><div><i id="fuelB"></i></div>
+          <div class="bar"><span>SU ISISI</span><span id="coolP">—</span></div><div><i id="coolB"></i></div>
+          <div id="rng">— km</div><div class="unit" style="text-align:center">MENZİL</div></div></div></div>
+      </div>
+      <div class="stats">
+        <div><span>Ort. 100 km</span><b id="sA">—</b></div>
+        <div><span>Ort. 1000 km</span><b id="sB">—</b></div>
+        <div><span>Yol</span><b id="sC">—</b></div>
+        <div><span>Dış ısı</span><b id="sD">—</b></div>
+      </div>
+    </section>
+  </div>
+</div>
+<script src="common.js"></script>
+<script>
+var VIEWS = [['MYDS', '01'], ['DENON', '02'], ['DRIVE', '03']], cur = 0;
+var THEME = window.Car && Car.theme ? Car.theme() : 10;
+var startHash = (location.hash || '').replace('#', '');
+function show(i, anim) {
+  cur = i;
+  for (var k = 0; k < 3; k++) {
+    var v = $('v' + k); v.classList.toggle('off', k !== i);
+    v.style.transform = k === i ? 'none' : 'translateX(' + (k < i ? -8 : 8) + 'vh)';
+  }
+  $('letters').innerHTML = VIEWS[i][0].split('').map(function (c, n) { return '<span' + (i === 0 && n === 2 ? ' style="margin-top:2.6vh"' : '') + '>' + c + '</span>'; }).join('');
+  $('numT').textContent = VIEWS[i][1];
+  $('back').style.visibility = i === 0 ? 'hidden' : 'visible';
+  [].forEach.call($('dots').children, function (d, n) { d.classList.toggle('on', n === i); });
+  if (i === 1) hifiLoad();
+}
+$('back').onclick = function () {
+  // opened from another theme's EQ key: back goes home there
+  if (THEME !== 10 && startHash) { call('open', 'themehome'); return; }
+  show(0);
+};
+$('cSes').onclick = function () { show(1); };
+$('cCar').onclick = function () { show(2); };
+$('cAA').onclick = function () { call('open', 'aa'); };
+[].forEach.call(document.querySelectorAll('.chip'), function (b) { b.onclick = function () { call('open', b.dataset.o); }; });
+[].forEach.call(document.querySelectorAll('[data-m]'), function (b) { b.onclick = function () { call('media', b.dataset.m); }; });
+// swipe between the three boards
+(function () {
+  var x0 = null;
+  $('views').addEventListener('pointerdown', function (e) { x0 = e.clientX; });
+  $('views').addEventListener('pointerup', function (e) {
+    if (x0 === null) return; var d = e.clientX - x0; x0 = null;
+    if (Math.abs(d) > innerWidth * .12) show(Math.max(0, Math.min(2, cur + (d < 0 ? 1 : -1))));
+  });
+})();
+// backlight
+function setBl(b) { document.body.classList.toggle('blue', b === 'blue'); store('denon.bl', b); [].forEach.call($('bl').children, function (x) { x.classList.toggle('on', x.dataset.b === b); }); drawGauges(); }
+[].forEach.call($('bl').children, function (x) { x.onclick = function () { setBl(x.dataset.b); }; });
+
+// ---------------------------------------------------------------- Denon sound stage
+var SPK = [[44, 96, 14], [186, 96, 14], [8, 196, 22], [222, 196, 22], [8, 286, 18], [222, 286, 18], [18, 258, 10], [212, 258, 10], [182, 362, 34]];
+(function car() {
+  var c = $('car'), u = function (v) { return (v / 400 * 55.6) + 'vh'; };
+  var h = '<div style="position:absolute;inset:0;border:1.5px solid var(--line2);border-color:rgba(127,127,127,.45);border-radius:' + u(96) + ' ' + u(96) + ' ' + u(54) + ' ' + u(54) + '"></div>'
+    + '<div style="position:absolute;left:' + u(30) + ';top:' + u(88) + ';width:' + u(170) + ';height:' + u(56) + ';border:1px solid var(--line2);border-radius:' + u(30) + ' ' + u(30) + ' ' + u(6) + ' ' + u(6) + '"></div>'
+    + '<div style="position:absolute;left:' + u(30) + ';top:' + u(170) + ';width:' + u(74) + ';height:' + u(70) + ';border-radius:' + u(10) + ';background:var(--card2)"></div>'
+    + '<div style="position:absolute;left:' + u(126) + ';top:' + u(170) + ';width:' + u(74) + ';height:' + u(70) + ';border-radius:' + u(10) + ';background:var(--card2)"></div>'
+    + '<div style="position:absolute;left:' + u(30) + ';top:' + u(266) + ';width:' + u(170) + ';height:' + u(62) + ';border-radius:' + u(10) + ';background:var(--card2)"></div>'
+    + '<div id="foc" style="position:absolute;transition:left .5s,top .5s"><i style="position:absolute;width:' + u(120) + ';height:' + u(120) + ';margin:-' + u(60) + ' 0 0 -' + u(60) + ';border-radius:50%;border:1px solid var(--a);opacity:.55"></i><i style="position:absolute;width:' + u(64) + ';height:' + u(64) + ';margin:-' + u(32) + ' 0 0 -' + u(32) + ';border-radius:50%;border:1px solid var(--a);opacity:.8"></i><i style="position:absolute;width:' + u(10) + ';height:' + u(10) + ';margin:-' + u(5) + ' 0 0 -' + u(5) + ';border-radius:50%;background:var(--a)"></i></div>';
+  SPK.forEach(function (s) { h += '<span class="spk" style="position:absolute;left:' + u(s[0]) + ';top:' + u(s[1]) + ';width:' + u(s[2]) + ';height:' + u(s[2]) + ';margin:-' + u(s[2] / 2) + ' 0 0 -' + u(s[2] / 2) + ';border-radius:50%;border:1.5px solid var(--fg);background:var(--bg)"></span>'; });
+  c.innerHTML = h;
+  window.carU = u;
+})();
+var H = null;
+var MOODS = [['flat', 'Yok'], ['denon', 'Denon Hi-Fi'], ['live', 'Canlı performans'], ['electronic', 'Elektronik'], ['rock', 'Rock'], ['blues', 'Blues'], ['jazz', 'Caz'],
+  ['pop', 'Pop'], ['hiphop', 'Hip-hop'], ['classic', 'Klasik'], ['acoustic', 'Akustik'], ['turkish', 'Türk müziği'], ['vocal', 'Vokal'], ['night', 'Gece'], ['road', 'Otoyol']];
+function hifiLoad() { try { H = JSON.parse(call('hifi') || 'null'); } catch (e) { H = null; } if (!H) H = { preset: 'flat', bass: 0, treble: 0, focus: 'all', svc: 0 }; drawSound(); }
+function fmt(v) { return v > 0 ? '+' + v : String(v); }
+function drawSound() {
+  [].forEach.call(document.querySelectorAll('.pre2'), function (b) { b.classList.toggle('on', b.dataset.f === (H.focus || 'all')); });
+  var f = H.focus === 'driver' ? [67, 205] : [115, 240];
+  $('foc').style.left = carU(f[0]); $('foc').style.top = carU(f[1]);
+  [].forEach.call(document.querySelectorAll('.spk'), function (s, n) {
+    var near = H.focus !== 'driver' || n === 0 || n === 2 || n === 8;
+    s.style.opacity = near ? 1 : .45;
+  });
+  $('knobs').innerHTML = '';
+  [['bass', 'Bas'], ['treble', 'Tiz']].forEach(function (k) {
+    var v = H[k[0]] || 0, d = document.createElement('div'); d.className = 'knob';
+    d.innerHTML = '<span class="kr"><span><i class="ptr" style="transform:rotate(' + (v * 13.5) + 'deg)"></i><i class="hub"></i></span></span>'
+      + '<div class="kv"><span class="cap">' + k[1] + '</span><b>' + fmt(v) + '</b><div class="pm"><button data-d="-1">−</button><button data-d="1">+</button></div></div>';
+    [].forEach.call(d.querySelectorAll('[data-d]'), function (b) {
+      b.onclick = function () { H[k[0]] = Math.max(-9, Math.min(9, v + +b.dataset.d)); call('hifiBT', H.bass || 0, H.treble || 0); drawSound(); };
+    });
+    $('knobs').appendChild(d);
+  });
+  $('moods').innerHTML = '';
+  MOODS.forEach(function (m) {
+    var b = document.createElement('button'); b.className = 'mood' + (H.preset === m[0] ? ' on' : ''); b.textContent = m[1];
+    b.onclick = function () { call('hifiPreset', m[0]); hifiLoad(); };
+    $('moods').appendChild(b);
+  });
+  [].forEach.call($('svc').children, function (b) { b.classList.toggle('on', +b.dataset.v === (H.svc || 0)); });
+  var pn = (MOODS.filter(function (m) { return m[0] === H.preset; })[0] || ['', 'Kendi ayarın'])[1];
+  $('cSesS').textContent = H.preset === 'flat' || H.preset === 'denon' ? 'Denon Hi-Fi · 9 hoparlör' : 'Denon Hi-Fi · ' + pn;
+  $('helloSub').textContent = H.focus === 'driver' ? 'Ses sahnesi sürücüye göre ayarlı' : 'Ses tüm yolculara eşit dağılıyor';
+}
+[].forEach.call(document.querySelectorAll('.pre2'), function (b) {
+  b.onclick = function () { H.focus = b.dataset.f; var ok = call('hifiFocus', b.dataset.f); drawSound(); if (ok === false) $('helloSub').textContent = 'Bu ünite ses dağılımını değiştirmeye izin vermiyor'; };
+});
+[].forEach.call($('svc').children, function (b) { b.onclick = function () { H.svc = +b.dataset.v; call('hifiSvc', H.svc); drawSound(); }; });
+$('detail').onclick = function () { call('open', 'eqDetail'); };
+
+// ---------------------------------------------------------------- gauges
+var RPMMAX = 5000;
+function drawGauges() {
+  var a0 = 225, sweep = 270, t = '', T = '';
+  for (var i = 0; i <= 50; i++) {
+    var a = (a0 - sweep * i / 50) * Math.PI / 180, big = i % 5 === 0, r1 = 90, r2 = big ? 80 : 85;
+    t += '<line x1="' + (100 + Math.cos(a) * r1) + '" y1="' + (100 - Math.sin(a) * r1) + '" x2="' + (100 + Math.cos(a) * r2) + '" y2="' + (100 - Math.sin(a) * r2) + '" stroke="var(--fg)" stroke-opacity="' + (big ? .9 : .45) + '" stroke-width="' + (big ? 1.6 : .9) + '"/>';
+  }
+  $('ticks').innerHTML = t + '<path id="spArc" fill="none" stroke="var(--a)" stroke-width="2.4" stroke-linecap="round"/>';
+  for (var k = 0; k <= 5; k++) {
+    var b = (a0 - sweep * k / 5) * Math.PI / 180, red = k >= 4.5;
+    T += '<line x1="' + (100 + Math.cos(b) * 86) + '" y1="' + (100 - Math.sin(b) * 86) + '" x2="' + (100 + Math.cos(b) * 74) + '" y2="' + (100 - Math.sin(b) * 74) + '" stroke="' + (k >= 4 ? '#F08A3C' : 'var(--fg)') + '" stroke-width="2.4"/>';
+    T += '<text x="' + (100 + Math.cos(b) * 60) + '" y="' + (100 - Math.sin(b) * 60 + 6) + '" text-anchor="middle" font-family="Jost" font-weight="300" font-size="17" fill="' + (k >= 4 ? '#F08A3C' : 'var(--fg)') + '">' + k + '</text>';
+    if (k < 5) for (var m = 1; m < 4; m++) { var c = (a0 - sweep * (k + m / 4) / 5) * Math.PI / 180; T += '<line x1="' + (100 + Math.cos(c) * 86) + '" y1="' + (100 - Math.sin(c) * 86) + '" x2="' + (100 + Math.cos(c) * 81) + '" y2="' + (100 - Math.sin(c) * 81) + '" stroke="var(--fg)" stroke-opacity=".45"/>'; }
+  }
+  T += '<text x="100" y="150" text-anchor="middle" font-family="Barlow Semi Condensed" font-size="10" letter-spacing="2" fill="var(--mut)">× 1000 d/dk</text>';
+  T += '<line id="needle" x1="100" y1="100" x2="100" y2="34" stroke="var(--a)" stroke-width="2.4" stroke-linecap="round"/><circle cx="100" cy="100" r="7" fill="#2A2E34" stroke="var(--line2)"/>';
+  $('tach').innerHTML = T;
+}
+drawGauges();
+function arc(frac) {
+  var a0 = 225, sweep = 270 * Math.max(0, Math.min(1, frac)), r = 95;
+  if (sweep < .5) return '';
+  var s = a0 * Math.PI / 180, e = (a0 - sweep) * Math.PI / 180;
+  return 'M' + (100 + Math.cos(s) * r) + ' ' + (100 - Math.sin(s) * r) + ' A' + r + ' ' + r + ' 0 ' + (sweep > 180 ? 1 : 0) + ' 1 ' + (100 + Math.cos(e) * r) + ' ' + (100 - Math.sin(e) * r);
+}
+
+// ---------------------------------------------------------------- data
+var MON = ['OCAK', 'ŞUBAT', 'MART', 'NİSAN', 'MAYIS', 'HAZİRAN', 'TEMMUZ', 'AĞUSTOS', 'EYLÜL', 'EKİM', 'KASIM', 'ARALIK'], DAY = ['PAZ', 'PZT', 'SAL', 'ÇAR', 'PER', 'CUM', 'CMT'];
+var artId = -1, rpmShown = 0;
+car.on(function (s) {
+  var d = new Date(), hr = d.getHours();
+  $('date').textContent = DAY[d.getDay()] + ' · ' + d.getDate() + ' ' + MON[d.getMonth()];
+  $('clock').textContent = s.time || ('0' + hr).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  $('hello').textContent = hr < 5 ? 'İyi geceler.' : hr < 11 ? 'Günaydın.' : hr < 17 ? 'İyi günler.' : hr < 22 ? 'İyi akşamlar.' : 'İyi geceler.';
+  $('btS').innerHTML = s.bt ? '<svg class="ic" style="width:1.8vh;height:1.8vh;vertical-align:-.2vh" viewBox="0 0 24 24"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg> Bağlı' : '';
+  var out = s.outdoor !== undefined ? s.outdoor : s.outdoorObd !== undefined ? s.outdoorObd : s.temp;
+  $('outS').textContent = out !== undefined ? 'Dış ' + Math.round(out) + '°C' : '';
+  // media
+  $('song').textContent = s.title ? s.title + (s.artist ? ' — ' + s.artist : '') : 'Çalan bir şey yok';
+  $('srcL').textContent = (s.src ? s.src : 'Medya') + ' · Denon';
+  $('prog').firstChild.style.width = s.dur > 0 ? Math.min(100, (s.pos || 0) / s.dur * 100) + '%' : '0';
+  $('playI').innerHTML = s.playing ? '<path d="M8 5v14M16 5v14"/>' : '<path d="M8 5v14l11-7z"/>';
+  if (s.artId !== artId) { artId = s.artId; var u = artId ? call('mediaArt') : ''; $('art').innerHTML = u ? '<img src="' + u + '">' : '<svg class="ic" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>'; }
+  var src = (s.src || '').toLowerCase();
+  [].forEach.call(document.querySelectorAll('.chip'), function (c) {
+    var o = c.dataset.o; c.classList.toggle('on', (o === 'radio' && src.indexOf('radyo') >= 0) || (o === 'btMusic' && src.indexOf('bluetooth') >= 0) || (o === 'usb' && src.indexOf('usb') >= 0));
+  });
+  $('cCarS').textContent = s.range ? 'Menzil ' + Math.round(s.range) + ' km' : 'Göstergeler · menzil';
+  // gauges
+  var sp = s.gps === 'ok' || s.obd ? Math.round(s.speed || 0) : 0;
+  $('spd').textContent = sp;
+  $('spArc').setAttribute('d', arc(sp / 240));
+  var g = s.gearObd || s.cpGear || 'N'; $('gear').textContent = /^[1-9]$/.test(String(g)) ? 'D' + g : g;
+  var r = s.rpm || (s.cpOn ? s.cpRpm : 0) || 0;
+  rpmShown += (r - rpmShown) * .5;
+  var nd = $('needle'); if (nd) nd.setAttribute('transform', 'rotate(' + (-135 + 270 * Math.min(1, rpmShown / RPMMAX)) + ' 100 100)');
+  var tank = s.tank || 60, pct = s.fuelLeft !== undefined ? Math.round(s.fuelLeft / tank * 100) : null;
+  $('fuelP').textContent = pct !== null ? pct + '%' : '—'; $('fuelB').style.width = (pct || 0) + '%';
+  $('coolP').textContent = s.coolant !== undefined ? Math.round(s.coolant) + '°' : '—'; $('coolB').style.width = s.coolant !== undefined ? Math.max(0, Math.min(100, (s.coolant - 40) / 80 * 100)) + '%' : '0';
+  $('rng').textContent = (s.range ? Math.round(s.range) : '—') + ' km';
+  $('sA').textContent = s.avgL100 ? num(s.avgL100, 1) + ' L/100' : '—';
+  $('sB').textContent = s.avg1000 ? num(s.avg1000, 1) + ' L/100' : '—';
+  $('sC').textContent = s.tripKm !== undefined ? num(s.tripKm, 1) + ' km' : '—';
+  $('sD').textContent = out !== undefined ? Math.round(out) + '°C' : '—';
+});
+setBl(store('denon.bl') || 'white');
+hifiLoad();
+show(startHash === 'ses' ? 1 : startHash === 'gosterge' ? 2 : 0);
+setTimeout(function () { document.body.classList.remove('noanim'); }, 400);
+window.addEventListener('hashchange', function () { startHash = (location.hash || '').replace('#', ''); show(startHash === 'ses' ? 1 : startHash === 'gosterge' ? 2 : 0); });
+</script>
+</body>
+</html>

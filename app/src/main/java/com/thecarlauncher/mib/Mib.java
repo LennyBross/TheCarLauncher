@@ -179,6 +179,36 @@ public final class Mib {
         return load(c, "themes/fonts/Montserrat-Bold.ttf", Typeface.BOLD);
     }
 
+    // ---- Denon concept type: Jost (thin, wide-spaced titles) and Barlow Semi Condensed (text) ----
+    private static final java.util.Map<String, Typeface> sDenon = new java.util.HashMap<>();
+
+    /** Jost at a weight (100…900), from the variable font; falls back to the theme's regular face. */
+    public static Typeface jost(Context c, int weight) {
+        String k = "jost" + weight;
+        Typeface t = sDenon.get(k);
+        if (t == null) {
+            try {
+                t = new Typeface.Builder(c.getAssets(), "themes/fonts/Jost-VF.ttf").setFontVariationSettings("'wght' " + weight).build();
+            } catch (Throwable e) { t = null; }
+            if (t == null) t = regular(c);
+            sDenon.put(k, t);
+        }
+        return t;
+    }
+
+    /** Barlow Semi Condensed: 400, 500 or 600. */
+    public static Typeface barlow(Context c, int weight) {
+        String k = "barlow" + weight;
+        Typeface t = sDenon.get(k);
+        if (t == null) {
+            String f = weight >= 600 ? "SemiBold" : weight >= 500 ? "Medium" : "Regular";
+            try { t = Typeface.createFromAsset(c.getAssets(), "themes/fonts/BarlowSemiCondensed-" + f + ".ttf"); } catch (Throwable e) { t = null; }
+            if (t == null) t = weight >= 600 ? semibold(c) : regular(c);
+            sDenon.put(k, t);
+        }
+        return t;
+    }
+
     private static Typeface load(Context c, String asset, int fallback) {
         try {
             return Typeface.createFromAsset(c.getAssets(), asset);
@@ -313,13 +343,13 @@ public final class Mib {
         float r = px(c, 14);
         boolean day = !com.thecarlauncher.util.DayNight.isNight(c);
         GradientDrawable n = new GradientDrawable();
-        n.setColor(day ? 0xFFFFFFFF : 0xFF15161A);
-        n.setCornerRadius(r);
-        n.setStroke(Math.max(1, px(c, 1)), day ? 0xFFDCDAD5 : 0xFF25262C);
+        n.setColor(day ? 0xFFFFFFFF : 0xFF0D0F12);
+        n.setCornerRadius(px(c, 12));
+        n.setStroke(Math.max(1, px(c, 1)), day ? 0x1A000000 : 0x1AFFFFFF);
         GradientDrawable p = new GradientDrawable();
-        p.setColor(shade(BLUE, 0.35f, 0xFF));
-        p.setCornerRadius(r);
-        p.setStroke(Math.max(1, px(c, 1.5f)), BLUE);
+        p.setColor(day ? 0xFFF0F1F3 : 0xFF14171B);
+        p.setCornerRadius(px(c, 12));
+        p.setStroke(Math.max(1, px(c, 1)), day ? 0xFF0B0C0E : 0xFFF2F4F7);
         StateListDrawable s = new StateListDrawable();
         s.addState(new int[]{android.R.attr.state_pressed}, p);
         s.addState(new int[]{}, n);

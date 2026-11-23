@@ -76,13 +76,16 @@ public class SettingsScreen extends Screen {
         LinearLayout r = new LinearLayout(act);
         r.setOrientation(LinearLayout.VERTICAL);
         r.setPadding(0, Mib.px(act, 14), 0, 0);
-        if (day()) r.setBackgroundColor(0xFFEDEBE7);
+        r.setBackgroundColor(day() ? 0xFFF3F4F6 : 0xFF07080A);   // Denon concept: near-black, quiet
 
         LinearLayout head = new LinearLayout(act);
         head.setGravity(Gravity.CENTER_VERTICAL);
         head.setPadding(Mib.px(act, 30), 0, Mib.px(act, 30), Mib.px(act, 10));
         FrameLayout backBox = new FrameLayout(act);
-        backBox.setBackground(Mib.box(act));
+        GradientDrawable bb = new GradientDrawable();
+        bb.setShape(GradientDrawable.OVAL);
+        bb.setStroke(Math.max(1, Mib.px(act, 1)), day() ? 0x29000000 : 0x29FFFFFF);
+        backBox.setBackground(bb);
         backBox.addView(Mib.icon(act, R.drawable.ui_ic_back, fg()),
                 new FrameLayout.LayoutParams(Mib.px(act, 30), Mib.px(act, 30), Gravity.CENTER));
         backBox.setOnClickListener(new View.OnClickListener() {
@@ -92,10 +95,12 @@ public class SettingsScreen extends Screen {
             }
         });
         back = backBox;
-        LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(Mib.px(act, 62), Mib.px(act, 54));
+        LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(Mib.px(act, 58), Mib.px(act, 58));
         bl.rightMargin = Mib.px(act, 18);
         head.addView(backBox, bl);
-        title = Mib.text(act, "", 40, Mib.semibold(act), fg());
+        title = Mib.text(act, "", 40, Mib.jost(act, 200), fg());
+        title.setAllCaps(true);
+        title.setLetterSpacing(.1f);
         head.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         r.addView(head);
 
@@ -439,7 +444,7 @@ public class SettingsScreen extends Screen {
         row.setClickable(false);
         for (int i = 0; i < 2; i++) {
             final Runnable r = i == 0 ? minus : plus;
-            TextView k = Mib.text(act, i == 0 ? "−" : "+", 34, Mib.semibold(act), fg());
+            TextView k = Mib.text(act, i == 0 ? "−" : "+", 34, Mib.barlow(act, 600), fg());
             k.setGravity(Gravity.CENTER);
             GradientDrawable g = new GradientDrawable();
             g.setColor(0x00000000);
@@ -459,7 +464,7 @@ public class SettingsScreen extends Screen {
 
     /** Grey explanatory text between bars. */
     private void note(String text) {
-        TextView t = Mib.text(act, text, 22, Mib.regular(act), Mib.GREY);
+        TextView t = Mib.text(act, text, 22, Mib.barlow(act, 400), Mib.GREY);
         t.setSingleLine(false);
         t.setMaxLines(4);
         t.setLineSpacing(0, 1.15f);
@@ -1194,7 +1199,7 @@ public class SettingsScreen extends Screen {
                                 action(s("Pošalji na telefon", "Send to phone"), s("kratak link, 7 dana", "short link, 7 days"), new Runnable() {
                                     public void run() { uploadReport(text); }
                                 });
-                                TextView t = Mib.text(act, reportText, 18, Mib.regular(act), fg());
+                                TextView t = Mib.text(act, reportText, 18, Mib.barlow(act, 400), fg());
                                 t.setSingleLine(false);
                                 t.setMaxLines(Integer.MAX_VALUE);
                                 t.setEllipsize(null);
@@ -1226,13 +1231,13 @@ public class SettingsScreen extends Screen {
                         ? s("Otvorite ovaj link na telefonu ili ga pošaljite:", "Open this link on your phone, download the file and send it in the chat:")
                         : s("Slanje nije uspelo. Proverite internet (hotspot telefona) i pokušajte ponovo.",
                         "Upload failed. Check the internet (phone hotspot) and try again.");
-                TextView a = Mib.text(act, msg, 22, Mib.regular(act), fg());
+                TextView a = Mib.text(act, msg, 22, Mib.barlow(act, 400), fg());
                 a.setSingleLine(false);
                 a.setMaxLines(4);
                 a.setPadding(Mib.px(act, 30), Mib.px(act, 20), Mib.px(act, 30), Mib.px(act, 10));
                 content.addView(a);
                 if (url != null) {
-                    TextView b = Mib.text(act, url.replaceFirst("^https?://", ""), 64, Mib.regular(act), 0xFF5CC8B0);
+                    TextView b = Mib.text(act, url.replaceFirst("^https?://", ""), 64, Mib.barlow(act, 400), 0xFF5CC8B0);
                     b.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
                     b.setSingleLine(false);
                     b.setMaxLines(3);
@@ -1640,7 +1645,7 @@ public class SettingsScreen extends Screen {
             }
         });
         TextView imp = Mib.text(act, s("Uvezi sliku sa uređaja ili USB-a:", "Import a picture from the unit or USB:"),
-                24, Mib.regular(act), Mib.GREY);
+                24, Mib.barlow(act, 400), Mib.GREY);
         LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         il.leftMargin = Mib.px(act, 30);
@@ -1841,7 +1846,7 @@ public class SettingsScreen extends Screen {
     }
 
     private void section(String text) {
-        TextView t = Mib.text(act, text, 24, Mib.semibold(act), Mib.GREY);
+        TextView t = Mib.text(act, text, 24, Mib.barlow(act, 600), Mib.GREY);
         LinearLayout.LayoutParams l = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         l.leftMargin = Mib.px(act, 30);
@@ -1855,8 +1860,8 @@ public class SettingsScreen extends Screen {
         LinearLayout box = new LinearLayout(act);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(Mib.px(act, 30), Mib.px(act, 10), Mib.px(act, 60), Mib.px(act, 10));
-        box.addView(Mib.text(act, label, 28, Mib.regular(act), fg()));
-        TextView v = Mib.text(act, value == null || value.isEmpty() ? "—" : value, 28, Mib.regular(act), fg());
+        box.addView(Mib.text(act, label, 28, Mib.barlow(act, 400), fg()));
+        TextView v = Mib.text(act, value == null || value.isEmpty() ? "—" : value, 28, Mib.barlow(act, 400), fg());
         v.setSingleLine(false);
         v.setMaxLines(3);
         v.setGravity(Gravity.RIGHT);
@@ -1962,8 +1967,8 @@ public class SettingsScreen extends Screen {
 
     /** Section caption above a group of rows on the main list. */
     private void group(String text) {
-        TextView t = Mib.text(act, text.toUpperCase(java.util.Locale.forLanguageTag("tr")), 19, Mib.semibold(act), 0xFF8A8B93);
-        t.setLetterSpacing(.12f);
+        TextView t = Mib.text(act, text.toUpperCase(java.util.Locale.forLanguageTag("tr")), 18, Mib.barlow(act, 500), 0xFF8A9099);
+        t.setLetterSpacing(.28f);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.leftMargin = Mib.px(act, 34);
         lp.topMargin = Mib.px(act, content.getChildCount() == 0 ? 4 : 22);
@@ -1980,21 +1985,23 @@ public class SettingsScreen extends Screen {
         if (icon != 0) {
             FrameLayout ib = new FrameLayout(act);
             GradientDrawable ibg = new GradientDrawable();
-            ibg.setColor(day() ? 0xFFECEEF1 : 0xFF22232A); ibg.setCornerRadius(Mib.px(act, 12));
+            ibg.setShape(GradientDrawable.OVAL);
+            ibg.setStroke(Math.max(1, Mib.px(act, 1.5f)), day() ? 0x33000000 : 0x40FFFFFF);
             ib.setBackground(ibg);
-            ib.addView(Mib.icon(act, icon, Mib.BLUE), new FrameLayout.LayoutParams(Mib.px(act, 32), Mib.px(act, 32), Gravity.CENTER));
+            ib.addView(Mib.icon(act, icon, fg()), new FrameLayout.LayoutParams(Mib.px(act, 26), Mib.px(act, 26), Gravity.CENTER));
             LinearLayout.LayoutParams il = new LinearLayout.LayoutParams(Mib.px(act, 52), Mib.px(act, 52));
             il.rightMargin = Mib.px(act, 20);
             row.addView(ib, il);
         }
         LinearLayout col = new LinearLayout(act);
         col.setOrientation(LinearLayout.VERTICAL);
-        TextView t = Mib.text(act, text, 28, Mib.regular(act), fg());
+        TextView t = Mib.text(act, text, 27, Mib.barlow(act, 500), fg());
+        t.setLetterSpacing(.04f);
         col.addView(t);
-        if (subtitle != null) col.addView(Mib.text(act, subtitle, 19, Mib.regular(act), sub()));
+        if (subtitle != null) col.addView(Mib.text(act, subtitle, 19, Mib.barlow(act, 400), day() ? 0xFF5E6068 : 0xFF8A9099));
         row.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         if (value != null) {
-            TextView v = Mib.text(act, value, 24, Mib.regular(act), sub());
+            TextView v = Mib.text(act, value, 24, Mib.barlow(act, 400), sub());
             v.setGravity(Gravity.RIGHT);
             LinearLayout.LayoutParams vl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);

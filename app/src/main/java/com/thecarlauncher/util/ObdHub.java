@@ -58,6 +58,15 @@ public final class ObdHub implements Obd.Listener {
                 }
             }
         }, "obd-watch").start();
+        // trip computer: once a second while the adapter answers
+        new Thread(new Runnable() {
+            public void run() {
+                while (true) {
+                    try { Thread.sleep(1000); } catch (InterruptedException e) { return; }
+                    try { if (connected()) ObdFuel.get(app).tick(ObdHub.this, -1); } catch (Throwable ignored) { }
+                }
+            }
+        }, "obd-fuel").start();
     }
 
     @SuppressWarnings("deprecation")
@@ -82,7 +91,8 @@ public final class ObdHub implements Obd.Listener {
         if (Obd.WIFI.equals(mode) || Obd.BT.equals(mode)) {
             Obd.ctx = app;
             obd = new Obd(this);
-            obd.rpmOnly = true;   // first version: engine rpm only (read-only 010C)
+            // full read-only set: rpm every round, speed, MAF, load, fuel rate / level, temperatures…
+            obd.rpmOnly = cp().getBoolean("obdRpmOnly", false);
             obd.pin = p.getString("obdPin", "1234");
             obd.start(mode, p.getString("obdTarget", ""), p.getString("obdProto", Obd.STD));
         }

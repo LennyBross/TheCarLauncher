@@ -38,12 +38,12 @@ import java.util.Locale;
  */
 public class ThemeScreen extends Screen {
     public static final String P_THEME = "home_theme", P_PREV = "home_theme_prev";
-    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7, STOCK = 8, LIVE = 9;
+    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7, STOCK = 8, LIVE = 9, DENON = 10;
     /** The themes offered in Settings (ids into NAMES). */
-    public static final int[] OFFERED = {LIVE, STOCK, DS4PLUS, PANEL};
+    public static final int[] OFFERED = {DENON, LIVE, STOCK, DS4PLUS, PANEL};
     public static final String[][] NAMES = {
             {"Klasična", "Classic"}, {"Moderna", "Modern"}, {"Retro", "Retro"}, {"Pilot", "Pilot"}, {"Panel", "Panel"},
-            {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}, {"Stock", "Stock"}, {"DS Live", "DS Live"}};
+            {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}, {"Stock", "Stock"}, {"DS Live", "DS Live"}, {"Denon", "Denon"}};
     public static final String PKG_MAPS = "com.google.android.apps.maps", PKG_SPOTIFY = "com.spotify.music",
             PKG_YTMUSIC = "com.google.android.apps.youtube.music", PKG_YOUTUBE = "com.google.android.youtube";
     private static final Locale TR = new Locale("tr", "TR");
@@ -112,7 +112,7 @@ public class ThemeScreen extends Screen {
     public static int current(Context c) {
         int t = Prefs.integer(c, P_THEME, -1);
         // Only DS4+, Panel and Stock are offered now; anything else moves to Stock.
-        if (t != DS4PLUS && t != PANEL && t != STOCK && t != LIVE) {
+        if (t != DS4PLUS && t != PANEL && t != STOCK && t != LIVE && t != DENON) {
             t = STOCK;
             Prefs.put(c, P_THEME, t);
             Prefs.put(c, ModernScreen.P_MODERN, false);
@@ -128,7 +128,7 @@ public class ThemeScreen extends Screen {
     public static Screen create(LauncherActivity act) {
         int t = current(act);
         if (t == MODERN) return new ModernScreen(act);
-        if (t >= RETRO && t <= LIVE) return new ThemeScreen(act, t);
+        if (t >= RETRO && t <= DENON) return new ThemeScreen(act, t);
         return new MenuScreen(act);
     }
 
@@ -140,6 +140,7 @@ public class ThemeScreen extends Screen {
             case DRIVE: return "drive.html";
             case DS4PLUS: return "ds4plus.html";
             case LIVE: return "live.html";
+            case DENON: return "denon.html";
             case STOCK: return "stock.html";
             default: return "panel.html";
         }
@@ -367,6 +368,7 @@ public class ThemeScreen extends Screen {
             o.put("gps", "ok");
             o.put("speed", Math.round(t.speed(act)));
         }
+        try { if (o.has("speed")) com.thecarlauncher.media.Tone.get(act).speed((float) o.optDouble("speed")); } catch (Throwable ignored) { }
         if (ob != null) {
             JSONObject oj = ob.json();
             o.put("obd", oj);
@@ -383,6 +385,8 @@ public class ThemeScreen extends Screen {
                 if (v.has("amb")) o.put("outdoorObd", v.optDouble("amb"));
             }
         }
+        JSONObject fuelObd = com.thecarlauncher.util.ObdFuel.get(act).json();
+        o.put("fuelObd", fuelObd);
 
         double price = FuelPrice.perLitre(act), l100 = FuelCost.litresPer100(act);
         if (price > 0) o.put("price", price);
@@ -489,6 +493,16 @@ public class ThemeScreen extends Screen {
         if (cd.hasOdometer()) o.put("odo", cd.odometer());
         double avg = cd.averageConsumption();
         if (avg > 0) o.put("avgL100", avg);
+        // OBD trip computer: instant, trip / 100 km / 1000 km averages, range from the tank level
+        if (fuelObd.has("inst") && !o.has("inst")) o.put("inst", fuelObd.optDouble("inst"));
+        if (fuelObd.has("lph")) o.put("lph", fuelObd.optDouble("lph"));
+        if (fuelObd.has("avg100")) { o.put("avg100", fuelObd.optDouble("avg100")); o.put("avgL100", fuelObd.optDouble("avg100")); }
+        if (fuelObd.has("avg1000")) o.put("avg1000", fuelObd.optDouble("avg1000"));
+        if (fuelObd.has("tripAvg")) { o.put("tripAvg", fuelObd.optDouble("tripAvg")); o.put("tripL", fuelObd.optDouble("tripL")); o.put("tripKm", fuelObd.optDouble("tripKm")); }
+        if (!o.has("canRange") && o.has("fuelLeft")) {
+            double use = fuelObd.has("avg100") ? fuelObd.optDouble("avg100") : avg;
+            if (use > 2) o.put("range", o.optDouble("fuelLeft") / use * 100.0);
+        }
         if (cd.oilDueKm() > 0) o.put("oilKm", cd.oilDueKm());
         if (cd.oilDueDate() > 0) o.put("oilDate", CarData.date(cd.oilDueDate()));
         if (cd.registrationDate() > 0) o.put("regDate", CarData.date(cd.registrationDate()));
@@ -610,7 +624,9 @@ public class ThemeScreen extends Screen {
                         case "canbridge": openPkg(com.thecarlauncher.util.CanLive.PKG_BRIDGE); break;
                         case "settings": act.show(LauncherActivity.SETTINGS, true); break;
                         case "sound": act.show(LauncherActivity.SOUND, true); break;
-                        case "eq": openEq(); break;
+                        case "eq": load("denon.html#ses"); break;
+                        case "eqDetail": load("ses.html"); break;
+                        case "eqFactory": openEq(); break;
                         // tap = play in the background and stay in MYDS; the *App routes open the app itself
                         // With the phone linked, the phone's own Spotify / YouTube Music plays (sound over Bluetooth).
                         case "spotify": if (!com.thecarlauncher.util.PhoneLink.control("play", PKG_SPOTIFY)) MediaHub.get(act).playInBackground(PKG_SPOTIFY); break;
@@ -700,6 +716,27 @@ public class ThemeScreen extends Screen {
                 return "{}";
             }
         }
+
+        @JavascriptInterface
+        public String hifi() { return com.thecarlauncher.media.Tone.get(act).json().toString(); }
+
+        @JavascriptInterface
+        public void hifiPreset(String id) { com.thecarlauncher.media.Tone.get(act).preset(id); }
+
+        @JavascriptInterface
+        public void hifiBand(int i, float db) { com.thecarlauncher.media.Tone.get(act).band(i, db); }
+
+        @JavascriptInterface
+        public void hifiFx(String which, int v) { com.thecarlauncher.media.Tone.get(act).fx(which, v); }
+
+        @JavascriptInterface
+        public boolean hifiFocus(String f) { return com.thecarlauncher.media.Tone.get(act).focus(f); }
+
+        @JavascriptInterface
+        public void hifiSvc(int level) { com.thecarlauncher.media.Tone.get(act).svc(level); }
+
+        @JavascriptInterface
+        public void hifiBT(int bass, int treble) { com.thecarlauncher.media.Tone.get(act).bassTreble(bass, treble); }
 
         @JavascriptInterface
         public void radioTune(final int khz) { main.post(new Runnable() { public void run() { com.thecarlauncher.radio.HcnRadio.tuneSmart(act, khz); } }); }

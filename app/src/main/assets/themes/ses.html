@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta id="stockcss">
+<title>Ses · Denon Hi-Fi</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* Ses: presets tuned for the DS4's Denon system, a 10-band curve, bass / stage width / loudness.
+   Works on the unit's own audio effects (global output + players that announce their session). */
+:root{--bg:#07080a;--card:#141518;--chip:#1d1e22;--fg:#EEEAE2;--mut:#8f8a80;--a:#E8D5B0;--line:rgba(255,255,255,.1);--r:2.6vh;--on:#111}
+body{background:var(--bg);color:var(--fg);font-family:'Montserrat',sans-serif;overflow:hidden;margin:0;user-select:none}
+body.day{--bg:#EEF1F4;--fg:#11161D;--card:#FFFFFF;--chip:#E9ECF0;--mut:#5d6672;--a:#8A6A3A;--line:rgba(0,0,0,.08);--on:#fff}
+body.t-ds4{font-family:'Inter',sans-serif}
+svg.ic{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.w{position:fixed;inset:0;padding:2.2vh 3vh;display:flex;flex-direction:column;gap:1.8vh}
+.top{display:flex;align-items:center;gap:1.6vh}
+.rb{width:7vh;height:7vh;border-radius:50%;border:none;background:var(--chip);color:var(--fg);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--line)}
+.rb svg{width:3.6vh;height:3.6vh}
+h1{font-size:3.4vh;font-weight:600;margin:0}
+.st{flex:1;font-size:1.9vh;color:var(--mut)}
+.card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);padding:2vh 2.6vh}
+.pre{display:flex;gap:1.2vh;flex-wrap:wrap}
+.pre button{height:6.4vh;padding:0 2.6vh;border-radius:3.2vh;border:none;background:var(--chip);color:var(--fg);font-family:inherit;font-size:2.1vh;box-shadow:inset 0 0 0 1px var(--line)}
+.pre button.on{background:var(--a);color:var(--on);font-weight:600}
+#eq{flex:1;display:flex;gap:1vh;align-items:stretch;min-height:0}
+.band{flex:1;display:flex;flex-direction:column;align-items:center;gap:.8vh}
+.band b{font-size:1.9vh;font-weight:600;min-height:2.4vh}
+.band i{font-style:normal;font-size:1.7vh;color:var(--mut)}
+.trk{position:relative;flex:1;width:6.4vh;border-radius:3.2vh;background:var(--chip);box-shadow:inset 0 0 0 1px var(--line);touch-action:none}
+.trk::before{content:'';position:absolute;left:1vh;right:1vh;top:50%;height:1px;background:var(--line)}
+.fill{position:absolute;left:2.6vh;width:1.2vh;border-radius:.6vh;background:var(--a);opacity:.55}
+.knob{position:absolute;left:.6vh;width:5.2vh;height:3.4vh;border-radius:1.7vh;background:var(--a);box-shadow:0 .6vh 1.4vh rgba(0,0,0,.35)}
+#curve{position:absolute;inset:0;pointer-events:none}
+.fx{display:grid;grid-template-columns:repeat(3,1fr);gap:2.4vh}
+.fx label{display:flex;justify-content:space-between;font-size:2vh;color:var(--mut);margin-bottom:.8vh}
+.fx label b{color:var(--fg);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--a);height:4vh}
+.row{display:flex;gap:1.4vh;align-items:center}
+.btn{height:6vh;padding:0 3vh;border-radius:3vh;border:none;background:var(--chip);color:var(--fg);font-family:inherit;font-size:2vh;box-shadow:inset 0 0 0 1px var(--line)}
+.warn{font-size:1.9vh;color:#E0A030}
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="top">
+    <button class="key rb" id="back" aria-label="Geri"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <svg class="ic" style="width:4.4vh;height:4.4vh;color:var(--a)" viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><circle cx="12" cy="14.5" r="4"/><circle cx="12" cy="14.5" r="1.2"/><circle cx="12" cy="6.5" r="1.4"/></svg>
+    <h1>Ses · Denon Hi-Fi</h1>
+    <span class="st" id="st"></span>
+    <button class="btn" id="factory">Ünitenin EQ'su</button>
+  </div>
+  <div class="card pre" id="pre"></div>
+  <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;position:relative">
+    <div id="eq"></div>
+  </div>
+  <div class="card fx">
+    <div><label>Bas güçlendirme <b id="vb">0</b></label><input type="range" id="boost" min="0" max="100" step="5"></div>
+    <div><label>Ses sahnesi (genişlik) <b id="vw">0</b></label><input type="range" id="width" min="0" max="100" step="5"></div>
+    <div><label>Kısık seste dolgunluk <b id="vl">0</b></label><input type="range" id="loud" min="0" max="100" step="5"></div>
+  </div>
+</div>
+<script src="common.js"></script>
+<script>
+$('back').onclick = function () { call('open', 'themehome'); };
+$('factory').onclick = function () { call('open', 'eqFactory'); };
+var H = null, LBL = ['32', '64', '125', '250', '500', '1k', '2k', '4k', '8k', '16k'];
+function load() { try { H = JSON.parse(call('hifi') || 'null'); } catch (e) { H = null; } }
+load();
+if (!H) H = { ok: false, curve: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], presets: [['flat', 'Düz'], ['denon', 'Denon Hi-Fi']], preset: 'flat', boost: 0, width: 0, loud: 0 };
+
+function status() {
+  var t;
+  if (!H.ok) t = 'Bu ünite Android ses efektlerine izin vermiyor — "Ünitenin EQ\'su" ile fabrika ayarına git.';
+  else t = 'Ünite EQ: ' + (H.devBands || []).length + ' bant · ' + (H.devBands || []).map(function (f) { return f >= 1000 ? Math.round(f / 1000) + 'k' : f; }).join(' / ') + ' Hz'
+    + (H.hasBoost ? ' · bas' : '') + (H.hasWidth ? ' · sahne' : '') + (H.hasLoud ? ' · dolgunluk' : '');
+  $('st').textContent = t;
+}
+function presets() {
+  $('pre').innerHTML = '';
+  H.presets.forEach(function (p) {
+    var b = document.createElement('button'); b.textContent = p[1]; b.className = H.preset === p[0] ? 'on' : '';
+    b.onclick = function () { call('hifiPreset', p[0]); load(); draw(); };
+    $('pre').appendChild(b);
+  });
+  if (H.preset === 'custom') { var c = document.createElement('button'); c.textContent = 'Kendi ayarın'; c.className = 'on'; $('pre').appendChild(c); }
+}
+var MIN = -12, MAX = 12;
+function build() {
+  $('eq').innerHTML = '';
+  for (var i = 0; i < 10; i++) (function (i) {
+    var d = document.createElement('div'); d.className = 'band';
+    d.innerHTML = '<b id="v' + i + '"></b><div class="trk" id="t' + i + '"><div class="fill" id="f' + i + '"></div><div class="knob" id="k' + i + '"></div></div><i>' + LBL[i] + '</i>';
+    $('eq').appendChild(d);
+    var t = d.querySelector('.trk'), drag = false;
+    function at(e) {
+      var r = t.getBoundingClientRect(), y = (e.clientY - r.top) / r.height;
+      var db = Math.round((MAX - y * (MAX - MIN)) * 2) / 2;
+      db = Math.max(MIN, Math.min(MAX, db)); H.curve[i] = db; H.preset = 'custom'; one(i);
+      return db;
+    }
+    t.addEventListener('pointerdown', function (e) { drag = true; try { t.setPointerCapture(e.pointerId); } catch (x) {} at(e); });
+    t.addEventListener('pointermove', function (e) { if (drag) at(e); });
+    t.addEventListener('pointerup', function (e) { if (!drag) return; drag = false; call('hifiBand', i, at(e)); load(); presets(); });
+  })(i);
+}
+function one(i) {
+  var v = H.curve[i], t = $('t' + i), h = t.clientHeight, k = $('k' + i), kh = k.offsetHeight;
+  var y = (MAX - v) / (MAX - MIN) * (h - kh);
+  k.style.top = y + 'px';
+  var mid = (h - kh) / 2 + kh / 2, ky = y + kh / 2;
+  var f = $('f' + i); f.style.top = Math.min(mid, ky) + 'px'; f.style.height = Math.abs(ky - mid) + 'px';
+  $('v' + i).textContent = (v > 0 ? '+' : '') + String(v).replace('.', ',');
+}
+function draw() {
+  status(); presets();
+  for (var i = 0; i < 10; i++) one(i);
+  [['boost', 'vb'], ['width', 'vw'], ['loud', 'vl']].forEach(function (p) { $(p[0]).value = H[p[0]] || 0; $(p[1]).textContent = H[p[0]] || 0; });
+}
+['boost', 'width', 'loud'].forEach(function (k) {
+  var lab = { boost: 'vb', width: 'vw', loud: 'vl' }[k];
+  $(k).oninput = function () { $(lab).textContent = this.value; };
+  $(k).onchange = function () { call('hifiFx', k, +this.value); load(); presets(); };
+});
+build();
+setTimeout(draw, 30);
+window.addEventListener('resize', draw);
+</script>
+</body>
+</html>

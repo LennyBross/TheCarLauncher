@@ -77,6 +77,8 @@ var eco = (function () {
       ? "html body,html button,html input,html .sg,html .num,html h1,html h2,html svg text{font-family:'Montserrat',sans-serif !important}"
       : t === 4
       ? "html body,html button,html input,html .sg,html .num,html h1,html h2,html svg text{font-family:'Share Tech Mono',monospace !important}"
+      : t === 10
+      ? "html body,html button,html input,html .sg,html .num,html svg text{font-family:'Barlow Semi Condensed',sans-serif !important}html h1,html h2{font-family:'Jost',sans-serif !important;font-weight:300 !important;letter-spacing:.08em}"
       : '';
     if (css) { var st = document.createElement('style'); st.textContent = css; (document.head || document.documentElement).appendChild(st); }
   } catch (e) {}
@@ -96,7 +98,7 @@ var eco = (function () {
 // DS4+: every page takes the noir look (grained black, frosted glass, white light).
 (function () {
   try {
-    if (window.Car && Car.theme && Car.theme() === 7 && !document.getElementById('noircss')) {
+    if (window.Car && Car.theme && (Car.theme() === 7 || Car.theme() === 10) && !document.getElementById('noircss') && !/denon\.html/.test(location.pathname)) {
       document.documentElement.classList.add('noir');
       var l = document.createElement('link'); l.id = 'noircss'; l.rel = 'stylesheet'; l.href = 'noir.css';
       (document.head || document.documentElement).appendChild(l);

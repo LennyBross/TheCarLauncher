@@ -1,0 +1,3 @@
+Barlow Semi Condensed — Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow)
+Jost — Copyright 2020 The Jost Project Authors (https://github.com/indestructible-type)
+Both licensed under the SIL Open Font License, Version 1.1: http://scripts.sil.org/OFL

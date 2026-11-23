@@ -37,6 +37,14 @@ jobs:
             echo "RELEASE_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
           fi
 
+      - name: Fetch Denon fonts (Jost, Barlow Semi Condensed — SIL OFL, google/fonts)
+        run: |
+          F=app/src/main/assets/themes/fonts
+          base=https://github.com/google/fonts/raw/main/ofl
+          curl -fsSL -o "$F/Jost-VF.ttf" "$base/jost/Jost%5Bwght%5D.ttf"
+          for w in Regular Medium SemiBold; do curl -fsSL -o "$F/BarlowSemiCondensed-$w.ttf" "$base/barlowsemicondensed/BarlowSemiCondensed-$w.ttf"; done
+          ls -la $F
+
       - name: Build release APK
         env:
           RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
