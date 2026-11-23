@@ -128,7 +128,7 @@ public final class Tone {
         try { am.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, v, 0); } catch (Throwable ignored) { }
         added = v - base; lastSet = v;
     }
-    }
+
     private boolean globalTried;
     /** Player sessions waiting for an equalizer until a tone is actually set. */
     private final List<Integer> pending = new ArrayList<>();
