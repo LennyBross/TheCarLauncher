@@ -561,10 +561,10 @@ public class ThemeScreen extends Screen {
         return "Kutu yakıt verisi göndermiyor" + (t == null || t.isEmpty() ? "" : " · gelen: " + t);
     }
 
-    @Override
     /** A page to open the next time the theme screen shows (e.g. from Settings → Motor sesi). */
     public static volatile String pendingPage;
 
+    @Override
     public void onShow() {
         closePanel();   // MyDS itself is in front again: the floating panel goes away
         if (pendingPage != null && web != null) { final String pg = pendingPage; pendingPage = null; load(pg); }
