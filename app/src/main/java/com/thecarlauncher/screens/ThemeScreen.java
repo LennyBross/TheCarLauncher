@@ -475,8 +475,17 @@ public class ThemeScreen extends Screen {
             if (com.thecarlauncher.util.CanLive.range >= 0) { o.put("canRange", com.thecarlauncher.util.CanLive.range); o.put("range", com.thecarlauncher.util.CanLive.range); }
         }
         if (com.thecarlauncher.util.CanLive.outdoorFresh()) o.put("outdoor", com.thecarlauncher.util.CanLive.outdoor);
-        boolean cp = com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_CP);
-        o.put("cp", cp);
+        // engine voice: Motor sesi (Engine_Sim) replaced CataraPatara; the old cp* keys now describe it
+        boolean cp = false;
+        o.put("cp", true);
+        try {
+            com.thecarlauncher.util.MotorSesi ms = com.thecarlauncher.util.MotorSesi.get(act);
+            JSONObject mst = new JSONObject(ms.state());
+            o.put("cpOn", ms.on());
+            o.put("cpRpm", mst.optInt("rpm"));
+            o.put("cpName", mst.optString("label", "Motor sesi"));
+            o.put("motor", mst);
+        } catch (Exception ignored) { }
         o.put("canBridge", com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_BRIDGE));
         o.put("canDiag", canDiag());
         if (cp) {
@@ -553,8 +562,12 @@ public class ThemeScreen extends Screen {
     }
 
     @Override
+    /** A page to open the next time the theme screen shows (e.g. from Settings → Motor sesi). */
+    public static volatile String pendingPage;
+
     public void onShow() {
         closePanel();   // MyDS itself is in front again: the floating panel goes away
+        if (pendingPage != null && web != null) { final String pg = pendingPage; pendingPage = null; load(pg); }
         main.removeCallbacks(tick);
         main.post(tick);
         if (web != null) {
@@ -621,17 +634,15 @@ public class ThemeScreen extends Screen {
                         case "remote": load("destek.html"); break;
                         case "pavyon": load("pavyon.html"); break;
                         case "obdDtc": { com.thecarlauncher.util.ObdHub h = com.thecarlauncher.util.ObdHub.get(); if (h != null) h.readDtc(); break; }
-                        case "obdSetup": com.thecarlauncher.util.CanLive.openCp(act); break;
-                        case "engine":
-                            com.thecarlauncher.util.CanLive.openCp(act);
-                            break;
-                        case "cpInstall": com.thecarlauncher.util.CanLive.openCp(act); break;
+                        case "obdSetup": load("obd.html"); break;
+                        case "engine": load("motor.html"); break;
+                        case "cpInstall": load("motor.html"); break;
                         case "canFix":
                             if (!com.thecarlauncher.util.CanLive.installed(act, com.thecarlauncher.util.CanLive.PKG_BRIDGE))
                                 com.thecarlauncher.util.Updater.installCompanionNow(act, com.thecarlauncher.util.CanLive.PKG_BRIDGE);
                             else openPkg(com.thecarlauncher.util.CanLive.PKG_BRIDGE);
                             break;
-                        case "cpToggle": com.thecarlauncher.util.CanLive.cpCommand(act, "toggle"); push(); break;
+                        case "cpToggle": com.thecarlauncher.util.MotorSesi.get(act).toggle(); push(); break;
                         case "canbridge": openPkg(com.thecarlauncher.util.CanLive.PKG_BRIDGE); break;
                         case "settings": act.show(LauncherActivity.SETTINGS, true); break;
                         case "sound": act.show(LauncherActivity.SOUND, true); break;
@@ -727,6 +738,18 @@ public class ThemeScreen extends Screen {
                 return "{}";
             }
         }
+
+        @JavascriptInterface
+        public String motorSettings() { return com.thecarlauncher.util.MotorSesi.get(act).settings(); }
+
+        @JavascriptInterface
+        public String motorState() { return com.thecarlauncher.util.MotorSesi.get(act).state(); }
+
+        @JavascriptInterface
+        public void motorSet(String json) { com.thecarlauncher.util.MotorSesi.get(act).set(json); }
+
+        @JavascriptInterface
+        public void motorPedal(float thr, float brake) { com.thecarlauncher.util.MotorSesi.get(act).pedal(thr, brake); }
 
         @JavascriptInterface
         public String hifi() { return com.thecarlauncher.media.Tone.get(act).json().toString(); }

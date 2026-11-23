@@ -1737,8 +1737,8 @@ public class SettingsScreen extends Screen {
     }
 
     private void buildAndroid() {
-        action("CataraPatara", s("ugrađen motor zvuk", "built-in engine sound"), new Runnable() {
-            public void run() { com.thecarlauncher.util.CanLive.openCp(act); }
+        action(s("Zvuk motora", "Engine sound"), s("Engine_Sim · Ferrari, AMG, V12…", "Engine_Sim · Ferrari, AMG, V12…"), new Runnable() {
+            public void run() { ThemeScreen.pendingPage = "motor.html"; act.show(LauncherActivity.MENU, false); }
         });
         if (com.thecarlauncher.util.CanLive.standaloneCp(act)) {
             action(s("Ukloni staru CataraPatara aplikaciju", "Remove the old CataraPatara app"), s("sada je u MYDS", "now inside MYDS"), new Runnable() {

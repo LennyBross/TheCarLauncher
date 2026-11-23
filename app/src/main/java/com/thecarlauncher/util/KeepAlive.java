@@ -37,6 +37,8 @@ public class KeepAlive extends Service {
         try { ObdHub.start(this); } catch (Throwable ignored) { }
         try { CarBody.start(this); } catch (Throwable ignored) { }
         try { RemoteSupport.start(this); } catch (Throwable ignored) { }
+        try { retireCataraPatara(); } catch (Throwable ignored) { }
+        try { MotorSesi.get(this).start(); } catch (Throwable ignored) { }
         try { AutoReturn.ensureAccess(this); } catch (Throwable ignored) { }
         try {
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -70,5 +72,20 @@ public class KeepAlive extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    /** CataraPatara's engine sound is replaced by Motor sesi (Engine_Sim): stop it and switch its parts off once. */
+    private void retireCataraPatara() {
+        android.content.SharedPreferences sp = getSharedPreferences("motor", MODE_PRIVATE);
+        if (sp.getBoolean("cpRetired", false)) return;
+        try { CanLive.cpCommand(this, "off"); } catch (Throwable ignored) { }
+        android.content.pm.PackageManager pm = getPackageManager();
+        for (String n : new String[]{"com.catarapatara.EngineService", "com.catarapatara.ControlReceiver", "com.catarapatara.BootReceiver", "com.catarapatara.MainActivity"}) {
+            try {
+                pm.setComponentEnabledSetting(new android.content.ComponentName(this, n),
+                        android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED, android.content.pm.PackageManager.DONT_KILL_APP);
+            } catch (Throwable ignored) { }
+        }
+        sp.edit().putBoolean("cpRetired", true).apply();
     }
 }

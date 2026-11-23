@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Motor sesi</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* Motor sesi: pick a dream engine; it follows the DS4's real rpm and accelerator through the
+   speakers. Sound engine: Engine_Sim (MIT, YigitSalihEmecen/Engine_Sim), Turkish front end. */
+:root{--bg:#07080A;--fg:#ECEEF1;--mut:#8A9099;--card:#0E1013;--chip:#16191D;--line:rgba(255,255,255,.10);--a:#FF8A2A;--on:#111}
+body.day{--bg:#F3F4F6;--fg:#0B0C0E;--mut:#5F6670;--card:#FFFFFF;--chip:#ECEEF1;--line:rgba(0,0,0,.10);--a:#E06A00;--on:#fff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:'Barlow Semi Condensed',sans-serif;overflow:hidden;user-select:none}
+button{font-family:inherit;color:inherit}
+svg.ic{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.w{position:fixed;inset:0;display:grid;grid-template-columns:1fr 46vh;gap:2.2vh;padding:2.2vh 3vh}
+.top{grid-column:1/3;display:flex;align-items:center;gap:1.6vh}
+.rb{width:7vh;height:7vh;border-radius:50%;border:1px solid var(--line);background:var(--chip);display:flex;align-items:center;justify-content:center}
+.rb svg{width:3.4vh;height:3.4vh}
+h1{margin:0;font-family:'Jost';font-weight:300;font-size:3.6vh;letter-spacing:.14em;text-transform:uppercase}
+.sub{font-size:1.8vh;color:var(--mut);letter-spacing:.06em}
+.sp{flex:1}
+#power{height:7vh;padding:0 3.4vh;border-radius:3.5vh;border:1.5px solid var(--a);background:none;font-size:2.2vh;font-weight:600;letter-spacing:.16em}
+#power.on{background:var(--a);color:var(--on)}
+.left{display:flex;flex-direction:column;gap:1.8vh;min-height:0}
+.cap{font-size:1.7vh;letter-spacing:.28em;text-transform:uppercase;color:var(--mut);margin-bottom:1vh}
+.eng{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1vh;overflow:auto;min-height:0}
+.e{min-height:10vh;border-radius:1.6vh;border:1px solid var(--line);background:var(--card);text-align:left;padding:1.2vh 1.5vh;display:flex;flex-direction:column;gap:.5vh}
+.e b{font-family:'Jost';font-weight:400;font-size:2.3vh;letter-spacing:.04em}
+.e small{font-size:1.65vh;color:var(--mut);line-height:1.2}
+.e.on{border-color:var(--a);box-shadow:inset 0 0 0 1px var(--a)}
+.chips{display:flex;gap:1vh;flex-wrap:wrap}
+.chip{height:5.6vh;padding:0 2.2vh;border-radius:2.8vh;border:1px solid var(--line);background:none;color:var(--mut);font-size:1.9vh;font-weight:500;letter-spacing:.1em}
+.chip.on{border-color:var(--a);color:var(--fg)}
+.right{display:flex;flex-direction:column;gap:1.6vh;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:2vh;padding:1.8vh 2.2vh}
+.big{font-family:'Jost';font-weight:200;font-size:9vh;line-height:1}
+.row{display:flex;align-items:baseline;gap:1.4vh}
+.mut{color:var(--mut);font-size:1.9vh}
+#bar{height:1vh;border-radius:.5vh;background:var(--chip);overflow:hidden;margin-top:1.2vh}#bar i{display:block;height:100%;width:0;background:var(--a)}
+.sl{display:flex;flex-direction:column;gap:.4vh}
+.sl label{display:flex;justify-content:space-between;font-size:1.85vh;color:var(--mut)}
+.sl label b{color:var(--fg);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--a);height:3.6vh;margin:0}
+.seg{display:flex;border:1px solid var(--line);border-radius:2.8vh;overflow:hidden}
+.seg button{flex:1;height:5.6vh;border:0;background:none;font-size:1.85vh;font-weight:600;letter-spacing:.08em;color:var(--mut)}
+.seg button.on{background:var(--a);color:var(--on)}
+#pedals{display:none;gap:1.2vh}
+#pedals.on{display:flex}
+#pedals button{flex:1;height:12vh;border-radius:2vh;border:1.5px solid var(--a);background:none;font-size:2.4vh;font-weight:600;letter-spacing:.18em;touch-action:none}
+#pedals button.dn{background:var(--a);color:var(--on)}
+#pedals #brk{border-color:var(--mut)}
+#err{color:#E0503C;font-size:1.8vh}
+.foot{font-size:1.5vh;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="top">
+    <button class="key rb" id="back" aria-label="Geri"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div><h1>Motor sesi</h1><div class="sub">Hayalindeki motor, senin gazınla · hoparlörlerden</div></div>
+    <span class="sp"></span>
+    <button id="power">AÇ</button>
+  </div>
+  <div class="left">
+    <div><div class="cap">Motor</div></div>
+    <div class="eng" id="eng"></div>
+    <div><div class="cap">Şasi / şanzıman (deneme modunda hissi değiştirir)</div><div class="chips" id="veh"></div></div>
+  </div>
+  <div class="right">
+    <div class="card">
+      <div class="cap">Canlı</div>
+      <div class="row"><span class="big" id="rpm">0</span><span class="mut">d/dk</span></div>
+      <div id="bar"><i></i></div>
+      <div class="mut" style="margin-top:1vh" id="info">Kapalı</div>
+      <div id="err"></div>
+    </div>
+    <div class="seg" id="mode"><button data-f="1">Arabamı takip et (OBD)</button><button data-f="0">Deneme (pedal)</button></div>
+    <div id="pedals"><button id="brk">FREN</button><button id="gas">GAZ</button></div>
+    <div class="card" style="display:flex;flex-direction:column;gap:1.2vh;overflow:auto">
+      <div class="seg" id="view"><button data-v="1">Kabinden</button><button data-v="0">Dışarıdan</button></div>
+      <div class="sl"><label>Ses seviyesi <b id="vVol"></b></label><input type="range" id="vol" min="0" max="100" step="5"></div>
+      <div class="sl"><label>Egzoz patlamaları <b id="vPop"></b></label><input type="range" id="pop" min="0" max="100" step="5"></div>
+      <div class="sl"><label>Uğultu (bas) <b id="vRum"></b></label><input type="range" id="rum" min="0" max="200" step="10"></div>
+      <div class="sl"><label>Parlaklık <b id="vBri"></b></label><input type="range" id="bri" min="0" max="200" step="10"></div>
+      <div class="sl"><label>Vuruş <b id="vPun"></b></label><input type="range" id="pun" min="0" max="200" step="10"></div>
+      <div class="sl"><label>Arabamın en yüksek devri <b id="vMax"></b></label><input type="range" id="max" min="3000" max="6000" step="100"></div>
+    </div>
+    <div class="foot">Ses motoru: Engine_Sim (MIT) · Yiğit Salih Emecen</div>
+  </div>
+</div>
+<script src="common.js"></script>
+<script>
+var ENGINES = [
+  ['v8flat', 'Ferrari tarzı V8', '4.5 düz krank · 9000 d/dk'],
+  ['v12', 'V12', '6.5 · Ferrari / Aston tarzı'],
+  ['v8tt', 'AMG tarzı V8', '4.0 biturbo · çapraz krank'],
+  ['v8cross', 'Jaguar / Mustang V8', '5.0 çapraz krank · gurultu'],
+  ['v10', 'V10', '5.2 · Lamborghini / Audi tarzı'],
+  ['flat6', 'Porsche tarzı boxer 6', '3.8 · 8500 d/dk'],
+  ['v6tt', 'Biturbo V6', '3.8 · GT-R tarzı'],
+  ['i6', 'Sıralı 6', '3.0 turbo · BMW tarzı'],
+  ['i5', '5 silindir', '2.5 turbo · Audi quattro tarzı'],
+  ['boxer4', 'Boxer 4', 'turbo · Subaru tarzı'],
+  ['rotary2', 'Wankel', 'çift rotor · 9000 d/dk'],
+  ['i4', '4 silindir', '2.0 atmosferik'],
+  ['v6', 'V6', '60° atmosferik'],
+  ['i3', '3 silindir', '1.0 turbo'],
+  ['i6diesel', 'Büyük dizel', '6.7 turbo dizel · pikap'],
+  ['vtwin', 'V2 motosiklet', '90° · 1.2']
+];
+var VEH = [['supercar', 'Süper otomobil'], ['sports', 'Spor'], ['hatch', 'Hot hatch'], ['muscle', 'Muscle car'], ['truck', 'Pikap']];
+var C = {};
+try { C = JSON.parse(call('motorSettings') || '{}'); } catch (e) {}
+C.tone = C.tone || { rumble: 1, brightness: 1, punch: 1 };
+function send(o) { for (var k in o) C[k] = o[k]; call('motorSet', JSON.stringify(o)); draw(); }
+$('back').onclick = function () { call('open', 'themehome'); };
+$('power').onclick = function () { send({ on: !C.on }); };
+ENGINES.forEach(function (e) {
+  var b = document.createElement('button'); b.className = 'e'; b.dataset.id = e[0];
+  b.innerHTML = '<b>' + e[1] + '</b><small>' + e[2] + '</small>';
+  b.onclick = function () { send({ engine: e[0], on: true }); };
+  $('eng').appendChild(b);
+});
+VEH.forEach(function (v) {
+  var b = document.createElement('button'); b.className = 'chip'; b.dataset.id = v[0]; b.textContent = v[1];
+  b.onclick = function () { send({ vehicle: v[0] }); };
+  $('veh').appendChild(b);
+});
+[].forEach.call($('mode').children, function (b) { b.onclick = function () { send({ follow: b.dataset.f === '1' }); }; });
+[].forEach.call($('view').children, function (b) { b.onclick = function () { send({ interior: b.dataset.v === '1' }); }; });
+function slider(id, lab, get, put, fmt) {
+  $(id).oninput = function () { $(lab).textContent = fmt(+this.value); };
+  $(id).onchange = function () { send(put(+this.value)); };
+}
+slider('vol', 'vVol', 0, function (v) { return { volume: v / 100 }; }, function (v) { return v + '%'; });
+slider('pop', 'vPop', 0, function (v) { return { pops: v / 100 }; }, function (v) { return v + '%'; });
+slider('rum', 'vRum', 0, function (v) { return { tone: { rumble: v / 100, brightness: C.tone.brightness, punch: C.tone.punch } }; }, function (v) { return v + '%'; });
+slider('bri', 'vBri', 0, function (v) { return { tone: { rumble: C.tone.rumble, brightness: v / 100, punch: C.tone.punch } }; }, function (v) { return v + '%'; });
+slider('pun', 'vPun', 0, function (v) { return { tone: { rumble: C.tone.rumble, brightness: C.tone.brightness, punch: v / 100 } }; }, function (v) { return v + '%'; });
+slider('max', 'vMax', 0, function (v) { return { carMax: v }; }, function (v) { return v + ' d/dk'; });
+// test pedals
+function hold(id, f) {
+  var el = $(id);
+  el.addEventListener('pointerdown', function (e) { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (x) {} el.classList.add('dn'); f(1); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (ev) { el.addEventListener(ev, function () { el.classList.remove('dn'); f(0); }); });
+}
+var gas = 0, brk = 0;
+hold('gas', function (v) { gas = v; call('motorPedal', gas, brk); });
+hold('brk', function (v) { brk = v; call('motorPedal', gas, brk); });
+
+function draw() {
+  $('power').classList.toggle('on', !!C.on); $('power').textContent = C.on ? 'AÇIK' : 'AÇ';
+  [].forEach.call($('eng').children, function (b) { b.classList.toggle('on', b.dataset.id === C.engine); });
+  [].forEach.call($('veh').children, function (b) { b.classList.toggle('on', b.dataset.id === C.vehicle); });
+  [].forEach.call($('mode').children, function (b) { b.classList.toggle('on', (b.dataset.f === '1') === (C.follow !== false)); });
+  [].forEach.call($('view').children, function (b) { b.classList.toggle('on', (b.dataset.v === '1') === (C.interior !== false)); });
+  $('pedals').classList.toggle('on', C.follow === false);
+  var vals = { vol: Math.round((C.volume != null ? C.volume : .8) * 100), pop: Math.round((C.pops != null ? C.pops : .6) * 100),
+    rum: Math.round(C.tone.rumble * 100), bri: Math.round(C.tone.brightness * 100), pun: Math.round(C.tone.punch * 100), max: C.carMax || 6000 };
+  for (var k in vals) $(k).value = vals[k];
+  $('vVol').textContent = vals.vol + '%'; $('vPop').textContent = vals.pop + '%'; $('vRum').textContent = vals.rum + '%';
+  $('vBri').textContent = vals.bri + '%'; $('vPun').textContent = vals.pun + '%'; $('vMax').textContent = vals.max + ' d/dk';
+}
+draw();
+var RED = { v8flat: 9000, v12: 8500, v8tt: 7200, v8cross: 7500, v10: 8500, flat6: 8500, v6tt: 7100, i6: 7000, i5: 7000, boxer4: 7000, rotary2: 9000, i4: 7000, v6: 7000, i3: 6500, i6diesel: 3200, vtwin: 9500 };
+setInterval(function () {
+  var s = {};
+  try { s = JSON.parse(call('motorState') || '{}'); } catch (e) {}
+  var r = s.rpm || 0;
+  $('rpm').textContent = C.on ? r : 0;
+  $('bar').firstChild.style.width = Math.min(100, r / (RED[C.engine] || 8000) * 100) + '%';
+  var info;
+  if (!C.on) info = 'Kapalı — bir motor seç ya da AÇ\'a bas';
+  else if (C.follow !== false) info = s.carRpm > 0 ? 'Arabanı takip ediyor · araç ' + s.carRpm + ' d/dk · gaz %' + Math.round((s.carThr || 0) * 100) : 'OBD verisi bekleniyor — kontak açık mı? Yoksa "Deneme"yi seç';
+  else info = 'Deneme modu · ' + (s.gear ? s.gear + '. vites' : '');
+  $('info').textContent = info;
+  $('err').textContent = s.err ? 'Hata: ' + s.err : '';
+}, 250);
+</script>
+</body>
+</html>
