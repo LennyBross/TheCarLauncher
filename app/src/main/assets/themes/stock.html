@@ -24,7 +24,10 @@ button{background:none;border:none;padding:0;color:inherit}
   background:linear-gradient(90deg,#0a0a0c,#111215)}
 #rail::after{content:'';position:absolute;right:-1px;top:110px;bottom:110px;width:1px;background:linear-gradient(transparent,rgba(232,213,176,.35),transparent)}
 #rail button{position:absolute;left:24px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;color:#DDD8CF;border-radius:14px}
-#rail button svg{width:34px;height:34px}
+#rail button{flex-direction:column;gap:2px;height:62px}
+#rail button svg{width:30px;height:30px}
+#rail button em{font-style:normal;font-size:10px;letter-spacing:.5px;opacity:.75}
+#rail .rI{display:flex}
 #rail button:active{background:rgba(232,213,176,.12)}
 #rail #pw.on{color:#ff4a3f;filter:drop-shadow(0 0 6px rgba(255,60,40,.9))}
 
@@ -171,13 +174,13 @@ button{background:none;border:none;padding:0;color:inherit}
 </svg>
 
 <div id="rail" class="ab">
- <button id="pw" style="top:104px" title="Motor sesi"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg></button>
- <button data-go="themehome" style="top:181px"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/></svg></button>
- <button id="back" data-go="minimal" style="top:258px" aria-label="Sade ekran"><svg class="ic" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></button>
- <button data-go="srcPick" style="top:335px"><svg class="ic" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg></button>
- <button data-go="nav" style="top:412px"><svg class="ic" viewBox="0 0 24 24"><path d="M21 3 3 10.5l7.5 3L14 21z"/></svg></button>
- <button data-go="phone" style="top:489px"><svg class="ic" viewBox="0 0 24 24"><path d="M5 3h3.5l1.8 4.5-2.3 1.4a11 11 0 0 0 7.1 7.1l1.4-2.3L21 15.5V19a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg></button>
- <button data-go="apps" style="top:566px"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"/></svg></button>
+ <button id="pw" style="top:104px" title="Motor sesi"><span class="rI" data-i="engine"></span><em>Motor</em></button>
+ <button data-go="themehome" style="top:181px"><span class="rI" data-i="home"></span><em>Ana</em></button>
+ <button id="back" data-go="minimal" style="top:258px" aria-label="Sade ekran"><span class="rI" data-i="gauge"></span><em>Sade</em></button>
+ <button data-go="srcPick" style="top:335px"><span class="rI" data-i="music"></span><em>Müzik</em></button>
+ <button data-go="nav" style="top:412px"><span class="rI" data-i="nav"></span><em>Harita</em></button>
+ <button data-go="phone" style="top:489px"><span class="rI" data-i="phone"></span><em>Telefon</em></button>
+ <button data-go="apps" style="top:566px"><span class="rI" data-i="apps"></span><em>Uygul.</em></button>
 </div>
 
 <div id="hdr" class="ab">
@@ -309,7 +312,7 @@ var IC = {
   car: '<path d="M3 15v-3l2.2-4.5A2 2 0 0 1 7 6.5h10a2 2 0 0 1 1.8 1L21 12v3"/><path d="M2.5 12h19"/><rect x="2.5" y="12" width="19" height="5" rx="1.5"/><path d="M5 17v2M19 17v2"/><circle cx="6.5" cy="14.5" r=".8"/><circle cx="17.5" cy="14.5" r=".8"/>',
   set: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.6M12 18.9v2.6M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12h2.6M18.9 12h2.6M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/><circle cx="12" cy="12" r="6.5"/>'
 };
-var BTN = [['Navigasyon', 'nav', 'split'], ['Müzik', 'music', 'srcPick'], ['Android Auto', 'aa', 'aa'], ['Ayarlar', 'set', 'settings']];
+var BTN = [['Navigasyon', 'nav', 'split'], ['Müzik', 'music', 'srcPick'], ['Android Auto', 'aa', 'aa'], ['Ayarlar', 'settings', 'settings']];
 var hasMaps = false;
 window.fitLabels = fitLabels;
 function fitLabels() {
@@ -319,9 +322,10 @@ function fitLabels() {
   });
 }
 setTimeout(fitLabels, 50); addEventListener('load', fitLabels);
+[].forEach.call(document.querySelectorAll('#rail .rI'), function (e) { e.innerHTML = icon(e.getAttribute('data-i')); });
 BTN.forEach(function (b, i) {
   var e = document.createElement('button'); e.className = 'bt'; e.id = 'b' + i;
-  e.innerHTML = '<div><svg class="ic" viewBox="0 0 24 24">' + IC[b[1]] + '</svg><span' + (/Android|CarPlay/.test(b[0]) ? ' lang="en"' : '') + '>' + b[0] + '</span></div>';
+  e.innerHTML = '<div>' + icon(b[1]) + '<span' + (/Android|CarPlay/.test(b[0]) ? ' lang="en"' : '') + '>' + b[0] + '</span></div>';
   e.onclick = function () { go(b[2]); };
   $('btns').appendChild(e);
 });

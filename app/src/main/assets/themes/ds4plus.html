@@ -32,8 +32,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:5vh;height
 #start.on .cap{color:var(--a);box-shadow:inset 0 0 0 1px var(--a),0 0 3vh rgba(255,255,255,.2),0 1.4vh 3vh rgba(0,0,0,.35)}
 .dock{height:11.11vh;border-radius:3.33vh;background:var(--card);display:flex;align-items:center;justify-content:space-between;padding:0 1.67vh;flex-shrink:0;gap:.56vh}
 .db{flex:1;height:9.44vh;border:none;border-radius:2.22vh;background:transparent;color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.56vh;font-family:inherit}
-.db i{width:7vh;height:7vh;border-radius:2vh;display:flex;align-items:center;justify-content:center}
-.db i svg{width:3.9vh;height:3.9vh}
+.db i{width:6.2vh;height:6.2vh;border-radius:2vh;display:flex;align-items:center;justify-content:center}
+.db i svg{width:3.5vh;height:3.5vh}
 .db span{font-size:1.67vh;color:var(--muted);white-space:nowrap}
 #carBox{position:relative;flex:1;min-height:0;border-radius:3.89vh;background:var(--stage);overflow:hidden;border:none;padding:0}
 body.day #carBox{box-shadow:inset 0 0 0 1px #E3E8EE}
@@ -65,7 +65,7 @@ body.day #start .cap{background:radial-gradient(circle at 50% 22%,#fff,rgba(255,
 .db i svg{stroke:#fff !important;color:#fff}
 body.day .db i{background:#FFFFFF !important;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 .8vh 2vh rgba(0,0,0,.08) !important}
 body.day .db i svg{stroke:#0A0A0A !important;color:#0A0A0A}
-.db span{display:none}
+.db span{display:block;font-size:1.5vh;letter-spacing:.04em}
 #clock{font-family:'Inter',sans-serif !important;font-weight:200 !important;letter-spacing:-.2vh !important}
 #temp,#pct{font-family:'Inter',sans-serif !important;font-weight:300 !important}
 .c .sg{font-weight:600}
@@ -142,12 +142,12 @@ var IC = {
   hifi: '<rect x="5" y="2.5" width="14" height="19" rx="2.5"/><circle cx="12" cy="14.5" r="4"/><circle cx="12" cy="14.5" r="1.2"/><circle cx="12" cy="6.5" r="1.4"/>',
   set: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'
 };
-[['Haritalar', 'map', '#2F80ED', 'split'], ['Müzik', 'sp', '#1F9D55', 'spotify'], ['Android Auto', 'aa', '#5A6B85', 'aa'],
- ['Radyo', 'rad', '#C98A3A', 'radio'], ['Denon Hi-Fi', 'hifi', '#3A3F47', 'eq'], ['Sade ekran', 'drv', '#2C9C84', 'minimal'], ['Ayarlar', 'set', '#4A5566', 'settings']]
+[['Harita', 'map', '#2F80ED', 'split'], ['Müzik', 'music', '#1F9D55', 'spotify'], ['Android Auto', 'aa', '#5A6B85', 'aa'],
+ ['Radyo', 'radio', '#C98A3A', 'radio'], ['Ekolayzır', 'eq', '#3A3F47', 'eq'], ['Sade ekran', 'gauge', '#2C9C84', 'minimal'], ['Ayarlar', 'settings', '#4A5566', 'settings']]
 .forEach(function (a) {
   var b = document.createElement('button'); b.className = 'key db';
   b.setAttribute('aria-label', a[0]);
-  b.innerHTML = '<i style="background:' + a[2] + '"><svg viewBox="0 0 24 24" fill="none" stroke="' + (a[4] || '#fff') + '" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + IC[a[1]] + '</svg></i>';
+  b.innerHTML = '<i style="background:' + a[2] + ';color:#fff">' + icon(a[1], 'dic') + '</i><span>' + a[0] + '</span>';
   b.onclick = function () { if (a[3]) call('open', a[3]); };
   $('dock').appendChild(b);
 });

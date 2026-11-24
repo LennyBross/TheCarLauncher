@@ -57,7 +57,9 @@ body.day .bars i.on{box-shadow:none}
 /* bottom keys: pictograms only */
 #keys{grid-column:1/4;display:flex;gap:1.4vh;padding:1.4vh}
 .keys button{flex:1}
-.keys button svg{width:5vh;height:5vh}
+.keys button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6vh}
+.keys button svg{width:4.2vh;height:4.2vh}
+.keys button em{font-style:normal;font-size:1.5vh;letter-spacing:.12em;text-transform:uppercase;opacity:.8}
 .keys button.mag{color:var(--mag);box-shadow:inset 0 0 0 1px rgba(255,79,216,.35)}
 .keys button.mag.on{background:rgba(255,79,216,.14);box-shadow:inset 0 0 0 1px var(--mag),0 0 2vh rgba(255,79,216,.35)}
 #lookM{position:fixed;right:3vh;top:11vh;z-index:30;display:none;flex-direction:column;gap:2vh;padding:2.4vh;width:52vh;background:var(--bg);border-radius:1.4vh;box-shadow:inset 0 0 0 1px var(--vfd),0 0 4vh rgba(0,0,0,.8)}
@@ -125,19 +127,13 @@ body.day .bars i.on{box-shadow:none}
 <script>
 // Tell-tale style pictograms for the key row (no words)
 var K = [
-  ['nav', '<path d="M21 3 3 10.5l7.5 3L14 21z"/>', 'Navigasyon'],
-  ['srcPick', '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>', 'Müzik'],
-  ['radio', '<rect x="2" y="8" width="20" height="13" rx="2"/><path d="M6 8l12-5"/><circle cx="8" cy="14.5" r="2.5"/><path d="M14 13h4M14 16h4"/>', 'Radyo'],
-  ['aa', '<path d="M12 3 4 20l8-4 8 4z"/>', 'Android Auto'],
-  ['engine', '<path d="M3 15h4l2-3h6l2 3h4"/><path d="M8 12V9h8v3"/><path d="M10 9V6h4v3"/><circle cx="6.5" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/>', 'Motor sesi', 'mag'],
-  ['vehicle', '<path d="M3 15v-3l2.2-4.5A2 2 0 0 1 7 6.5h10a2 2 0 0 1 1.8 1L21 12v3"/><rect x="2.5" y="12" width="19" height="5" rx="1.5"/><path d="M5 17v2M19 17v2"/>', 'Aracım'],
-  ['minimal', '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', 'Sade ekran'],
-  ['settings', '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>', 'Ayarlar']];
+  ['nav', MYDS_ICONS.nav, 'Harita'], ['srcPick', MYDS_ICONS.music, 'Müzik'], ['radio', MYDS_ICONS.radio, 'Radyo'], ['aa', MYDS_ICONS.aa, 'Android Auto'],
+  ['engine', MYDS_ICONS.engine, 'Motor sesi', 'mag'], ['vehicle', MYDS_ICONS.car, 'Aracım'], ['minimal', MYDS_ICONS.gauge, 'Sade ekran'], ['settings', MYDS_ICONS.settings, 'Ayarlar']];
 var hasMaps = false;
 K.forEach(function (k) {
   var b = document.createElement('button'); b.className = 'key' + (k[3] ? ' ' + k[3] : ''); b.id = 'k-' + k[0];
   b.setAttribute('aria-label', k[2]);
-  b.innerHTML = '<svg class="ic" viewBox="0 0 24 24">' + k[1] + '</svg>';
+  b.innerHTML = '<svg class="ic" viewBox="0 0 24 24">' + k[1] + '</svg><em>' + k[2] + '</em>';
   b.onclick = function () {
     var w = k[0];
     if (w === 'nav') w = 'split';

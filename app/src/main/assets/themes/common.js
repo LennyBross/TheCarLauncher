@@ -170,3 +170,36 @@ function carPhoto(holder, o) {
   api.nose = function () { return REAL[cur] ? -0.75 : Math.sin(((Math.round(api.az / 45) * 45)) * Math.PI / 180); };
   return api;
 }
+
+// ---- One icon set for every theme: plain pictograms that say what the button does ----------------
+// Stroke icons on a 24×24 grid (stroke = currentColor); themes pick size and colour.
+var MYDS_ICONS = (function () {
+  // gear with 8 square teeth, generated so it stays crisp at any size
+  var g = '', n = 8, R1 = 9.2, R2 = 7.2;
+  for (var i = 0; i < n * 4; i++) {
+    var a = (i / (n * 4)) * Math.PI * 2 - Math.PI / 2 - Math.PI / (n * 4), r = (i % 4 < 2) ? R1 : R2;
+    g += (i ? 'L' : 'M') + (12 + r * Math.cos(a)).toFixed(2) + ' ' + (12 + r * Math.sin(a)).toFixed(2);
+  }
+  return {
+    nav: '<path d="M20.5 3.5 3.5 10.6l7 2.9 2.9 7z"/>',
+    map: '<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6z"/><path d="M9 4v14M15 6v14"/>',
+    music: '<path d="M9 18V5.5l11-2.2v12.5"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="15.8" r="2.5"/>',
+    radio: '<rect x="2.5" y="8.5" width="19" height="12" rx="2"/><path d="M7 8.5 17.5 3.5"/><circle cx="8" cy="14.5" r="3"/><path d="M14 12.5h4.5M14 15h4.5M14 17.5h4.5"/>',
+    aa: '<rect x="2.5" y="5.5" width="6.5" height="12" rx="1.5"/><path d="M5 15h1.5"/><rect x="12.5" y="6.5" width="9" height="8" rx="1.4"/><path d="M15 18.5h4M17 14.5v4"/><path d="M9.8 10.5h1.8M10.8 9.5l1 1-1 1"/>',
+    phone: '<path d="M5 3h3.5l1.8 4.5-2.3 1.4a11 11 0 0 0 7.1 7.1l1.4-2.3L21 15.5V19a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z"/>',
+    apps: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
+    eq: '<path d="M5 21v-7M5 10V3M12 21v-9M12 8V3M19 21v-5M19 12V3"/><path d="M2.5 14h5M9.5 8h5M16.5 16h5"/>',
+    gauge: '<path d="M4.2 18a9 9 0 1 1 15.6 0"/><path d="M12 13.5 16 9"/><circle cx="12" cy="13.5" r="1.4"/><path d="M8 18h8"/>',
+    engine: '<path d="M4 10h2V7.5h4V6h4v1.5h3l2 2.5h2v6h-2l-2 2.5H8L6 16H4z"/><path d="M1.5 11v4"/>',
+    car: '<path d="M2.5 16.5v-3.4l2.6-.9 2.8-4.2h7.3l3.6 4.2 2.7.7v3.6h-1.6"/><path d="M9.1 16.5h5.8M4.9 16.5H2.5"/><circle cx="7" cy="16.8" r="2"/><circle cx="17" cy="16.8" r="2"/><path d="M8.8 12.2h9.4"/>',
+    settings: '<path d="' + g + 'Z"/><circle cx="12" cy="12" r="3"/>',
+    home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/><path d="M10 20v-5h4v5"/>',
+    night: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    screen: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+    split: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/>'
+  };
+})();
+// <svg> markup for an icon; cls defaults to the common "ic" stroke style
+function icon(name, cls) {
+  return '<svg class="' + (cls || 'ic') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (MYDS_ICONS[name] || '') + '</svg>';
+}

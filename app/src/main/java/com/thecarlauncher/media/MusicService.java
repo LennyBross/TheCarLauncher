@@ -112,10 +112,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         session.setCallback(new MediaSession.Callback() {
             // While the built-in FM radio is the source, steering-wheel keys drive the tuner.
             @Override public void onPlay() { if (!radio()) play(); }
-            @Override public void onPause() { if (radio()) RadioController.get(MusicService.this).stop(); else pause(); }
-            @Override public void onStop() { if (radio()) RadioController.get(MusicService.this).stop(); else pause(); }
-            @Override public void onSkipToNext() { if (radio()) RadioController.get(MusicService.this).seekUp(); else next(); }
-            @Override public void onSkipToPrevious() { if (radio()) RadioController.get(MusicService.this).seekDown(); else previous(); }
+            @Override public void onPause() { if (web()) com.thecarlauncher.radio.WebRadio.get(MusicService.this).stop(); else if (radio()) RadioController.get(MusicService.this).stop(); else pause(); }
+            @Override public void onStop() { if (web()) com.thecarlauncher.radio.WebRadio.get(MusicService.this).stop(); else if (radio()) RadioController.get(MusicService.this).stop(); else pause(); }
+            @Override public void onSkipToNext() { if (web()) com.thecarlauncher.radio.WebRadio.get(MusicService.this).skip(true); else if (radio()) RadioController.get(MusicService.this).seekUp(); else next(); }
+            @Override public void onSkipToPrevious() { if (web()) com.thecarlauncher.radio.WebRadio.get(MusicService.this).skip(false); else if (radio()) RadioController.get(MusicService.this).seekDown(); else previous(); }
             @Override public void onSeekTo(long pos) { seekTo((int) pos); }
         });
         Intent open = new Intent(this, LauncherActivity.class).putExtra(LauncherActivity.EXTRA_SCREEN, "media");
@@ -388,6 +388,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         }
         return true;
     }
+
+    private boolean web() { return com.thecarlauncher.radio.WebRadio.get(this).isPlaying(); }
 
     private boolean radio() {
         return RadioController.get(this).isActive();

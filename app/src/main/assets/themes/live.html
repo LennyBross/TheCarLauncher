@@ -159,11 +159,7 @@ body.photo #spin,body.photo #glowF,body.photo #glowR,body.photo .blk{display:blo
 <script>
 var night = true;
 // ---------------------------------------------------------------- dock & popovers
-var DOCK = [['music', 'Müzik', '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>'],
-  ['apps', 'Uygulamalar', '<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>'],
-  ['engine', 'Motor', '<path d="M3 15h4l2-3h6l2 3h4"/><path d="M8 12V9h8v3"/><path d="M10 9V6h4v3"/><circle cx="6.5" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/>'],
-  ['screen', 'Ekran', '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>'],
-  ['settings', 'Ayarlar', '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>']];
+var DOCK = [['music', 'Müzik', MYDS_ICONS.music], ['apps', 'Uygulamalar', MYDS_ICONS.apps], ['engine', 'Motor sesi', MYDS_ICONS.engine], ['screen', 'Ekran', MYDS_ICONS.screen], ['settings', 'Ayarlar', MYDS_ICONS.settings]];
 function closePops() { [].forEach.call(document.querySelectorAll('.pop'), function (p) { p.classList.remove('on'); }); }
 DOCK.forEach(function (d) {
   var b = document.createElement('button'); b.className = 'key';

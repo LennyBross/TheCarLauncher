@@ -773,6 +773,17 @@ public class ThemeScreen extends Screen {
         public void hifiBT(int bass, int treble) { com.thecarlauncher.media.Tone.get(act).bassTreble(bass, treble); }
 
         @JavascriptInterface
+        public String webRadioState() { return com.thecarlauncher.radio.WebRadio.get(act).state(); }
+        @JavascriptInterface
+        public void webRadioPlay(String name, String url) { com.thecarlauncher.radio.WebRadio.get(act).play(name, url); }
+        @JavascriptInterface
+        public void webRadioStop() { com.thecarlauncher.radio.WebRadio.get(act).stop(); }
+        @JavascriptInterface
+        public void webRadioFavs(String json) { com.thecarlauncher.radio.WebRadio.get(act).setFavs(json); }
+        /** Runs on the bridge thread (not the UI thread), so the network call is fine here. */
+        @JavascriptInterface
+        public String webRadioSearch(String q) { return com.thecarlauncher.radio.WebRadio.get(act).search(q); }
+        @JavascriptInterface
         public void radioTune(final int khz) { main.post(new Runnable() { public void run() { com.thecarlauncher.radio.HcnRadio.tuneSmart(act, khz); } }); }
 
         @JavascriptInterface

@@ -162,6 +162,7 @@ public final class RadioController implements K706Tuner.Listener {
     /** Makes FM the audio source (like pressing Radio on the factory unit) and tunes the last station. */
     public boolean start() {
         if (!available()) return false;
+        try { WebRadio w = WebRadio.get(app); if (w.isPlaying()) w.stop(); } catch (Throwable ignored) { }
         if (active) return true;
         MediaHub.get(app).onRadioStarting();
         if (car) {
