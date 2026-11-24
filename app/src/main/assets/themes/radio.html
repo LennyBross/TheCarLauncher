@@ -95,6 +95,22 @@ body.t-stock .st,body.t-stock #now{background:linear-gradient(180deg,rgba(36,37,
 body.t-stock .st.on{box-shadow:inset 0 0 0 1px rgba(240,222,186,.7),0 0 14px rgba(240,215,170,.2)}
 html.noir body:not(.day) .key.chip.hot{background:#F5F5F5 !important;color:#050505 !important}
 html.noir body.day .key.chip.hot{background:#0A0A0A !important;color:#fff !important}
+/* Bigger type for reading at a glance while driving */
+.sub{font-size:2vh}
+.fav span{font-size:1.9vh}
+.chip{font-size:2.3vh}
+#cats .chip,#subs .chip{height:6.2vh;font-size:2.4vh;padding:0 2.4vh}
+#subs .chip{height:5.6vh;font-size:2.2vh}
+#sts{grid-template-columns:1fr 1fr;grid-auto-rows:11.5vh;gap:1.4vh}
+.st{gap:1.6vh;min-height:10.5vh}
+.st b{font-size:2.7vh}
+.st small{font-size:2vh}
+.mono.sm{width:7.8vh;height:7.8vh;font-size:2.6vh}
+#nowN{font-size:3.9vh !important}
+#nowS{font-size:2.4vh !important}
+#q{font-size:2.6vh;height:7.2vh}
+#modeSw button{font-size:2.3vh;height:6vh}
+#wFavs .st{min-height:10.5vh}
 </style>
 </head>
 <body>
@@ -171,7 +187,7 @@ function grid(box, list, cls, onHold) {
 }
 function paintFavs() {
   grid($('favs'), favs, 'fav', function (i) { favs.splice(i, 1); save(); paint(); });
-  if (!favs.length) $('favs').innerHTML = '<div class="sub" style="grid-column:1/4;font-size:2vh;line-height:1.5;padding:1vh">Beğendiğin istasyonda ♥ tuşuna bas, burada dursun. Dokununca o istasyona geçer.</div>';
+  if (!favs.length) $('favs').innerHTML = '<div class="sub" style="grid-column:1/-1;font-size:2vh;line-height:1.5;padding:1vh">Beğendiğin istasyonda ♥ tuşuna bas, burada dursun. Dokununca o istasyona geçer.</div>';
   $('presetBox').style.display = presets.length ? 'block' : 'none';
   grid($('presets'), presets, 'fav', null);
 }
@@ -337,14 +353,14 @@ function paintCats() {
   $('subs').style.display = g.sub ? 'flex' : 'none';
   if (g.sub) chipRow($('subs'), g.sub.map(function (s) { return s[0]; }), subAt[gAt] || 0, function (i) { subAt[gAt] = i; store('radio.sub', JSON.stringify(subAt)); paintCats(); paintSts(); });
 }
-function msg(t) { $('sts').innerHTML = '<div class="sub" style="grid-column:1/4;font-size:2vh;line-height:1.5">' + t + '</div>'; }
-function subtitle(s, g) { var t = (s.tags || '').split(',').filter(Boolean).slice(0, 2).join(' · '); return [s.st, t, s.kbps ? s.kbps + ' kbps' : ''].filter(Boolean).join(' · ') || g; }
+function msg(t) { $('sts').innerHTML = '<div class="sub" style="grid-column:1/-1;font-size:2vh;line-height:1.5">' + t + '</div>'; }
+function subtitle(s, g) { var t = (s.tags || '').split(',').filter(Boolean).slice(0, 2).join(' · '); return [s.st, t].filter(Boolean).join(' · ') || g; }
 // a live list: ask the unit (it fetches in the background), then poll for the answer
 function live(qs, names, col, label) {
   var tok = ++listTok, g = $('sts'); g.innerHTML = '';
   (names || []).forEach(function (n) { g.appendChild(tile(n, label, '', col)); });
   if (!qs.length) { if (!g.children.length) msg('Liste boş.'); return; }
-  var wait = document.createElement('div'); wait.className = 'sub'; wait.style.cssText = 'grid-column:1/4;font-size:1.9vh;padding:1vh'; wait.textContent = 'Radyolar yükleniyor…'; g.appendChild(wait);
+  var wait = document.createElement('div'); wait.className = 'sub'; wait.style.cssText = 'grid-column:1/-1;font-size:1.9vh;padding:1vh'; wait.textContent = 'Radyolar yükleniyor…'; g.appendChild(wait);
   var shown = {}; (names || []).forEach(function (n) { shown[n.toLowerCase()] = 1; });
   (function next(i) {
     if (tok !== listTok) return;
