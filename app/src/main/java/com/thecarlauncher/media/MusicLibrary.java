@@ -98,9 +98,12 @@ public final class MusicLibrary {
                         folder = slash > 0 ? data.substring(0, slash) : data;
                     }
                     if (data != null) indexed.add(data);
-                    out.add(new Track(cur.getLong(0), clean(cur.getString(1), "Unknown title"),
+                    Track tr = new Track(cur.getLong(0), clean(cur.getString(1), "Unknown title"),
                             clean(cur.getString(2), "Unknown artist"), clean(cur.getString(3), "Unknown album"),
-                            cur.getLong(4), cur.getLong(5), cur.getLong(6), folder));
+                            cur.getLong(4), cur.getLong(5), cur.getLong(6), folder);
+                    TagIndex.Tags tg = data == null ? null : TagIndex.get(c, data);
+                    if (tg != null) { tr.genre = tg.genre; tr.year = tg.year; tr.trackNo = tg.track; }
+                    out.add(tr);
                 }
             }
         } catch (Exception ignored) {
@@ -225,11 +228,28 @@ public final class MusicLibrary {
                     artist = base.substring(0, dash).trim();
                     title = base.substring(dash + 3).trim();
                 }
+                String album = dir.getName();
+                long duration = 0;
+                TagIndex.Tags tg = TagIndex.get(c, f);
+                String albumKey = folder;
+                if (tg != null) {
+                    if (!tg.title.isEmpty()) title = tg.title;
+                    if (!tg.artist.isEmpty()) artist = tg.artist;
+                    else if (!tg.albumArtist.isEmpty()) artist = tg.albumArtist;
+                    if (!tg.album.isEmpty()) {
+                        album = tg.album;
+                        // an album is the same album in any folder: album artist + name
+                        albumKey = (tg.albumArtist.isEmpty() ? artist : tg.albumArtist).toLowerCase() + "|" + tg.album.toLowerCase();
+                    }
+                    duration = tg.duration;
+                }
                 long id = -1 - (f.getPath().hashCode() & 0x7fffffffL);
-                long albumId = -1 - (folder.hashCode() & 0x7fffffffL);
+                long albumId = -1 - (albumKey.hashCode() & 0x7fffffffL);
                 long artistId = -1 - (artist.toLowerCase().hashCode() & 0x7fffffffL);
                 paths.put(id, f.getPath());
-                out.add(new Track(id, title, artist, dir.getName(), albumId, artistId, 0, folder, f.getPath()));
+                Track tr = new Track(id, title, artist, album, albumId, artistId, duration, folder, f.getPath());
+                if (tg != null) { tr.genre = tg.genre; tr.year = tg.year; tr.trackNo = tg.track; }
+                out.add(tr);
                 count[0]++;
             }
         }
@@ -317,6 +337,25 @@ public final class MusicLibrary {
         return out;
     }
 
+    /** Songs by genre (from the files' tags); songs without one go under "Unknown genre". */
+    public static List<Group> genres(Context c) {
+        Map<String, Group> map = new LinkedHashMap<>();
+        for (Track t : all(c)) {
+            String g0 = t.genre == null ? "" : t.genre.trim();
+            String k = "genre:" + g0.toLowerCase();
+            Group g = map.get(k);
+            if (g == null) {
+                g = new Group(k, g0.isEmpty() ? com.thecarlauncher.mib.Mib.t(c, "Nepoznat žanr", "Unknown genre") : g0);
+                g.artAlbumId = t.albumId;
+                map.put(k, g);
+            }
+            g.count++;
+        }
+        List<Group> out = sorted(map);
+        for (Group g : out) g.subtitle = g.count + (g.count == 1 ? " song" : " songs");
+        return out;
+    }
+
     public static List<Group> folders(Context c) {
         Map<String, Group> map = new LinkedHashMap<>();
         for (Track t : all(c)) {
@@ -353,7 +392,7 @@ public final class MusicLibrary {
         List<Track> out = new ArrayList<>();
         for (Track t : all) {
             if (ctx.equals("album:" + t.albumId) || ctx.equals("artist:" + t.artistId)
-                    || ctx.equals("folder:" + t.folder)) {
+                    || ctx.equals("folder:" + t.folder) || ctx.equals("genre:" + (t.genre == null ? "" : t.genre.trim().toLowerCase()))) {
                 out.add(t);
             }
         }
@@ -362,6 +401,8 @@ public final class MusicLibrary {
             Collections.sort(out, new Comparator<Track>() {
                 @Override
                 public int compare(Track a, Track b) {
+                    // track numbers from the tags when there are any, else the order Android lists them in
+                    if (a.trackNo > 0 || b.trackNo > 0) return Integer.compare(a.trackNo > 0 ? a.trackNo : 9999, b.trackNo > 0 ? b.trackNo : 9999);
                     return Long.compare(a.id, b.id);
                 }
             });

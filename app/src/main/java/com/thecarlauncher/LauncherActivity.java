@@ -126,6 +126,11 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         mf.addAction(Intent.ACTION_MEDIA_REMOVED);
         mf.addDataScheme("file");
         registerReceiver(mediaMount, mf);
+        // tags read in the background refresh the open music lists
+        com.thecarlauncher.media.TagIndex.onUpdated = new Runnable() {
+            public void run() { for (Screen s : screens) if (s != null && s.isCreated()) s.onPermissionsChanged(); }
+        };
+        com.thecarlauncher.media.TagIndex.scan(this);   // a stick already in at start
         Mib.loadAmbient(this);
         enableAnimations();
         com.thecarlauncher.media.Tone.get(this).attachGlobal();
@@ -898,9 +903,10 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
     private final android.content.BroadcastReceiver mediaMount = new android.content.BroadcastReceiver() {
         @Override
         public void onReceive(android.content.Context c, Intent i) {
-            // USB stick plugged in or removed: read the library again.
+            // USB stick plugged in or removed: read the library again, then the songs' tags in the background.
             MusicLibrary.invalidate();
             for (Screen s : screens) if (s != null && s.isCreated()) s.onPermissionsChanged();
+            if (Intent.ACTION_MEDIA_MOUNTED.equals(i.getAction())) com.thecarlauncher.media.TagIndex.scan(c);
         }
     };
 

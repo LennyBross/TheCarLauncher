@@ -11,6 +11,9 @@ public final class Track {
     public final String path;
     /** Music video (MP4 …): played with its picture where the cover is. */
     public final boolean video;
+    /** From the file's tags (USB / SD): genre, year, track number; empty / 0 when unknown. */
+    public String genre = "";
+    public int year, trackNo;
 
     public Track(long id, String title, String artist, String album, long albumId, long artistId,
                  long duration, String folder) {

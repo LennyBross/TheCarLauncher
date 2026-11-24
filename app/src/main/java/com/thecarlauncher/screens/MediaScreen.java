@@ -43,7 +43,7 @@ public class MediaScreen extends Screen implements MediaHub.Listener {
     private MibProgress progress;
     private MibBar bar, browseBar;
     private MibBar.Key sourceKey, playKey;
-    private final MibBar.Key[] tabKeys = new MibBar.Key[4];
+    private final MibBar.Key[] tabKeys = new MibBar.Key[5];
     private ListView list;
 
     private int tab;
@@ -286,9 +286,9 @@ public class MediaScreen extends Screen implements MediaHub.Listener {
                 onBack();
             }
         });
-        String[][] tabs = {{"Pesme", "Songs"}, {"Albumi", "Albums"}, {"Izvođači", "Artists"}, {"Fascikle", "Folders"}};
-        int[] icons = {R.drawable.ui_key_music, R.drawable.ui_key_cd, R.drawable.ui_ic_person, R.drawable.ui_ic_folder};
-        for (int i = 0; i < 4; i++) {
+        String[][] tabs = {{"Pesme", "Songs"}, {"Albumi", "Albums"}, {"Izvođači", "Artists"}, {"Fascikle", "Folders"}, {"Žanrovi", "Genres"}};
+        int[] icons = {R.drawable.ui_key_music, R.drawable.ui_key_cd, R.drawable.ui_ic_person, R.drawable.ui_ic_folder, R.drawable.ui_ic_eq};
+        for (int i = 0; i < 5; i++) {
             final int idx = i;
             tabKeys[i] = browseBar.add(s(tabs[i][0], tabs[i][1]), icons[i], new View.OnClickListener() {
                 @Override
@@ -573,10 +573,10 @@ public class MediaScreen extends Screen implements MediaHub.Listener {
     }
 
     private void loadTab() {
-        for (int i = 0; i < 4; i++) tabKeys[i].setActive(i == tab);
+        for (int i = 0; i < 5; i++) tabKeys[i].setActive(i == tab);
         final int forTab = tab;
         final MusicLibrary.Group group = openGroup;
-        String[] names = {s("Pesme", "Songs"), s("Albumi", "Albums"), s("Izvođači", "Artists"), s("Fascikle", "Folders")};
+        String[] names = {s("Pesme", "Songs"), s("Albumi", "Albums"), s("Izvođači", "Artists"), s("Fascikle", "Folders"), s("Žanrovi", "Genres")};
         path.setText("USB / SD  ›  " + names[tab] + (group != null ? "  ›  " + group.title : ""));
         empty.setVisibility(View.GONE);
         new Thread(new Runnable() {
@@ -587,6 +587,7 @@ public class MediaScreen extends Screen implements MediaHub.Listener {
                 else if (forTab == 0) data.addAll(MusicLibrary.all(act));
                 else if (forTab == 1) data.addAll(MusicLibrary.albums(act));
                 else if (forTab == 2) data.addAll(MusicLibrary.artists(act));
+                else if (forTab == 4) data.addAll(MusicLibrary.genres(act));
                 else data.addAll(MusicLibrary.folders(act));
                 main.post(new Runnable() {
                     @Override
@@ -700,7 +701,7 @@ public class MediaScreen extends Screen implements MediaHub.Listener {
                 Track t = (Track) o;
                 h.title.setText(t.title);
                 h.title.setTextColor(cur != null && cur.id == t.id ? Mib.BLUE : Mib.WHITE);
-                h.sub.setText(t.artist + "  ·  " + t.album);
+                h.sub.setText(t.artist + "  ·  " + t.album + (t.year > 0 ? "  ·  " + t.year : "") + (t.genre != null && !t.genre.isEmpty() ? "  ·  " + t.genre : ""));
                 h.meta.setText(Ui.time(t.duration));
                 ArtLoader.into(act, h.icon, t.albumId, R.drawable.ui_ic_note);
             } else {
@@ -709,7 +710,7 @@ public class MediaScreen extends Screen implements MediaHub.Listener {
                 h.title.setTextColor(Mib.WHITE);
                 h.sub.setText(g.subtitle);
                 h.meta.setText(String.valueOf(g.count));
-                int fb = tab == 2 ? R.drawable.ui_ic_person : tab == 3 ? R.drawable.ui_ic_folder : R.drawable.ui_ic_cd;
+                int fb = tab == 2 ? R.drawable.ui_ic_person : tab == 3 ? R.drawable.ui_ic_folder : tab == 4 ? R.drawable.ui_ic_eq : R.drawable.ui_ic_cd;
                 if (tab == 1) {
                     ArtLoader.into(act, h.icon, g.artAlbumId, fb);
                 } else {
