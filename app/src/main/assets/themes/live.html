@@ -309,6 +309,7 @@ function init3D() {
           }
           // Tinted windows (black film): the greenhouse glass goes nearly opaque and dark
           if (m.transparent && /lights_lod0 \[env/.test(nm)) { m.color.setHex(0x05070a); m.opacity = .9; m.roughness = .05; m.metalness = .6; }
+          if (m.name === 'window_black') { m.envMapIntensity = 0.3; m.roughness = 0.16; }   // tinted-black glass: nothing of the cabin shows
           if (m.transparent) { m.depthWrite = false; o.renderOrder = 2; }
         });
       });
@@ -332,11 +333,14 @@ function init3D() {
   canvas.addEventListener('pointerup', function () { clearTimeout(lp); });
 
   function ease(p, want, sp) { return p + (want - p) * sp; }
+  var lastF = 0;
   function frame(now) {
     requestAnimationFrame(frame);
     if (document.hidden || window.__asleep) return;
+    if (now - lastF < 32) return;                                  // 30 fps is plenty for a slow turn
+    var dt = Math.min(.1, (now - (lastF || now)) / 1000); lastF = now;
     var t = (now - t0) / 1000;
-    if (now - idleSince > 9000 && !drag) azT += .0016;            // slow showroom turn when nothing happens
+    if (now - idleSince > 9000 && !drag) azT += .04 * dt;          // slow showroom turn (~2.3°/s) when nothing happens
     az = ease(az, azT, .05);
     cam.position.set(Math.cos(az) * Math.cos(el) * dist, Math.sin(el) * dist + .2, -Math.sin(az) * Math.cos(el) * dist).add(new THREE.Vector3(0, 0, 0));
     cam.lookAt(TGT);
@@ -418,12 +422,12 @@ function fpsTick(now) {
     return ce.apply(console, arguments);
   };
 })();
-// Photos by default (fast, the GPU stays free); live 3D only when chosen on the vehicle page.
-if (store('myds.3d') !== '3d') toPhoto('pref');
+// Live 3D by default (lighter model: no interior, black glass); photos when chosen on the vehicle page.
+if (store('myds.3d') === 'photo') toPhoto('pref');
 else {
   var ls = function (l, done) { if (!l.length) return done(); var e = document.createElement('script'); e.src = l[0]; e.onload = function () { ls(l.slice(1), done); }; e.onerror = function () { toPhoto('nofile'); }; document.body.appendChild(e); };
   ls(['3d/three.min.js', '3d/GLTFLoader.js'], function () { try { init3D(); } catch (e) { toPhoto('error'); } });
-  setTimeout(function () { if (!window.__shown3d) toPhoto('slow'); }, 10000);
+  setTimeout(function () { if (!window.__shown3d) toPhoto('slow'); }, 15000);
 }
 window.__sleep = function (v) { window.__asleep = v; };
 

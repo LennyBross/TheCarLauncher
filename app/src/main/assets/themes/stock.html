@@ -552,8 +552,8 @@ function loadScripts(list, done) {
   s.onload = function () { loadScripts(list.slice(1), done); }; s.onerror = function () { fallback('nofile'); };
   document.body.appendChild(s);
 }
-// Photos by default (fast, the GPU stays free); live 3D only when chosen on the vehicle page.
-if (store('myds.3d') !== '3d' || !webglOK() || /sprite/.test(location.hash)) fallback('photo');
+// Live 3D by default (lighter model: no interior, black glass); photos when chosen on the vehicle page.
+if (store('myds.3d') === 'photo' || !webglOK() || /sprite/.test(location.hash)) fallback('photo');
 else loadScripts(['3d/three.min.js', '3d/GLTFLoader.js', '3d/RoomEnvironment.js', '3d/ds4model.js'], function () { try { init3D(); } catch (e) { fallback('init'); } });
 if (mode !== 'sprite') setTimeout(function () { if (!api || !api.shown) fallback('timeout'); }, 15000);
 
@@ -614,12 +614,13 @@ function init3D() {
           pm.name = 'body';
           if (Array.isArray(o.material)) o.material[k] = pm; else o.material = pm;
         }
+        if (m.name === 'window_black') { m.envMapIntensity = 0.3; m.roughness = 0.16; }   // tinted-black glass: nothing of the cabin shows
         if (m.transparent) { m.depthWrite = false; o.castShadow = false; o.renderOrder = 2; }
       });
     });
     scene.add(model);
     shown = true; $('load').style.display = 'none';
-    if (doIntro) fly(REST[0], REST[1], 2800, true);
+    if (doIntro) fly(REST[0], REST[1], 4600, true);   // slower first turn
   }, function () { fallback('load'); });
 
   var stopped = false, slowSince = 0, lastT = 0, sleeping = false;
@@ -632,6 +633,7 @@ function init3D() {
   };
   window.__pose = function (a, e) { tw = null; az = a; el = e; place(); renderer.render(scene, camera); };
   place();
+  var lastSig = '', renders = 0;
   function loop(now) {
     if (stopped || sleeping) return;
     if (shown && lastT) {
@@ -644,8 +646,9 @@ function init3D() {
       az = tw.az + tw.dAz * k; el = tw.el + tw.dEl * k;
       if (t >= 1) tw = null;
     } else if (tw && !shown) tw.t0 = now;
-    place();
-    renderer.render(scene, camera);
+    // draw only when the view moved: a still car costs no GPU time
+    var sig = az.toFixed(3) + ',' + el.toFixed(3) + (shown ? 1 : 0);
+    if (sig !== lastSig || !shown || renders < 3) { place(); renderer.render(scene, camera); lastSig = sig; renders++; }
     requestAnimationFrame(loop);
   }
   loop(performance.now());
