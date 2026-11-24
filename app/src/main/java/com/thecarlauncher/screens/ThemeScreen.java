@@ -777,6 +777,10 @@ public class ThemeScreen extends Screen {
         @JavascriptInterface
         public void webRadioPlay(String name, String url) { com.thecarlauncher.radio.WebRadio.get(act).play(name, url); }
         @JavascriptInterface
+        public void webRadioList(String q) { com.thecarlauncher.radio.WebRadio.get(act).listAsync(q); }
+        @JavascriptInterface
+        public String webRadioResult(String q) { return com.thecarlauncher.radio.WebRadio.get(act).result(q); }
+        @JavascriptInterface
         public void webRadioStop() { com.thecarlauncher.radio.WebRadio.get(act).stop(); }
         @JavascriptInterface
         public void webRadioFavs(String json) { com.thecarlauncher.radio.WebRadio.get(act).setFavs(json); }

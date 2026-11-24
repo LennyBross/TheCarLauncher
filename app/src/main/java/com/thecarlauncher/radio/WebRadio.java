@@ -170,6 +170,69 @@ public final class WebRadio implements AudioManager.OnAudioFocusChangeListener {
         return "";
     }
 
+    // ---- lists for the page (country / genre / city), fetched off the UI thread -------------------
+    private final java.util.Map<String, String> results = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Map<String, Long> resultAt = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Starts a directory query; the page asks result(key) until it is not null.
+     *  q = {"cc":"GR","tag":"news","state":"İzmir","name":"kral","limit":40} (all optional). */
+    public void listAsync(final String q) {
+        Long t = resultAt.get(q);
+        if (t != null && System.currentTimeMillis() - t < 10 * 60_000L && results.containsKey(q)) return;
+        results.remove(q);
+        new Thread(new Runnable() { public void run() {
+            String out = "[]";
+            try {
+                JSONObject o = new JSONObject(q);
+                StringBuilder path = new StringBuilder("/json/stations/search?hidebroken=true&order=clickcount&reverse=true");
+                String[][] keys = { { "cc", "countrycode" }, { "tag", "tag" }, { "state", "state" }, { "name", "name" } };
+                for (String[] k : keys) if (o.optString(k[0]).length() > 0) path.append('&').append(k[1]).append('=').append(URLEncoder.encode(o.optString(k[0]), "UTF-8"));
+                path.append("&limit=").append(o.optInt("limit", 40));
+                out = toList(fetch(path.toString()), o.optInt("limit", 40));
+            } catch (Exception ignored) { }
+            results.put(q, out); resultAt.put(q, System.currentTimeMillis());
+        } }, "webradio-list").start();
+    }
+    public String result(String q) { return results.get(q); }
+
+    private static String toList(String raw, int max) {
+        try {
+            JSONArray a = new JSONArray(raw == null ? "[]" : raw), out = new JSONArray();
+            java.util.HashSet<String> seen = new java.util.HashSet<>();
+            for (int i = 0; i < a.length() && out.length() < max; i++) {
+                JSONObject s = a.getJSONObject(i), o = new JSONObject();
+                String n = s.optString("name").trim().replaceAll("\\s+", " ");
+                if (n.isEmpty() || !seen.add(n.toLowerCase())) continue;
+                o.put("n", n);
+                o.put("u", s.optString("url_resolved", s.optString("url")));
+                o.put("tags", s.optString("tags"));
+                o.put("st", s.optString("state"));
+                o.put("kbps", s.optInt("bitrate"));
+                out.put(o);
+            }
+            return out.toString();
+        } catch (Exception e) { return "[]"; }
+    }
+
+    private String fetch(String path) {
+        for (String h : API) {
+            HttpURLConnection c = null;
+            try {
+                c = (HttpURLConnection) new URL(h + path).openConnection();
+                c.setConnectTimeout(5000); c.setReadTimeout(8000);
+                c.setRequestProperty("User-Agent", UA);
+                if (c.getResponseCode() != 200) continue;
+                InputStream in = c.getInputStream();
+                ByteArrayOutputStream bo = new ByteArrayOutputStream();
+                byte[] b = new byte[8192]; int k;
+                while ((k = in.read(b)) > 0) bo.write(b, 0, k);
+                return bo.toString("UTF-8");
+            } catch (Exception ignored) {
+            } finally { if (c != null) c.disconnect(); }
+        }
+        return null;
+    }
+
     /** Search for the page: [{n, u, tags, logo, kbps}] */
     public String search(String q) {
         String r = searchRaw(q, true, 30);
