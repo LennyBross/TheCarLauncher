@@ -118,7 +118,7 @@ body.day .db i svg{stroke:#0A0A0A !important;color:#0A0A0A}
 </div>
 </div>
 <button id="carBox" class="key" aria-label="Aracım">
-<img id="carSpin" alt="" src="3d/home/h06.webp" style="position:absolute;left:-9%;top:2%;width:118%;height:112%;object-fit:contain;pointer-events:none">
+<img id="carSpin" alt="" src="" style="position:absolute;left:-9%;top:2%;width:118%;height:112%;object-fit:contain;pointer-events:none">
 <span style="position:absolute;left:3.33vh;top:2.78vh;display:flex;flex-direction:column;align-items:flex-start"><span class="sg" style="font-size:3.06vh;color:var(--fg)">Citroën DS4</span><span style="font-size:1.94vh;color:var(--muted)">10 KE 424 · 3D ve bilgiler</span></span>
 </button>
 </div>
@@ -174,21 +174,12 @@ st.addEventListener('pointerdown', function () { st.classList.add('down'); held 
 ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { st.addEventListener(ev, function () { st.classList.remove('down'); clearTimeout(ht); }); });
 st.onclick = function () { if (held) return; if (hasCp) { st.classList.toggle('on'); call('open', 'cpToggle'); } else call('open', 'engine'); };
 
-// The car turns round once, smoothly, and stays in the high ¾ front view.
+// The car: one studio photo in the high ¾ front view (no animation, the GPU stays free).
 (function () {
-  var N = 48, REST = 6, pics = [], ready = 0, el = $('carSpin');
-  for (var i = 0; i < N; i++) { var im = new Image(); im.onload = function () { if (++ready === N) spin(); }; im.src = '3d/home/h' + ('0' + i).slice(-2) + '.webp'; pics.push(im); }
-  function spin() {
-    var t0 = 0, last = -1;
-    function frame(t) {
-      if (!t0) t0 = t;
-      var u = Math.min(1, (t - t0) / 2800), e = u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
-      var k = (REST + Math.round(e * N)) % N;
-      if (k !== last) { last = k; el.src = pics[k].src; }
-      if (u < 1) requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-  }
+  var el = $('carSpin'), im = new Image();
+  el.style.transition = 'opacity .6s ease'; el.style.opacity = '0';
+  im.onload = function () { el.src = im.src; el.style.opacity = '1'; };
+  im.src = '3d/foto/c0_45.webp';
 })();
 
 car.on(function (s) {

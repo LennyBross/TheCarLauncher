@@ -126,3 +126,43 @@ function panelLook(hex) {
   return hex;
 }
 try { if (window.Car && Car.theme && Car.theme() === 4) panelLook(); } catch (e) {}
+
+// Car photos instead of live 3D: studio shots from 8 angles (every 45°, 0 = nose towards the viewer's
+// left-front, 90 = left side) plus a top view, in the six paint colours of the vehicle page.
+// Two stacked <img> layers crossfade, so changing the angle costs one image decode, not a GPU loop.
+// carPhoto(holder, {cls, color}) → { show(az|'top'), az, nose() }
+var CAR_PHOTO_COLORS = 1;   // white only (the owner's car)
+function carPhoto(holder, o) {
+  o = o || {};
+  var col = o.color != null ? o.color : (parseInt(store('myds.color') || '0', 10) || 0);
+  if (!(col >= 0 && col < CAR_PHOTO_COLORS)) col = 0;
+  var a = document.createElement('img'), b = document.createElement('img');
+  [a, b].forEach(function (im) {
+    im.alt = ''; im.draggable = false; if (o.cls) im.className = o.cls;
+    im.style.cssText += ';transition:opacity .45s ease;pointer-events:none;-webkit-user-drag:none';
+    im.style.opacity = '0'; holder.appendChild(im);
+  });
+  var front = a, cur = null, api = { az: 45 };
+  function src(k) { return '3d/foto/c' + col + '_' + k + '.webp'; }
+  // warm the cache with the neighbours so a swipe never waits
+  function warm(k) { if (k === 'top') return; [45, -45].forEach(function (d) { var im = new Image(); im.src = src((k + d + 360) % 360); }); }
+  api.show = function (az, instant) {
+    var k = az === 'top' ? 'top' : ((Math.round(az / 45) * 45) % 360 + 360) % 360;
+    if (az !== 'top') api.az = az;
+    if (k === cur) return k;
+    cur = k;
+    var back = front === a ? b : a, url = src(k);
+    back.onload = function () {
+      back.style.transition = instant ? 'none' : 'opacity .45s ease';
+      front.style.transition = instant ? 'none' : 'opacity .45s ease';
+      back.style.opacity = '1'; front.style.opacity = '0'; front = back;
+      warm(k);
+    };
+    back.src = url;
+    return k;
+  };
+  api.color = function (c) { if (c >= 0 && c < CAR_PHOTO_COLORS && c !== col) { col = c; var k = cur; cur = null; api.show(k === 'top' ? 'top' : api.az, true); } };
+  // where the nose points on screen for the current angle: +1 right … −1 left
+  api.nose = function () { return Math.sin(((Math.round(api.az / 45) * 45)) * Math.PI / 180); };
+  return api;
+}

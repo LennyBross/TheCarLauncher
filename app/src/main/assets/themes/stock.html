@@ -85,6 +85,7 @@ button{background:none;border:none;padding:0;color:inherit}
 #car{left:calc(387px + var(--dx));top:165px;width:506px;height:297px;touch-action:none}
 #car canvas,#car img{position:absolute;left:0;top:0;width:100%;height:100%}
 #car img{display:none;object-fit:contain}
+#car img.ph{display:block}
 #dots{left:calc(610px + var(--dx));top:527px;width:60px;height:14px;display:flex;justify-content:space-between}
 #dots button{width:12px;height:12px;border-radius:50%;background:#77736c;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4)}
 #dots button.on{background:#F3EEE4;box-shadow:0 0 6px rgba(255,245,225,.8)}
@@ -498,15 +499,13 @@ function fallback(why) {
   mode = 'sprite';
   try { if (window.__stop3d) window.__stop3d(); } catch (e) {}
   $('c').style.display = 'none'; $('load').style.display = 'none';
-  var img = $('spin'); img.style.display = 'block';
-  spinFrames = [];
-  for (var i = 0; i < 48; i++) { var im = new Image(); im.src = '3d/home/h' + ('0' + i).slice(-2) + '.webp'; spinFrames.push(im); }
-  showSprite(45);
+  $('spin').remove();
+  spinFrames = carPhoto($('car'), { cls: 'ph' });
+  spinFrames.show(45, true);
 }
 function showSprite(az) {
   spinAz = ((az % 360) + 360) % 360;
-  var i = Math.round(spinAz / 7.5) % 48;
-  $('spin').src = spinFrames[i].src;
+  spinFrames.show(spinAz);
 }
 
 // shared gestures: drag turns the car, tap opens the vehicle page, dots pick a view
@@ -533,12 +532,7 @@ function pick(i) {
   else if (spinFrames) animSprite(VIEWS[i][0], 900);
 }
 document.querySelectorAll('#dots button').forEach(function (b) { b.onclick = function () { clearTimeout(idleT); pick(+b.getAttribute('data-v')); }; });
-function animSprite(to, ms, from) {
-  var a = from === undefined ? spinAz : from, d = to - a;
-  if (from === undefined) { while (d > 180) d -= 360; while (d < -180) d += 360; }
-  var t0 = performance.now();
-  (function f(now) { var t = Math.min(1, (now - t0) / ms), k = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; showSprite(a + d * k); if (t < 1) requestAnimationFrame(f); })(t0);
-}
+function animSprite(to) { showSprite(to); }
 // Turn once on arrival (not again within 10 minutes), then rest on the ¾ front view.
 var doIntro = (Date.now() - (+(store('stock.intro') || 0))) > 600000;
 if (doIntro) store('stock.intro', String(Date.now()));
@@ -554,9 +548,10 @@ function loadScripts(list, done) {
   s.onload = function () { loadScripts(list.slice(1), done); }; s.onerror = function () { fallback('nofile'); };
   document.body.appendChild(s);
 }
-if (!webglOK() || /sprite/.test(location.hash)) fallback('nogl');
+// Photos by default (fast, the GPU stays free); live 3D only when chosen on the vehicle page.
+if (store('myds.3d') !== '3d' || !webglOK() || /sprite/.test(location.hash)) fallback('photo');
 else loadScripts(['3d/three.min.js', '3d/GLTFLoader.js', '3d/RoomEnvironment.js', '3d/ds4model.js'], function () { try { init3D(); } catch (e) { fallback('init'); } });
-setTimeout(function () { if (!api || !api.shown) fallback('timeout'); }, 15000);
+if (mode !== 'sprite') setTimeout(function () { if (!api || !api.shown) fallback('timeout'); }, 15000);
 
 function init3D() {
   if (mode === 'sprite') return;

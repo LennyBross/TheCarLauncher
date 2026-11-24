@@ -156,8 +156,6 @@ body.photo #spin,body.photo #glowF,body.photo #glowR,body.photo .blk{display:blo
 <div id="black"></div>
 
 <script src="common.js"></script>
-<script src="3d/three.min.js"></script>
-<script src="3d/GLTFLoader.js"></script>
 <script>
 var night = true;
 // ---------------------------------------------------------------- dock & popovers
@@ -387,27 +385,29 @@ function photoFocus(k) {
 function toPhoto(why) {
   if (window.__photo) return;
   window.__photo = why || 'yes'; document.body.classList.add('photo'); focusOn = photoFocus;
-  var pics = [];
-  for (var i = 0; i < 48; i++) { var im = new Image(); im.src = '3d/home/h' + ('0' + i).slice(-2) + '.webp'; pics.push(im); }
+  // studio photos (crossfade between 45° angles) instead of the 48-frame spin
+  var holder = $('spin'), ph = document.createElement('div');
+  ph.id = 'spin'; ph.style.cssText = holder.style.cssText; holder.parentNode.replaceChild(ph, holder);
+  var cp = carPhoto(ph);
+  [].forEach.call(ph.children, function (im) { im.style.cssText += ';position:absolute;inset:0;width:100%;height:100%;object-fit:contain'; });
+  cp.show(phAz, true);
   var drag = null;
   $('spin').addEventListener('pointerdown', function (e) { drag = { x: e.clientX, a: phWant }; });
   window.addEventListener('pointermove', function (e) { if (drag) { phWant = drag.a - (e.clientX - drag.x) / 3; phIdle = Date.now(); } });
   window.addEventListener('pointerup', function () { drag = null; });
   setInterval(function () {
     if (window.__asleep) return;
-    if (Date.now() - phIdle > 9000 && !drag) phWant += 0.6;
-    phAz += (phWant - phAz) * .15;
-    var f = ((Math.round(phAz / 7.5) % 48) + 48) % 48;
-    var src = '3d/home/h' + ('0' + f).slice(-2) + '.webp';
-    if ($('spin').getAttribute('src') !== src) $('spin').setAttribute('src', src);
+    if (Date.now() - phIdle > 12000 && !drag) phWant = 45;   // rest on the ¾ front view
+    phAz += (phWant - phAz) * .35;
+    cp.show(phAz);
     // where the nose / tail are on screen for this angle: + = right
-    var a = phAz * Math.PI / 180, nose = Math.sin(a);           // left side view (90°) → nose right
+    var nose = cp.nose();          // left side view (90°) → nose right
     var low = body.low || body.high, park = body.park || low, blink = Math.sin(Date.now() / 1000 * Math.PI * 3) > 0;
     $('glowF').style.left = (50 + nose * 22 - 11) + '%'; $('glowR').style.left = (50 - nose * 22 - 11) + '%';
     $('glowF').style.opacity = low ? (body.high ? 1 : .7) : 0; $('glowR').style.opacity = park ? .8 : 0;
     $('blkL').style.opacity = (body.turnL || body.hazard) && blink ? 1 : 0;
     $('blkR').style.opacity = (body.turnR || body.hazard) && blink ? 1 : 0;
-  }, 50);
+  }, 120);
 }
 var fpsN = 0, fpsT = 0, slow = 0;
 function fpsTick(now) {
@@ -422,9 +422,13 @@ function fpsTick(now) {
     return ce.apply(console, arguments);
   };
 })();
-if (store('myds.3d') === 'sprites') toPhoto('pref');
-else { try { init3D(); } catch (e) { toPhoto('error'); } }
-setTimeout(function () { if (!window.__shown3d) toPhoto('slow'); }, 10000);
+// Photos by default (fast, the GPU stays free); live 3D only when chosen on the vehicle page.
+if (store('myds.3d') !== '3d') toPhoto('pref');
+else {
+  var ls = function (l, done) { if (!l.length) return done(); var e = document.createElement('script'); e.src = l[0]; e.onload = function () { ls(l.slice(1), done); }; e.onerror = function () { toPhoto('nofile'); }; document.body.appendChild(e); };
+  ls(['3d/three.min.js', '3d/GLTFLoader.js'], function () { try { init3D(); } catch (e) { toPhoto('error'); } });
+  setTimeout(function () { if (!window.__shown3d) toPhoto('slow'); }, 10000);
+}
 window.__sleep = function (v) { window.__asleep = v; };
 
 // ---------------------------------------------------------------- learning sheet
