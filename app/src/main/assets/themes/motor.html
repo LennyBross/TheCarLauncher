@@ -39,11 +39,11 @@ h1{margin:0;font-family:'Jost';font-weight:300;font-size:3.6vh;letter-spacing:.1
 .row{display:flex;align-items:baseline;gap:1.4vh}
 .mut{color:var(--mut);font-size:1.9vh}
 #bar{height:1vh;border-radius:.5vh;background:var(--chip);overflow:hidden;margin-top:1.2vh}#bar i{display:block;height:100%;width:0;background:var(--a)}
-.sl{display:flex;flex-direction:column;gap:.4vh}
+.sl{flex-shrink:0;display:flex;flex-direction:column;gap:.2vh}
 .sl label{display:flex;justify-content:space-between;font-size:1.85vh;color:var(--mut)}
 .sl label b{color:var(--fg);font-weight:600}
-input[type=range]{width:100%;accent-color:var(--a);height:3.6vh;margin:0}
-.seg{display:flex;border:1px solid var(--line);border-radius:2.8vh;overflow:hidden}
+input[type=range]{width:100%;accent-color:var(--a);height:3vh;margin:0}
+.seg{flex-shrink:0;display:flex;border:1px solid var(--line);border-radius:2.8vh;overflow:hidden}
 .seg button{flex:1;height:5.6vh;border:0;background:none;font-size:1.85vh;font-weight:600;letter-spacing:.08em;color:var(--mut)}
 .seg button.on{background:var(--a);color:var(--on)}
 #pedals{display:none;gap:1.2vh}
@@ -53,6 +53,18 @@ input[type=range]{width:100%;accent-color:var(--a);height:3.6vh;margin:0}
 #pedals #brk{border-color:var(--mut)}
 #err{color:#E0503C;font-size:1.8vh}
 .foot{font-size:1.5vh;color:var(--mut)}
+/* Follows the home theme: Stock (champagne), DS4+/Denon (noir glass, white light), DS Live (amber), Panel 80 (VFD colour) */
+html.stock body{--mut:var(--muted);--line:rgba(255,255,255,.09);--on:#111}
+html.stock .e{background:linear-gradient(180deg,#16171a,#0c0d0f);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+html.noir .e{background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 45%,rgba(255,255,255,.035));box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.06)}
+html.noir body.day .e{background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 1vh 3vh rgba(0,0,0,.06)}
+html.noir .e.on{box-shadow:inset 0 0 0 2px var(--a)}
+html.noir #pedals #brk{border-color:var(--line)}
+html.noir body.day .seg button.on,html.noir body.day .chip.on{background:#0A0A0A !important;color:#fff !important}
+html.t-live body:not(.day){--a:#FFB341;--bg:#050505;--card:#0D0D0E}
+html.t-live body.day{--a:#D9750A}
+html.t-panel body{--a:var(--pv);--bg:#000;--card:rgba(var(--pvr),.05);--chip:rgba(var(--pvr),.08);--line:rgba(var(--pvr),.22);--fg:var(--pv);--mut:var(--pv2);--on:#000}
+html.t-panel body.day{--bg:#000;--card:rgba(var(--pvr),.05)}
 </style>
 </head>
 <body>
@@ -92,6 +104,7 @@ input[type=range]{width:100%;accent-color:var(--a);height:3.6vh;margin:0}
 </div>
 <script src="common.js"></script>
 <script>
+try { var TH = Car.theme(); if (TH === 9) document.documentElement.classList.add('t-live'); if (TH === 4) document.documentElement.classList.add('t-panel'); } catch (e) {}
 var ENGINES = [
   ['v8flat', 'Ferrari tarzı V8', '4.5 düz krank · 9000 d/dk'],
   ['v12', 'V12', '6.5 · Ferrari / Aston tarzı'],
