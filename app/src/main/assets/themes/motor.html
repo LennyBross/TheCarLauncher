@@ -91,6 +91,7 @@ html.t-panel body.day{--bg:#000;--card:rgba(var(--pvr),.05)}
     <div class="seg" id="mode"><button data-f="1">Arabamı takip et (OBD)</button><button data-f="0">Deneme (pedal)</button></div>
     <div id="pedals"><button id="brk">FREN</button><button id="gas">GAZ</button></div>
     <div class="card" style="display:flex;flex-direction:column;gap:1.2vh;overflow:auto">
+      <div class="seg" id="qual"><button data-q="1">Hafif (ünite)</button><button data-q="0">Tam kalite</button></div>
       <div class="seg" id="view"><button data-v="1">Kabinden</button><button data-v="0">Dışarıdan</button></div>
       <div class="sl"><label>Ses seviyesi <b id="vVol"></b></label><input type="range" id="vol" min="0" max="100" step="5"></div>
       <div class="sl"><label>Egzoz patlamaları <b id="vPop"></b></label><input type="range" id="pop" min="0" max="100" step="5"></div>
@@ -143,6 +144,7 @@ VEH.forEach(function (v) {
 });
 [].forEach.call($('mode').children, function (b) { b.onclick = function () { send({ follow: b.dataset.f === '1' }); }; });
 [].forEach.call($('view').children, function (b) { b.onclick = function () { send({ interior: b.dataset.v === '1' }); }; });
+[].forEach.call($('qual').children, function (b) { b.onclick = function () { send({ lite: b.dataset.q === '1' }); }; });
 function slider(id, lab, get, put, fmt) {
   $(id).oninput = function () { $(lab).textContent = fmt(+this.value); };
   $(id).onchange = function () { send(put(+this.value)); };
@@ -168,6 +170,7 @@ function draw() {
   [].forEach.call($('eng').children, function (b) { b.classList.toggle('on', b.dataset.id === C.engine); });
   [].forEach.call($('veh').children, function (b) { b.classList.toggle('on', b.dataset.id === C.vehicle); });
   [].forEach.call($('mode').children, function (b) { b.classList.toggle('on', (b.dataset.f === '1') === (C.follow !== false)); });
+  [].forEach.call($('qual').children, function (b) { b.classList.toggle('on', (b.dataset.q === '1') === (C.lite !== false)); });
   [].forEach.call($('view').children, function (b) { b.classList.toggle('on', (b.dataset.v === '1') === (C.interior !== false)); });
   $('pedals').classList.toggle('on', C.follow === false);
   var vals = { vol: Math.round((C.volume != null ? C.volume : .8) * 100), pop: Math.round((C.pops != null ? C.pops : .6) * 100),

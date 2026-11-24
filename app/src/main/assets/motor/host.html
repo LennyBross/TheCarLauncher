@@ -18,7 +18,7 @@ const S = {
   volume: 0.8, interior: true, tone: { rumble: 1, brightness: 1, punch: 1 }, pops: 0.6, turbo: null,
   testThr: 0, testBrake: 0,
 };
-let sim = null, ctx = null, last = 0, starting = false, carRpm = 0, carThr = 0, carKmh = 0, err = '';
+let sim = null, ctx = null, ctxLite = null, last = 0, starting = false, carRpm = 0, carThr = 0, carKmh = 0, err = '';
 
 function car() {
   try { return JSON.parse(window.MotorCar ? MotorCar.data() : '{}'); } catch (e) { return {}; }
@@ -34,7 +34,16 @@ async function build() {
   if (starting) return;
   starting = true;
   try {
-    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'playback' });
+    // Lite (default on the head unit): 22 kHz, no reverb, no oversampling: about a third of the work.
+    var lite = S.lite !== false;
+    globalThis.MYDS_LITE = lite;
+    if (ctx && ctxLite !== lite) { try { if (sim) sim.dispose(); } catch (e) {} sim = null; try { ctx.close(); } catch (e) {} ctx = null; }
+    if (!ctx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      try { ctx = new AC(lite ? { latencyHint: 'playback', sampleRate: 22050 } : { latencyHint: 'playback' }); }
+      catch (e) { ctx = new AC({ latencyHint: 'playback' }); }
+      ctxLite = lite;
+    }
     if (sim) { try { sim.dispose(); } catch (e) {} sim = null; }
     sim = new EngineSim(ctx, { engine: S.engine, vehicle: S.vehicle });
     await sim.start();
@@ -62,7 +71,7 @@ function apply() {
 window.M = {
   set(json) {
     const o = typeof json === 'string' ? JSON.parse(json) : json;
-    const rebuild = (o.engine && o.engine !== S.engine) || (o.vehicle && o.vehicle !== S.vehicle);
+    const rebuild = (o.engine && o.engine !== S.engine) || (o.vehicle && o.vehicle !== S.vehicle) || ('lite' in o && o.lite !== (S.lite !== false));
     Object.assign(S, o);
     if (o.tone) S.tone = Object.assign({}, S.tone, o.tone);
     if (!S.on) { if (sim) { try { sim.stop(); sim.dispose(); } catch (e) {} sim = null; } if (ctx) ctx.suspend(); report(); return; }
@@ -100,8 +109,8 @@ function frame() {
     sim.update(dt);
   }
 }
-setInterval(frame, 16);
-setInterval(report, 250);
+setInterval(frame, 33);   // 30 updates a second is enough for the engine model
+setInterval(report, 500);
 report({ ready: true });
 </script>
 </body>

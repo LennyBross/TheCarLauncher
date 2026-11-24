@@ -676,7 +676,7 @@ export class TurboLayer {
         this.whineDrive.gain.value = 1;
         this.whineShaper = keep(ctx.createWaveShaper());
         this.whineShaper.curve = grainCurve(1024, 0.55);
-        this.whineShaper.oversample = '4x'; // it is a 1-3 kHz tone; do it properly
+        this.whineShaper.oversample = globalThis.MYDS_LITE ? 'none' : '4x'; // it is a 1-3 kHz tone; do it properly
         this.whineOsc.connect(this.whineDrive);
         this.whineDrive.connect(this.whineShaper);
         this.whineShaper.connect(this.whineBP);
@@ -803,7 +803,7 @@ export class TurboLayer {
         this._srcs.push(this.wgOsc);
         this.wgShaper = keep(ctx.createWaveShaper());
         this.wgShaper.curve = surgePulseCurve(1024);
-        this.wgShaper.oversample = '2x';
+        this.wgShaper.oversample = globalThis.MYDS_LITE ? 'none' : '2x';
         this.wgAM = keep(ctx.createGain());
         this.wgAM.gain.value = 0.05;
         this.wgOsc.connect(this.wgShaper);
@@ -878,7 +878,7 @@ export class TurboLayer {
         this.surgeShaper.curve = surgePulseCurve(1024);
         // The curve turns a band-limited ramp into a burst; 2x is enough to keep
         // the corner clean without paying for 4x on a 16 Hz signal.
-        this.surgeShaper.oversample = '2x';
+        this.surgeShaper.oversample = globalThis.MYDS_LITE ? 'none' : '2x';
         this.surgeOsc.connect(this.surgeShaper);
         // Dry path: its own gentle lowpass, not the layer's tone stage, whose
         // -5.5 dB shelf above 2.6 kHz would eat a flutter that lives at 2.5-4 kHz.

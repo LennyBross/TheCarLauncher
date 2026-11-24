@@ -106,11 +106,13 @@ export class Reverb {
         this.hp.frequency.value = 110;
         this.inGain.connect(this.dry);
         this.dry.connect(this.out);
-        this.inGain.connect(this.hp);
-        this.hp.connect(this.conv);
-        this.conv.connect(this.damp);
-        this.damp.connect(this.wet);
-        this.wet.connect(this.out);
+        if (!globalThis.MYDS_LITE) {   // MYDS lite: no convolution on a slow head unit
+            this.inGain.connect(this.hp);
+            this.hp.connect(this.conv);
+            this.conv.connect(this.damp);
+            this.damp.connect(this.wet);
+            this.wet.connect(this.out);
+        }
         this._size = clamp(fin(opts.size, 0.35), 0.05, 1);
         this._mix = clamp(fin(opts.mix, 0.16), 0, 1);
         this.setSize(this._size);
@@ -462,7 +464,7 @@ export class SafetyClipper {
             c[i] = Math.sign(x) * y;
         }
         this.shaper.curve = c;
-        this.shaper.oversample = '2x';
+        this.shaper.oversample = globalThis.MYDS_LITE ? 'none' : '2x';
         this.pre.connect(this.shaper);
     }
     get input() { return this.pre; }
@@ -513,7 +515,7 @@ export class BassEnhancer {
             c[i] = t + 0.45 * t * t; // even + odd harmonics
         }
         this.shaper.curve = c;
-        this.shaper.oversample = '2x';
+        this.shaper.oversample = globalThis.MYDS_LITE ? 'none' : '2x';
         this.hp = mk('highpass', 90, 0.7);
         this.lp3 = mk('lowpass', 420, 0.6);
         this.amount = ctx.createGain();
