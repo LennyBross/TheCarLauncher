@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Literatür</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* LİTERATÜR — a home screen built from published in-vehicle HMI guidance, for use while moving.
+   Screen: 1280×720 at ~160 dpi, so 1 dp ≈ 1 px ≈ 0.139 vh.
+   - Glances ≤ 2 s, task ≤ 12 s eyes-off-road (NHTSA Visual-Manual Guidelines, 2013): one tap per task,
+     at most 6 destinations, nothing to read twice.
+   - Text: primary 32 dp, secondary 24 dp (Android for Cars); critical text ≥ 20 arcmin, other ≥ 16 arcmin
+     at the driver's eye (ISO 15008 practice / FHWA): at ~75 cm that is ≥ 40 px and ≥ 32 px font size.
+   - Touch targets ≥ 76×76 dp, ≥ 23 dp apart (Android for Cars).
+   - Contrast ≥ 4.5:1, preferred 7:1 (Android for Cars, FHWA); light-on-dark at night, dark-on-light by day.
+   - No moving pictures, no auto-scroll, nothing that entertains the eye (European Statement of Principles 2006).
+   - Feedback on touch within 0.25 s (Android for Cars; ESoP 4.3.4.7). */
+:root{--bg:#000;--card:#141414;--key:#1F1F1F;--fg:#FFFFFF;--mut:#BDBDBD;--line:#3A3A3A;--a:#FFB000;--on:#000;--hot:#FF5A4A;
+  --t1:5.6vh;--t2:4.45vh;--gap:3.2vh;--r:2.4vh}
+body.day{--bg:#ECECEC;--card:#FFFFFF;--key:#F4F4F4;--fg:#000000;--mut:#3F3F3F;--line:#C9C9C9;--a:#8A5A00;--on:#fff;--hot:#C62828}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;overflow:hidden;user-select:none}
+button{font-family:inherit;color:inherit;border:none;cursor:pointer}
+/* instant press feedback (≤ 0.25 s), no transitions */
+button:active{filter:brightness(1.35)}
+body.day button:active{filter:brightness(.88)}
+.w{position:fixed;inset:0;padding:2.4vh 3vh;display:grid;grid-template-rows:9vh 1fr 21vh;gap:var(--gap)}
+/* top line: time and outside temperature only */
+.top{display:flex;align-items:center;justify-content:space-between;font-size:var(--t1);font-weight:700;font-variant-numeric:tabular-nums}
+.top .s{font-size:var(--t2);color:var(--mut);font-weight:500;margin-left:1.4vh}
+.mid{display:grid;grid-template-columns:40% 1fr;gap:var(--gap);min-height:0}
+.card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);min-height:0}
+/* speed: the one number that matters most; tap = vehicle page */
+#spdC{display:flex;flex-direction:column;justify-content:center;padding:2.4vh 3.2vh;text-align:left}
+#spd{font-size:21vh;line-height:.95;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.6vh}
+.unit{font-size:var(--t2);color:var(--mut);font-weight:600}
+.facts{display:flex;gap:4vh;margin-top:2vh}
+.fact b{display:block;font-size:var(--t1);font-weight:700;font-variant-numeric:tabular-nums}
+.fact span{font-size:var(--t2);color:var(--mut)}
+/* now playing + the three media keys */
+#media{display:flex;flex-direction:column;justify-content:space-between;padding:2.6vh 3.2vh}
+#src{font-size:var(--t2);color:var(--mut);font-weight:600}
+#ttl{font-size:var(--t1);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.6vh}
+#art{font-size:var(--t2);color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctl{display:flex;gap:4vh;align-items:center}
+.ctl button{width:15vh;height:15vh;border-radius:50%;background:var(--key);box-shadow:inset 0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center}
+.ctl button svg{width:7vh;height:7vh}
+.ctl #play{width:17vh;height:17vh;background:var(--fg);color:var(--bg);box-shadow:none}
+.ctl #play svg{width:8vh;height:8vh}
+/* six destinations, icon + word, each ≥ 76 dp */
+.dock{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--gap)}
+.dock button{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2vh;min-width:0}
+.dock svg{width:7.2vh;height:7.2vh}
+.dock span{font-size:var(--t2);font-weight:600;white-space:nowrap}
+.dock button.go{color:var(--a)}
+.dock button.go span{color:var(--fg)}
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="top"><span><span id="clock">--:--</span></span><span><span id="temp">--°</span><span class="s" id="tempL">dış</span></span></div>
+  <div class="mid">
+    <button class="card" id="spdC" aria-label="Aracım">
+      <div><span id="spd">0</span> <span class="unit">km/h</span></div>
+      <div class="facts">
+        <div class="fact"><b id="rng">—</b><span>menzil km</span></div>
+        <div class="fact"><b id="avg">—</b><span>L/100 km</span></div>
+      </div>
+    </button>
+    <div class="card" id="media">
+      <div><div id="src">Medya</div><div id="ttl">Çalan bir şey yok</div><div id="art"></div></div>
+      <div class="ctl">
+        <button id="prev" aria-label="Önceki"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2.2v14H6zM19 5v14L9.2 12z"/></svg></button>
+        <button id="play" aria-label="Çal / duraklat"></button>
+        <button id="next" aria-label="Sonraki"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.8 5H18v14h-2.2zM5 5v14l9.8-7z"/></svg></button>
+      </div>
+    </div>
+  </div>
+  <div class="dock" id="dock"></div>
+</div>
+<script src="common.js"></script>
+<script>
+var PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12.5-7.5z"/></svg>',
+    PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg>';
+var DOCK = [['nav', 'Harita', 'split'], ['music', 'Müzik', 'srcPick'], ['radio', 'Radyo', 'radio'], ['phone', 'Telefon', 'phone'], ['aa', 'Android Auto', 'aa'], ['settings', 'Ayarlar', 'settings']];
+DOCK.forEach(function (d) {
+  var b = document.createElement('button'); b.className = 'key go'; b.setAttribute('aria-label', d[1]);
+  b.innerHTML = icon(d[0], 'li') + '<span>' + d[1] + '</span>';
+  b.onclick = function () { call('open', d[2]); };
+  $('dock').appendChild(b);
+});
+// long labels shrink, but never under 24 dp (secondary text)
+function fit() {
+  [].forEach.call(document.querySelectorAll('.dock span'), function (s) {
+    var f = innerHeight * .0445; s.style.fontSize = f + 'px';
+    while (s.scrollWidth > s.parentNode.clientWidth - 12 && f > 24) { f -= 1; s.style.fontSize = f + 'px'; }
+  });
+}
+addEventListener('resize', fit); setTimeout(fit, 30);
+$('spdC').onclick = function () { call('open', 'vehicle'); };
+$('prev').onclick = function () { call('media', 'prev'); };
+$('next').onclick = function () { call('media', 'next'); };
+$('play').onclick = function () { call('media', 'play'); };
+$('play').innerHTML = PLAY;
+function n0(v) { return v === undefined || v === null || isNaN(v) ? '—' : String(Math.round(v)); }
+function n1(v) { return v === undefined || v === null || isNaN(v) || v <= 0 ? '—' : Number(v).toFixed(1).replace('.', ','); }
+car.on(function (s) {
+  document.body.classList.toggle('day', s.night === false);
+  $('clock').textContent = s.time || '--:--';
+  var out = s.outdoor !== undefined;
+  $('temp').textContent = out ? Math.round(s.outdoor) + '°' : (s.temp !== undefined ? s.temp + '°' : '--°');
+  $('tempL').textContent = out ? 'dış' : 'hava';
+  $('spd').textContent = n0(s.speed || 0);
+  $('rng').textContent = n0(s.range);
+  $('avg').textContent = n1(s.avg100 || s.avgL100);
+  $('src').textContent = s.srcLabel || 'Medya';
+  $('ttl').textContent = s.title || 'Çalan bir şey yok';
+  $('art').textContent = s.artist || '';
+  $('play').innerHTML = s.playing ? PAUSE : PLAY;
+});
+</script>
+</body>
+</html>

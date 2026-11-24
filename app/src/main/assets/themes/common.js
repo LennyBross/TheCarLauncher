@@ -106,6 +106,35 @@ var eco = (function () {
   } catch (e) {}
 })();
 
+// Literatür: plain high-contrast pages, and no text smaller than 24 dp (Android for Cars secondary text).
+(function () {
+  try {
+    if (!(window.Car && Car.theme && Car.theme() === 11) || /literatur\.html/.test(location.pathname)) return;
+    document.documentElement.classList.add('lit');
+    var l = document.createElement('link'); l.id = 'litcss'; l.rel = 'stylesheet'; l.href = 'lit.css';
+    (document.head || document.documentElement).appendChild(l);
+    // the 24 dp floor is for pages used on the move; set-up pages (motor, vehicle, sound) keep their layout
+    if (!/(radio|obd|minimal|split|drive)[^\/]*\.html/.test(location.pathname)) return;
+    var MIN = 24;
+    function grow(root) {
+      var all = (root || document.body).querySelectorAll('*');
+      for (var i = 0; i < all.length; i++) {
+        var e = all[i], t = false;
+        for (var c = e.firstChild; c; c = c.nextSibling) if (c.nodeType === 3 && c.nodeValue.trim()) { t = true; break; }
+        if (!t || e.tagName === 'text' || e.closest && e.closest('svg')) continue;
+        var f = parseFloat(getComputedStyle(e).fontSize);
+        if (f && f < MIN) e.style.fontSize = MIN + 'px';
+      }
+    }
+    var run = function () { grow(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(run, 50); });
+    else setTimeout(run, 50);
+    // lists filled later (radio stations, OBD values…)
+    var pend = null;
+    new MutationObserver(function () { clearTimeout(pend); pend = setTimeout(run, 120); }).observe(document.documentElement, { childList: true, subtree: true });
+  } catch (e) {}
+})();
+
 // Panel 80: the display colour the driver picked (VFD cyan, amber, phosphor green, ...), on every page.
 var PANEL_COLORS = [['#56F2FF', 'Camgöbeği'], ['#FFB347', 'Amber'], ['#7CFF6B', 'Fosfor yeşili'], ['#FF4FD8', 'Magenta'], ['#FF4A3D', 'Kırmızı'], ['#E8F1FF', 'Buz beyazı']];
 function panelLook(hex) {

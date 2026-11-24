@@ -423,6 +423,16 @@ function setMode(m) {
   [].forEach.call($('modeSw').children, function (b) { b.classList.toggle('on', b.getAttribute('data-m') === m); });
   if (m === 'fm') { R('webRadioStop'); R('radioPlay'); paint(); }
 }
+// No typing while the car moves (NHTSA Visual-Manual Guidelines): search unlocks when stopped.
+var moving = false;
+car.on(function (s) {
+  var m = (s.speed || 0) > 8;
+  if (m === moving) return; moving = m;
+  var q = $('q'), g = $('qGo'); if (!q) return;
+  q.disabled = m; g.disabled = m; g.style.opacity = m ? .4 : '';
+  q.placeholder = m ? 'Arama: araç dururken' : 'Radyo ara: Kral, Joy, TRT…';
+  if (m) q.blur();
+});
 function webInit() {
   try { wState = JSON.parse(R('webRadioState') || '{}'); wFavs = wState.favs || []; } catch (e) {}
   [].forEach.call($('modeSw').children, function (b) { b.onclick = function () { setMode(b.getAttribute('data-m')); }; });
