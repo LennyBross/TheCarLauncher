@@ -500,7 +500,7 @@ function fallback(why) {
   try { if (window.__stop3d) window.__stop3d(); } catch (e) {}
   $('c').style.display = 'none'; $('load').style.display = 'none';
   $('spin').remove();
-  spinFrames = carPhoto($('car'), { cls: 'ph' });
+  spinFrames = carPhoto($('car'), { cls: 'ph', realOnly: true });
   spinFrames.show(45, true);
 }
 function showSprite(az) {

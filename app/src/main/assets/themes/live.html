@@ -388,7 +388,7 @@ function toPhoto(why) {
   // studio photos (crossfade between 45° angles) instead of the 48-frame spin
   var holder = $('spin'), ph = document.createElement('div');
   ph.id = 'spin'; ph.style.cssText = holder.style.cssText; holder.parentNode.replaceChild(ph, holder);
-  var cp = carPhoto(ph);
+  var cp = carPhoto(ph, { realOnly: true });
   [].forEach.call(ph.children, function (im) { im.style.cssText += ';position:absolute;inset:0;width:100%;height:100%;object-fit:contain'; });
   cp.show(phAz, true);
   var drag = null;

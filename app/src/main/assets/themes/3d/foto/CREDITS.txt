@@ -1,0 +1,8 @@
+Car photographs in 3d/foto/
+
+real_front.webp, real_rear.webp: background removed and resized from
+  "2013 Citroen DS4" photographs by Vauxford, Wikimedia Commons,
+  licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/).
+  These two adapted files are shared under the same licence.
+
+c0_*.webp: renders of the MYDS 3D model.

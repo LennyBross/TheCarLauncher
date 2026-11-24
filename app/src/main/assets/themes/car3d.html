@@ -388,6 +388,10 @@ function startSprites() {
   var cp = carPhoto(box);
   [].forEach.call(box.children, function (im) { im.style.cssText += ';position:absolute;inset:0;width:100%;height:100%;object-fit:contain'; });
   $('load').style.display = 'none';
+  var cr = document.createElement('div');
+  cr.style.cssText = 'position:absolute;right:2vh;bottom:11vh;font-size:1.4vh;opacity:.45;pointer-events:none';
+  cr.textContent = 'Fotoğraf: Vauxford · Wikimedia Commons · CC BY-SA 4.0';
+  stage.appendChild(cr);
   var az = 45, sx = null, spinOn = store('myds.spin') !== '0', tour = null, idle = null;
   function go(a) { az = a; cp.show(a); }
   function setSpin2(on) { spinOn = on; $('spin').classList.toggle('on', on); clearInterval(tour); tour = null; if (on) tour = setInterval(function () { go(az + 45); markView(-1); }, 3500); }

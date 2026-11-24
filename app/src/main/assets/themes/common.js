@@ -143,11 +143,15 @@ function carPhoto(holder, o) {
     im.style.opacity = '0'; holder.appendChild(im);
   });
   var front = a, cur = null, api = { az: 45 };
-  function src(k) { return '3d/foto/c' + col + '_' + k + '.webp'; }
+  // ¾ front and ¾ rear are real photographs (Wikimedia Commons, Vauxford, CC BY-SA 4.0); the rest are renders
+  var REAL = { 45: 'real_front', 135: 'real_rear' };
+  function src(k) { return '3d/foto/' + (REAL[k] ? REAL[k] : 'c' + col + '_' + k) + '.webp'; }
   // warm the cache with the neighbours so a swipe never waits
-  function warm(k) { if (k === 'top') return; [45, -45].forEach(function (d) { var im = new Image(); im.src = src((k + d + 360) % 360); }); }
+  function warm(k) { if (k === 'top' || o.realOnly) { if (o.realOnly) [45, 135].forEach(function (d) { var im = new Image(); im.src = src(d); }); return; } [45, -45].forEach(function (d) { var im = new Image(); im.src = src((k + d + 360) % 360); }); }
   api.show = function (az, instant) {
     var k = az === 'top' ? 'top' : ((Math.round(az / 45) * 45) % 360 + 360) % 360;
+    // home screens: only the two real photos (front ¾ / rear ¾), so the look never jumps to a render
+    if (o.realOnly && k !== 'top') k = (k >= 90 && k < 270) ? 135 : 45;
     if (az !== 'top') api.az = az;
     if (k === cur) return k;
     cur = k;
@@ -163,6 +167,6 @@ function carPhoto(holder, o) {
   };
   api.color = function (c) { if (c >= 0 && c < CAR_PHOTO_COLORS && c !== col) { col = c; var k = cur; cur = null; api.show(k === 'top' ? 'top' : api.az, true); } };
   // where the nose points on screen for the current angle: +1 right … −1 left
-  api.nose = function () { return Math.sin(((Math.round(api.az / 45) * 45)) * Math.PI / 180); };
+  api.nose = function () { return REAL[cur] ? -0.75 : Math.sin(((Math.round(api.az / 45) * 45)) * Math.PI / 180); };
   return api;
 }
