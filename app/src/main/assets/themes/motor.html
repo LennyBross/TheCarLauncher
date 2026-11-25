@@ -95,7 +95,7 @@ body.loop .liveOnly{display:none !important}
     <div class="seg" id="mode"><button data-f="1">Arabamı takip et (OBD)</button><button data-f="0">Deneme (pedal)</button></div>
     <div id="pedals"><button id="brk">FREN</button><button id="gas">GAZ</button></div>
     <div class="card" style="display:flex;flex-direction:column;gap:1.2vh;overflow:auto">
-      <div class="seg liveOnly" id="qual"><button data-q="1">Hafif (ünite)</button><button data-q="0">Tam kalite</button></div>
+      <div class="seg liveOnly" id="qual"><button data-q="1">Ünite ayarı</button><button data-q="0">Tam (telefon gibi)</button></div>
       <div class="seg liveOnly" id="view"><button data-v="1">Kabinden</button><button data-v="0">Dışarıdan</button></div>
       <div class="sl"><label>Ses seviyesi <b id="vVol"></b></label><input type="range" id="vol" min="0" max="100" step="5"></div>
       <div class="sl liveOnly"><label>Egzoz patlamaları <b id="vPop"></b></label><input type="range" id="pop" min="0" max="100" step="5"></div>
@@ -201,7 +201,7 @@ setInterval(function () {
   $('info').textContent = info;
   $('err').textContent = s.err ? 'Hata: ' + s.err : '';
   // live voice health: the engine model should be updated about every 33 ms
-  $('diag').textContent = C.on && s.mode !== 'loop' && s.tickMs ? 'Güncelleme: ort. ' + s.tickMs + ' ms, en kötü ' + s.tickMax + ' ms · saat: ' + (s.clock === 'audio' ? 'ses' : 'zamanlayıcı') + ' · ' + (s.sr || '') + ' Hz' : '';
+  $('diag').textContent = C.on && s.mode !== 'loop' && s.tickMs ? 'Güncelleme: ort. ' + s.tickMs + ' ms, en kötü ' + s.tickMax + ' ms · saat: ' + (s.clock === 'audio' ? 'ses' : 'zamanlayıcı') + ' · ' + (s.sr || '') + ' Hz' + (s.autoLow ? ' (işlemci yetişmedi, otomatik düşürüldü)' : '') : '';
 }, 250);
 </script>
 </body>

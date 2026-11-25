@@ -18,7 +18,7 @@ const S = {
   volume: 0.8, interior: true, tone: { rumble: 1, brightness: 1, punch: 1 }, pops: 0.6, turbo: null,
   testThr: 0, testBrake: 0,
 };
-let frames = 0, sim = null, ctx = null, ctxLite = null, tick = null, lastTickMsg = 0, tickLog = [], last = 0, starting = false, carRpm = 0, carThr = 0, carKmh = 0, err = '';
+let autoLow = false, ctxLat = null, frames = 0, sim = null, ctx = null, ctxLite = null, tick = null, lastTickMsg = 0, tickLog = [], last = 0, starting = false, carRpm = 0, carThr = 0, carKmh = 0, err = '';
 
 function car() {
   try { return JSON.parse(window.MotorCar ? MotorCar.data() : '{}'); } catch (e) { return {}; }
@@ -30,7 +30,7 @@ function report(extra) {
   // how evenly the engine model is updated: ~33 ms is right; hundreds of ms means the page is being throttled
   let avg = 0, mx = 0; tickLog.forEach(v => { avg += v; mx = Math.max(mx, v); }); avg = tickLog.length ? avg / tickLog.length : 0;
   MotorCar.report(JSON.stringify(Object.assign({ on: S.on && !!sim, engine: S.engine, follow: S.follow, carRpm: Math.round(carRpm), carThr: carThr, err: err,
-    tickMs: Math.round(avg), tickMax: Math.round(mx), clock: tick && performance.now() - lastTickMsg < 300 ? 'audio' : 'timer', sr: ctx ? ctx.sampleRate : 0 }, st, extra || {})));
+    tickMs: Math.round(avg), tickMax: Math.round(mx), clock: tick && performance.now() - lastTickMsg < 300 ? 'audio' : 'timer', sr: ctx ? ctx.sampleRate : 0, autoLow: autoLow }, st, extra || {})));
 }
 
 async function build() {
@@ -40,12 +40,15 @@ async function build() {
     // Lite (default on the head unit): 22 kHz, no reverb, no oversampling: about a third of the work.
     var lite = S.lite !== false;
     globalThis.MYDS_LITE = lite;
-    if (ctx && ctxLite !== lite) { try { if (sim) sim.dispose(); } catch (e) {} sim = null; try { ctx.close(); } catch (e) {} ctx = null; }
+    const rate = lite ? (+S.sr || 22050) : 0;
+    if (ctx && (ctxLite !== lite || (rate && ctx.sampleRate !== rate) || ctxLat !== (+S.lat || 0.15))) { try { if (sim) sim.dispose(); } catch (e) {} sim = null; try { ctx.close(); } catch (e) {} ctx = null; }
     if (!ctx) {
       var AC = window.AudioContext || window.webkitAudioContext;
-      try { ctx = new AC(lite ? { latencyHint: 'playback', sampleRate: 22050 } : { latencyHint: 'playback' }); }
+      // a deeper output buffer rides out moments when the unit's CPU is busy elsewhere
+      const lat = +S.lat || 0.15;
+      try { ctx = new AC(lite ? { latencyHint: lat, sampleRate: rate } : { latencyHint: lat }); }
       catch (e) { ctx = new AC({ latencyHint: 'playback' }); }
-      ctxLite = lite;
+      ctxLite = lite; ctxLat = +S.lat || 0.15;
       tick = null;
     }
     // drive the engine model from the audio clock (≈30 Hz); timers are only a fallback
@@ -60,8 +63,21 @@ async function build() {
       } catch (e) { tick = null; }
     }
     if (sim) { try { sim.dispose(); } catch (e) {} sim = null; }
-    sim = new EngineSim(ctx, { engine: S.engine, vehicle: S.vehicle });
+    // wavetable source (no JavaScript on the audio thread): half the cost of the combustion worklet
+    sim = new EngineSim(ctx, { engine: S.engine, vehicle: S.vehicle, wavetables: S.wt !== false });
     await sim.start();
+    if (S.short !== false && lite) {
+      // unit profile: skip the stage-by-stage mastering (3-band compressor, EQ, room, stereo widener,
+      // bass harmonics); the cabin filter feeds the limiter directly. The car's amp does the rest.
+      try {
+        sim.cabin.output.disconnect();
+        // one peaking filter + a little gain stand in for the skipped stages (measured: same band balance)
+        const pk = ctx.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = 650; pk.Q.value = 0.7; pk.gain.value = 4.5;
+        const mk = ctx.createGain(); mk.gain.value = 1.26;
+        sim.cabin.output.connect(pk); pk.connect(mk); mk.connect(sim.limiter);
+        sim.infra[1].disconnect(sim.bass.input); sim.bass.output.disconnect();
+      } catch (e) {}
+    }
     apply();
     err = '';
   } catch (e) {
@@ -86,7 +102,8 @@ function apply() {
 window.M = {
   set(json) {
     const o = typeof json === 'string' ? JSON.parse(json) : json;
-    const rebuild = (o.engine && o.engine !== S.engine) || (o.vehicle && o.vehicle !== S.vehicle) || ('lite' in o && o.lite !== (S.lite !== false));
+    const rebuild = (o.engine && o.engine !== S.engine) || (o.vehicle && o.vehicle !== S.vehicle) || ('lite' in o && o.lite !== (S.lite !== false))
+      || ('wt' in o && o.wt !== (S.wt !== false)) || ('sr' in o && o.sr !== S.sr) || ('lat' in o && o.lat !== S.lat) || ('short' in o && o.short !== S.short);
     Object.assign(S, o);
     if (o.tone) S.tone = Object.assign({}, S.tone, o.tone);
     if (!S.on) { if (sim) { try { sim.stop(); sim.dispose(); } catch (e) {} sim = null; } if (ctx) ctx.suspend(); report(); return; }
@@ -131,6 +148,19 @@ function frame() {
 setInterval(() => { if (performance.now() - lastTickMsg > 150) frame(); }, 33);
 setInterval(report, 500);
 report({ ready: true });
+window.__ctx = () => ctx;   // for the performance test harness
+
+// Self-check: if the audio clock falls behind the wall clock, the CPU cannot keep up and the
+// device is dropping sound. Then step down to 16 kHz (about 25 % less work) on its own.
+let watch = null;
+setInterval(() => {
+  if (!ctx || !sim || !S.on || ctx.state !== 'running') { watch = null; return; }
+  const now = { w: performance.now() / 1000, c: ctx.currentTime };
+  if (!watch) { watch = now; return; }
+  const lag = (now.w - watch.w) - (now.c - watch.c);
+  watch = now;
+  if (lag > 0.12 && (+S.sr || 22050) > 16000) { autoLow = true; S.sr = 16000; build(); watch = null; }
+}, 8000);
 </script>
 </body>
 </html>
