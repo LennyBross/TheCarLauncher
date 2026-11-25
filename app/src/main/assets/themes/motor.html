@@ -65,6 +65,8 @@ html.t-live body:not(.day){--a:#FFB341;--bg:#050505;--card:#0D0D0E}
 html.t-live body.day{--a:#D9750A}
 html.t-panel body{--a:var(--pv);--bg:#000;--card:rgba(var(--pvr),.05);--chip:rgba(var(--pvr),.08);--line:rgba(var(--pvr),.22);--fg:var(--pv);--mut:var(--pv2);--on:#000}
 html.t-panel body.day{--bg:#000;--card:rgba(var(--pvr),.05)}
+body.loop .liveOnly{display:none !important}
+#diag{font-size:1.5vh;color:var(--mut)}
 </style>
 </head>
 <body>
@@ -78,6 +80,7 @@ html.t-panel body.day{--bg:#000;--card:rgba(var(--pvr),.05)}
   <div class="left">
     <div><div class="cap">Motor</div></div>
     <div class="eng" id="eng"></div>
+    <div class="liveOnly"><div class="cap">Şasi / şanzıman (deneme modunda hissi değiştirir)</div><div class="chips" id="veh"></div></div>
   </div>
   <div class="right">
     <div class="card">
@@ -86,14 +89,22 @@ html.t-panel body.day{--bg:#000;--card:rgba(var(--pvr),.05)}
       <div id="bar"><i></i></div>
       <div class="mut" style="margin-top:1vh" id="info">Kapalı</div>
       <div id="err"></div>
+      <div id="diag"></div>
     </div>
+    <div class="seg" id="kind"><button data-k="live">Canlı ses (en gerçekçi)</button><button data-k="loop">Kayıtlı (en hafif)</button></div>
     <div class="seg" id="mode"><button data-f="1">Arabamı takip et (OBD)</button><button data-f="0">Deneme (pedal)</button></div>
     <div id="pedals"><button id="brk">FREN</button><button id="gas">GAZ</button></div>
     <div class="card" style="display:flex;flex-direction:column;gap:1.2vh;overflow:auto">
+      <div class="seg liveOnly" id="qual"><button data-q="1">Hafif (ünite)</button><button data-q="0">Tam kalite</button></div>
+      <div class="seg liveOnly" id="view"><button data-v="1">Kabinden</button><button data-v="0">Dışarıdan</button></div>
       <div class="sl"><label>Ses seviyesi <b id="vVol"></b></label><input type="range" id="vol" min="0" max="100" step="5"></div>
+      <div class="sl liveOnly"><label>Egzoz patlamaları <b id="vPop"></b></label><input type="range" id="pop" min="0" max="100" step="5"></div>
+      <div class="sl liveOnly"><label>Uğultu (bas) <b id="vRum"></b></label><input type="range" id="rum" min="0" max="200" step="10"></div>
+      <div class="sl liveOnly"><label>Parlaklık <b id="vBri"></b></label><input type="range" id="bri" min="0" max="200" step="10"></div>
+      <div class="sl liveOnly"><label>Vuruş <b id="vPun"></b></label><input type="range" id="pun" min="0" max="200" step="10"></div>
       <div class="sl"><label>Arabamın en yüksek devri <b id="vMax"></b></label><input type="range" id="max" min="3000" max="6000" step="100"></div>
     </div>
-    <div class="foot">Sesler Engine_Sim (MIT · Yiğit Salih Emecen) ile kaydedildi; ünitede hazır döngülerle çalar</div>
+    <div class="foot">Ses motoru: Engine_Sim (MIT) · Yiğit Salih Emecen</div>
   </div>
 </div>
 <script src="common.js"></script>
@@ -130,12 +141,24 @@ ENGINES.forEach(function (e) {
   b.onclick = function () { send({ engine: e[0], on: true }); };
   $('eng').appendChild(b);
 });
+VEH.forEach(function (v) {
+  var b = document.createElement('button'); b.className = 'chip'; b.dataset.id = v[0]; b.textContent = v[1];
+  b.onclick = function () { send({ vehicle: v[0] }); };
+  $('veh').appendChild(b);
+});
+[].forEach.call($('kind').children, function (b) { b.onclick = function () { send({ mode: b.dataset.k }); }; });
 [].forEach.call($('mode').children, function (b) { b.onclick = function () { send({ follow: b.dataset.f === '1' }); }; });
+[].forEach.call($('view').children, function (b) { b.onclick = function () { send({ interior: b.dataset.v === '1' }); }; });
+[].forEach.call($('qual').children, function (b) { b.onclick = function () { send({ lite: b.dataset.q === '1' }); }; });
 function slider(id, lab, get, put, fmt) {
   $(id).oninput = function () { $(lab).textContent = fmt(+this.value); };
   $(id).onchange = function () { send(put(+this.value)); };
 }
 slider('vol', 'vVol', 0, function (v) { return { volume: v / 100 }; }, function (v) { return v + '%'; });
+slider('pop', 'vPop', 0, function (v) { return { pops: v / 100 }; }, function (v) { return v + '%'; });
+slider('rum', 'vRum', 0, function (v) { return { tone: { rumble: v / 100, brightness: C.tone.brightness, punch: C.tone.punch } }; }, function (v) { return v + '%'; });
+slider('bri', 'vBri', 0, function (v) { return { tone: { rumble: C.tone.rumble, brightness: v / 100, punch: C.tone.punch } }; }, function (v) { return v + '%'; });
+slider('pun', 'vPun', 0, function (v) { return { tone: { rumble: C.tone.rumble, brightness: C.tone.brightness, punch: v / 100 } }; }, function (v) { return v + '%'; });
 slider('max', 'vMax', 0, function (v) { return { carMax: v }; }, function (v) { return v + ' d/dk'; });
 // test pedals
 function hold(id, f) {
@@ -150,11 +173,18 @@ hold('brk', function (v) { brk = v; call('motorPedal', gas, brk); });
 function draw() {
   $('power').classList.toggle('on', !!C.on); $('power').textContent = C.on ? 'AÇIK' : 'AÇ';
   [].forEach.call($('eng').children, function (b) { b.classList.toggle('on', b.dataset.id === C.engine); });
+  [].forEach.call($('veh').children, function (b) { b.classList.toggle('on', b.dataset.id === C.vehicle); });
+  var kind = C.mode === 'loop' ? 'loop' : 'live'; document.body.classList.toggle('loop', kind === 'loop');
+  [].forEach.call($('kind').children, function (b) { b.classList.toggle('on', b.dataset.k === kind); });
   [].forEach.call($('mode').children, function (b) { b.classList.toggle('on', (b.dataset.f === '1') === (C.follow !== false)); });
+  [].forEach.call($('qual').children, function (b) { b.classList.toggle('on', (b.dataset.q === '1') === (C.lite !== false)); });
+  [].forEach.call($('view').children, function (b) { b.classList.toggle('on', (b.dataset.v === '1') === (C.interior !== false)); });
   $('pedals').classList.toggle('on', C.follow === false);
-  var vals = { vol: Math.round((C.volume != null ? C.volume : .8) * 100), max: C.carMax || 6000 };
+  var vals = { vol: Math.round((C.volume != null ? C.volume : .8) * 100), pop: Math.round((C.pops != null ? C.pops : .6) * 100),
+    rum: Math.round(C.tone.rumble * 100), bri: Math.round(C.tone.brightness * 100), pun: Math.round(C.tone.punch * 100), max: C.carMax || 6000 };
   for (var k in vals) $(k).value = vals[k];
-  $('vVol').textContent = vals.vol + '%'; $('vMax').textContent = vals.max + ' d/dk';
+  $('vVol').textContent = vals.vol + '%'; $('vPop').textContent = vals.pop + '%'; $('vRum').textContent = vals.rum + '%';
+  $('vBri').textContent = vals.bri + '%'; $('vPun').textContent = vals.pun + '%'; $('vMax').textContent = vals.max + ' d/dk';
 }
 draw();
 var RED = { v8flat: 9000, v12: 8500, v8tt: 7200, v8cross: 7500, v10: 8500, flat6: 8500, v6tt: 7100, i6: 7000, i5: 7000, boxer4: 7000, rotary2: 9000, i4: 7000, v6: 7000, i3: 6500, i6diesel: 3200, vtwin: 9500 };
@@ -167,9 +197,11 @@ setInterval(function () {
   var info;
   if (!C.on) info = 'Kapalı — bir motor seç ya da AÇ\'a bas';
   else if (C.follow !== false) info = s.carRpm > 0 ? 'Arabanı takip ediyor · araç ' + s.carRpm + ' d/dk · gaz %' + Math.round((s.carThr || 0) * 100) : 'OBD verisi bekleniyor — kontak açık mı? Yoksa "Deneme"yi seç';
-  else info = 'Deneme modu · GAZ tuşunu basılı tut';
+  else info = 'Deneme modu · ' + (s.gear ? s.gear + '. vites' : '');
   $('info').textContent = info;
   $('err').textContent = s.err ? 'Hata: ' + s.err : '';
+  // live voice health: the engine model should be updated about every 33 ms
+  $('diag').textContent = C.on && s.mode !== 'loop' && s.tickMs ? 'Güncelleme: ort. ' + s.tickMs + ' ms, en kötü ' + s.tickMax + ' ms · saat: ' + (s.clock === 'audio' ? 'ses' : 'zamanlayıcı') + ' · ' + (s.sr || '') + ' Hz' : '';
 }, 250);
 </script>
 </body>

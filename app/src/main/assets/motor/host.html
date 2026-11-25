@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Motor sesi</title>
+</head>
+<body>
+<script type="module">
+// Hidden host for the engine voice: Engine_Sim (MIT, github.com/YigitSalihEmecen/Engine_Sim) running
+// inside MYDS. It follows the real car (OBD rpm + accelerator) or a test pedal from motor.html.
+// The diesel's 800…carMax rpm band is stretched over the chosen engine's idle…redline, so a Ferrari
+// V8 screams near its limit while the DS4 is at 4500.
+import { EngineSim } from './src/engine-sim.js';
+
+const RPS = 60 / (2 * Math.PI);
+const S = {
+  on: false, engine: 'v8flat', vehicle: 'supercar', follow: true, carIdle: 800, carMax: 6000,
+  volume: 0.8, interior: true, tone: { rumble: 1, brightness: 1, punch: 1 }, pops: 0.6, turbo: null,
+  testThr: 0, testBrake: 0,
+};
+let frames = 0, sim = null, ctx = null, ctxLite = null, tick = null, lastTickMsg = 0, tickLog = [], last = 0, starting = false, carRpm = 0, carThr = 0, carKmh = 0, err = '';
+
+function car() {
+  try { return JSON.parse(window.MotorCar ? MotorCar.data() : '{}'); } catch (e) { return {}; }
+}
+function report(extra) {
+  if (!window.MotorCar) return;
+  let st = {};
+  try { if (sim) { const g = sim.getState(); st = { rpm: Math.round(g.rpm || 0), gear: g.gear, label: g.engineLabel, boost: g.boost }; } } catch (e) {}
+  // how evenly the engine model is updated: ~33 ms is right; hundreds of ms means the page is being throttled
+  let avg = 0, mx = 0; tickLog.forEach(v => { avg += v; mx = Math.max(mx, v); }); avg = tickLog.length ? avg / tickLog.length : 0;
+  MotorCar.report(JSON.stringify(Object.assign({ on: S.on && !!sim, engine: S.engine, follow: S.follow, carRpm: Math.round(carRpm), carThr: carThr, err: err,
+    tickMs: Math.round(avg), tickMax: Math.round(mx), clock: tick && performance.now() - lastTickMsg < 300 ? 'audio' : 'timer', sr: ctx ? ctx.sampleRate : 0 }, st, extra || {})));
+}
+
+async function build() {
+  if (starting) return;
+  starting = true;
+  try {
+    // Lite (default on the head unit): 22 kHz, no reverb, no oversampling: about a third of the work.
+    var lite = S.lite !== false;
+    globalThis.MYDS_LITE = lite;
+    if (ctx && ctxLite !== lite) { try { if (sim) sim.dispose(); } catch (e) {} sim = null; try { ctx.close(); } catch (e) {} ctx = null; }
+    if (!ctx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      try { ctx = new AC(lite ? { latencyHint: 'playback', sampleRate: 22050 } : { latencyHint: 'playback' }); }
+      catch (e) { ctx = new AC({ latencyHint: 'playback' }); }
+      ctxLite = lite;
+      tick = null;
+    }
+    // drive the engine model from the audio clock (≈30 Hz); timers are only a fallback
+    if (!tick && ctx.audioWorklet && window.AudioWorkletNode) {
+      try {
+        await ctx.audioWorklet.addModule('./tick-worklet.js');
+        tick = new AudioWorkletNode(ctx, 'myds-tick', { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [1],
+          processorOptions: { every: Math.round(ctx.sampleRate / 30) } });
+        const mute = ctx.createGain(); mute.gain.value = 0;
+        tick.connect(mute); mute.connect(ctx.destination);   // a node is only run when it leads somewhere
+        tick.port.onmessage = () => { lastTickMsg = performance.now(); frame(); };
+      } catch (e) { tick = null; }
+    }
+    if (sim) { try { sim.dispose(); } catch (e) {} sim = null; }
+    sim = new EngineSim(ctx, { engine: S.engine, vehicle: S.vehicle });
+    await sim.start();
+    apply();
+    err = '';
+  } catch (e) {
+    err = String(e && e.message || e);
+    sim = null;
+  }
+  starting = false;
+  report();
+}
+function apply() {
+  if (!sim) return;
+  try {
+    sim.setVolume(S.volume);
+    sim.setPerspective(S.interior ? 'interior' : 'exterior');
+    sim.setTone(S.tone);
+    sim.setPopDepth(S.pops);
+    if (S.turbo !== null) sim.setTurbo(S.turbo);
+    sim.setAutoShift(true);
+  } catch (e) { err = String(e.message || e); }
+}
+
+window.M = {
+  set(json) {
+    const o = typeof json === 'string' ? JSON.parse(json) : json;
+    const rebuild = (o.engine && o.engine !== S.engine) || (o.vehicle && o.vehicle !== S.vehicle) || ('lite' in o && o.lite !== (S.lite !== false));
+    Object.assign(S, o);
+    if (o.tone) S.tone = Object.assign({}, S.tone, o.tone);
+    if (!S.on) { if (sim) { try { sim.stop(); sim.dispose(); } catch (e) {} sim = null; } if (ctx) ctx.suspend(); report(); return; }
+    if (ctx) ctx.resume();
+    if (!sim || rebuild) build(); else apply();
+    report();
+  },
+  pedal(thr, brake) { S.testThr = +thr || 0; S.testBrake = +brake || 0; },
+  state() { report(); },
+};
+
+function frame() {
+  const nowMs = performance.now();
+  if (last) { tickLog.push(nowMs - last * 1000); if (tickLog.length > 60) tickLog.shift(); }
+  const now = nowMs / 1000;
+  const dt = last ? Math.min(0.1, now - last) : 0.016;
+  last = now;
+  if (!sim || !S.on) return;
+  if (++frames % 15 === 0) report();   // state also when timers are slowed
+  const c = car();
+  carRpm = +c.rpm || 0; carThr = c.thr !== undefined ? +c.thr : (carThr); carKmh = +c.kmh || 0;
+  const prof = sim.profile || {};
+  const idle = prof.idleRpm || 800, red = prof.redlineRpm || 7000;
+  if (S.follow && carRpm > 300) {
+    // follow the car: stretch its rpm band over this engine, accelerator from OBD (or from rpm rise)
+    const f = Math.max(0, Math.min(1.02, (carRpm - S.carIdle) / Math.max(500, S.carMax - S.carIdle)));
+    const target = idle + f * (red - idle);
+    sim.setClutch(1);                       // engine free of the virtual gearbox: the car decides rpm
+    sim.setThrottle(Math.max(0, Math.min(1, carThr)));
+    sim.physics.we = target / RPS;
+    sim.update(dt);
+    sim.physics.we = target / RPS;
+  } else {
+    // test mode (pedal on motor.html), or the car is off: the simulator drives itself
+    sim.setClutch(0);
+    sim.setThrottle(S.testThr);
+    sim.setBrake(S.testBrake);
+    sim.update(dt);
+  }
+}
+// fallback clock, only while the audio clock is not ticking (no worklet, or the context is suspended)
+setInterval(() => { if (performance.now() - lastTickMsg > 150) frame(); }, 33);
+setInterval(report, 500);
+report({ ready: true });
+</script>
+</body>
+</html>
