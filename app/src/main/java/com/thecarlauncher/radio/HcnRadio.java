@@ -30,7 +30,10 @@ public final class HcnRadio {
         return sPlayer;
     }
 
-    public static boolean available() { return player() != null; }
+    /** The radio app's tuner service, when it answered (the direct way; everything else is the fallback). */
+    private static HcnService svc() { HcnService s = HcnService.peek(); return s != null && s.ready() ? s : null; }
+
+    public static boolean available() { return svc() != null || player() != null; }
 
     /*
      * How the firmware works (from the factory CAN app, com.hcn.autocan):
@@ -49,6 +52,8 @@ public final class HcnRadio {
 
     /** Current station: [freq in kHz, stereo 0/1, preset index] or null. */
     public static int[] info() {
+        HcnService s = svc();
+        if (s != null) { int[] i = s.info(); if (i != null) return i; }
         Object p = player();
         if (p == null) return null;
         try {
@@ -70,6 +75,12 @@ public final class HcnRadio {
      * Field names differ between firmwares, so every String field is looked at by name.
      */
     public static String[] rds() {
+        HcnService s0 = svc();
+        if (s0 != null && !s0.ps().isEmpty()) { String[] old = rdsOld(); return new String[]{s0.ps(), old == null ? "" : old[1]}; }
+        return rdsOld();
+    }
+
+    private static String[] rdsOld() {
         String ps = "", rt = "";
         Object p = player();
         if (p == null) return new String[]{ps, rt};
@@ -96,6 +107,8 @@ public final class HcnRadio {
     }
 
     public static String band() {
+        HcnService s0 = svc();
+        if (s0 != null && s0.info() != null) return s0.band();
         Object p = player();
         if (p == null) return "";
         try {
@@ -162,6 +175,8 @@ public final class HcnRadio {
      */
     public static void tuneSmart(final android.content.Context c, final int khz) {
         sWant = khz;
+        HcnService s = svc();
+        if (s != null) { ensure(); s.tune(khz); sHow = "service"; return; }
         try { c.startService(new android.content.Intent().setClassName(RADIO_PKG, RADIO_PKG + ".service.FMPlugService")); } catch (Throwable ignored) { }
         ensure();
         tune(khz);
@@ -194,6 +209,8 @@ public final class HcnRadio {
 
     /** Seek: RadioPlayer, then the radio's media keys, then a plain step. */
     public static void seekSmart(final android.content.Context c, final boolean up) {
+        HcnService s = svc();
+        if (s != null) { ensure(); s.seek(up); sHow = "service"; return; }
         final int[] before = info();
         ensure();
         seek(up);
@@ -223,6 +240,8 @@ public final class HcnRadio {
     }
 
     public static void stepSmart(android.content.Context c, boolean up) {
+        HcnService s = svc();
+        if (s != null) { ensure(); s.step(up); sHow = "service"; return; }
         int[] i = info();
         int base = sWant > 0 ? sWant : i != null ? i[0] : 87500;
         if (i != null && sWant > 0 && near(i[0], sWant)) base = i[0];
@@ -297,6 +316,8 @@ public final class HcnRadio {
      *     (the factory CAN app also starts it this way) and come straight back to MYDS.
      */
     public static void start(final android.content.Context c) {
+        HcnService hs = HcnService.get(c);
+        hs.connect(true);   // starting the tuner service is what powers the FM chip
         play();
         try {
             c.startService(new android.content.Intent().setClassName(RADIO_PKG, RADIO_PKG + ".service.FMPlugService"));
@@ -333,6 +354,8 @@ public final class HcnRadio {
      */
     public static boolean play() {
         boolean ok = false;
+        HcnService s = svc();
+        if (s != null) s.play();
         try {
             Class<?> c = Class.forName("android.sourceservice.SourceInfo");
             Object si = c.getMethod("getInstance").invoke(null);
@@ -351,6 +374,8 @@ public final class HcnRadio {
     public static String describe() {
         StringBuilder sb = new StringBuilder();
         Object p = player();
+        HcnService hs = HcnService.peek();
+        sb.append("  FMPlugService (IRadioServiceAPI): ").append(hs == null ? "not tried" : hs.ready() ? "connected, contract " + hs.contract() : hs.how()).append('\n');
         sb.append("  android.radio.RadioPlayer: ").append(p != null ? "available" : "not available").append('\n');
         if (sCls != null) {
             for (Method m : sCls.getDeclaredMethods()) {

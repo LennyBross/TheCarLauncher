@@ -727,6 +727,8 @@ public class ThemeScreen extends Screen {
                 if (i != null) o.put("khz", i[0]).put("stereo", i[1] == 1).put("band", com.thecarlauncher.radio.HcnRadio.band());
                 else if (want > 0) o.put("khz", want).put("band", "FM-1");
                 o.put("tunerKhz", i != null ? i[0] : -1).put("want", want).put("how", com.thecarlauncher.radio.HcnRadio.how());
+                com.thecarlauncher.radio.HcnService hs = com.thecarlauncher.radio.HcnService.peek();
+                o.put("service", hs == null ? "" : hs.ready() ? "contract " + hs.contract() : hs.how());
                 String src = com.thecarlauncher.radio.HcnRadio.source();
                 o.put("source", src).put("active", com.thecarlauncher.radio.HcnRadio.RADIO_PKG.equals(src));
                 String[] rd = com.thecarlauncher.radio.HcnRadio.rds();
