@@ -9,6 +9,9 @@ window.car = {
     // here as s.night, and every page follows it the same way.
     if (this.s.night !== undefined && document.body) {
       var day = this.s.night === false;
+      try {
+        if (Car.theme() === 8) { var L = store('stock.light'); if (L === 'day') day = true; else if (L === 'night' || L === 'dark') day = false; }
+      } catch (e) {}
       document.body.classList.toggle('day', day);
       document.documentElement.classList.toggle('isday', day);
     }
@@ -107,6 +110,18 @@ var MYDS_FONTS = { 'Roboto': 'Roboto.ttf', 'Montserrat': null, 'Open Sans': 'Ope
       var l = document.createElement('link'); l.id = 'stockcss'; l.rel = 'stylesheet'; l.href = 'stock.css';
       (document.head || document.documentElement).appendChild(l);
     }
+  } catch (e) {}
+})();
+
+// DS Live and Panel 80: every page takes the home theme's look too (colours, day / night, font)
+(function () {
+  try {
+    if (!(window.Car && Car.theme)) return;
+    var t = Car.theme(), k = t === 9 ? ['lv', 'live.css', /live\.html/] : t === 4 ? ['p80', 'p80.css', /panel\.html/] : null;
+    if (!k || k[2].test(location.pathname) || document.getElementById(k[0] + 'css')) return;
+    document.documentElement.classList.add(k[0]);
+    var l = document.createElement('link'); l.id = k[0] + 'css'; l.rel = 'stylesheet'; l.href = k[1];
+    (document.head || document.documentElement).appendChild(l);
   } catch (e) {}
 })();
 

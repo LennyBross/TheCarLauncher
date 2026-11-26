@@ -155,7 +155,7 @@ body.day .db i svg{stroke:#0A0A0A !important;color:#0A0A0A}
 <!-- Right half: weather, fuel, the car -->
 <div class="half">
 <div class="c" style="padding:2.6vh 3.2vh;display:flex;flex-direction:column;gap:1.8vh">
-<div style="display:flex;align-items:center;gap:1.39vh"><svg id="fuelIcon" style="width:4.6vh;height:4.6vh;color:var(--a)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17"/><line x1="2" y1="22" x2="15" y2="22"/><line x1="6" y1="8" x2="11" y2="8"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg><span style="font-size:2.5vh;color:var(--muted);flex:1">Seyir</span><span class="sg" style="font-size:5.4vh;font-weight:300 !important;color:var(--a)" id="pct">—</span></div>
+<div style="display:flex;align-items:center;gap:1.39vh"><svg id="fuelIcon" style="width:4.6vh;height:4.6vh;color:var(--a)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v17"/><line x1="2" y1="22" x2="15" y2="22"/><line x1="6" y1="8" x2="11" y2="8"/><path d="M14 10h2a2 2 0 0 1 2 2v4a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg><span style="font-size:2.5vh;color:var(--muted)">Seyir</span><span id="spdG" class="sg" style="flex:1;font-size:3vh;margin-left:2.2vh;color:var(--fg)"></span><span class="sg" style="font-size:5.4vh;font-weight:300 !important;color:var(--a)" id="pct">—</span></div>
 <div style="height:1.9vh;border-radius:1vh;background:var(--track);overflow:hidden"><div id="bar" style="height:100%;width:0;background:var(--a);transition:width .4s"></div></div>
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2vh 1.6vh">
 <div class="tv"><b id="rng">—</b><span>Menzil km</span></div>
@@ -204,6 +204,11 @@ var IC = {
   b.innerHTML = '<i style="background:' + a[2] + ';color:#fff">' + icon(a[1], 'dic') + '</i><span>' + a[0] + '</span>';
   b.onclick = function () { if (a[3]) call('open', a[3]); };
   $('dock').appendChild(b);
+});
+car.on(function (s) {
+  var ov = s.obd && s.obd.ok && s.obd.v ? s.obd.v.speed : null, v = ov != null ? ov : (s.gps === 'ok' || s.speed != null ? s.speed : null);
+  var g = s.gearObd ? (/^[1-9]$/.test(s.gearObd) ? 'D' + s.gearObd : s.gearObd) : '';
+  $('spdG').textContent = v != null ? Math.round(v) + ' km/h' + (g ? ' · ' + g : '') : g;
 });
 $('carBox').onclick = function (e) {
   if (e.target.closest('#carPhotoBtn')) { carPhotoPicker(function () { if (window.showCar) showCar(); }); return; }

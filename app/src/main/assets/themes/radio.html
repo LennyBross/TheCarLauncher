@@ -52,6 +52,10 @@ body.t-panel #lin .needle{background:var(--hot);box-shadow:0 0 1vh var(--hot)}
 /* ---- Stock ---- */
 body.t-stock{--a:#E8D5B0;--on:#111;--bg:#050506;--card:transparent;--chip:#1a1b1f;--muted:#A8A39A;--fg:#EEEAE2;--hot:#D3242E;--r:44px;--rb:14px;font-family:'Montserrat',sans-serif;
   background:radial-gradient(70% 60% at 50% 42%,#1b1c1f 0%,#0b0b0d 55%,#040405 100%)}
+/* Stock by day: light panels, bronze accent (the Stock home's Gündüz) */
+body.t-stock.day{--bg:#E9E6E0;--chip:#F1EEE9;--muted:#5B5750;--fg:#1C1C1F;--a:#8A6A3A;--on:#fff;background:radial-gradient(70% 60% at 50% 42%,#f7f5f1 0%,#e4e1db 55%,#cfcbc4 100%) !important}
+body.t-stock.day .card,body.t-stock.day .chip,body.t-stock.day .fav,body.t-stock.day .ctl,body.t-stock.day .st,body.t-stock.day #now,body.t-stock.day #q{background:linear-gradient(180deg,#FFFFFF,#F1EEE9) !important;color:#1C1C1F;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),inset 0 1px 0 #fff,0 1vh 2.6vh rgba(0,0,0,.10) !important}
+body.t-stock.day .fav.on,body.t-stock.day .chip.hot,body.t-stock.day .chip.on{background:linear-gradient(180deg,#E9D7B2,#C7AC7C) !important;color:#111 !important}
 body.t-stock .num{font-family:'Montserrat',sans-serif;font-style:italic;font-weight:600}
 body.t-stock .card{background:linear-gradient(180deg,rgba(28,29,32,.92),rgba(10,10,12,.92));box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.18),0 18px 40px rgba(0,0,0,.6)}
 body.t-stock .ttl{font-style:italic;font-weight:600}

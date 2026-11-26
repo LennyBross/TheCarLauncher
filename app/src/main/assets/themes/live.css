@@ -1,0 +1,15 @@
+/* DS Live skin for every MYDS page (music, radio, OBD, engine sound, vehicle, Hi-Fi…): the home screen's
+   warm graphite and amber, day and night. Loaded by common.js when DS Live is the home theme. */
+html.lv body:not(.day){
+  --a:#FFB341;--as:rgba(255,179,65,.16);--a2:rgba(255,179,65,.22);--on:#1A0F00;--hot:#FF4A3D;
+  --bg:#070503;--fg:#FFFFFF;--text:#FFFFFF;--card:#15110c;--inner:#1b1610;--chip:#221a12;--track:#2a2016;
+  --muted:rgba(255,255,255,.55);--mut:rgba(255,255,255,.55);--sub:rgba(255,255,255,.55);--line:rgba(255,179,65,.14);--sep:rgba(255,255,255,.08);
+  background:radial-gradient(70% 70% at 50% 40%,#1d140a 0%,#070503 70%) !important;
+}
+html.lv body.day.day{
+  --a:#D9750A;--as:rgba(217,117,10,.14);--a2:rgba(217,117,10,.16);--on:#FFFFFF;--hot:#D33A2E;
+  --bg:#EFEBE6;--fg:#120D08;--text:#120D08;--card:#FFFFFF;--inner:#F6F2EC;--chip:#E4DDD4;--track:#E4DDD4;
+  --muted:#6D6255;--mut:#6D6255;--sub:#6D6255;--line:rgba(0,0,0,.08);--sep:rgba(0,0,0,.08);
+  background:radial-gradient(70% 70% at 50% 40%,#FFFFFF 0%,#EFEBE6 70%) !important;
+}
+html.lv .seg button.on,html.lv .tabs button.on,html.lv .chip.on,html.lv .opt.on{background:var(--a) !important;color:var(--on) !important}

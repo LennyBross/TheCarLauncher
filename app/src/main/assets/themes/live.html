@@ -99,7 +99,7 @@ body.photo #spin,body.photo #glowF,body.photo #glowR,body.photo .blk{display:blo
 #glowF,#glowR,.blk{display:none !important}
 #alerts{top:25vh;left:67%}
 #dock{bottom:2.4vh;gap:2.4vh}
-#dock button{width:19vh;height:14vh;gap:1.2vh;font-size:2.5vh !important;font-weight:600}
+#dock button{width:17.5vh;height:14vh;gap:1.2vh;font-size:2.5vh !important;font-weight:600}
 #dock button svg{width:5.4vh;height:5.4vh}
 .top .t{font-size:4vh;font-weight:700}
 .top{font-size:2.6vh}
@@ -184,7 +184,7 @@ body.photo #spin,body.photo #glowF,body.photo #glowR,body.photo .blk{display:blo
 <script>
 var night = true;
 // ---------------------------------------------------------------- dock & popovers
-var DOCK = [['music', 'Müzik', MYDS_ICONS.music], ['apps', 'Uygulamalar', MYDS_ICONS.apps], ['engine', 'Motor sesi', MYDS_ICONS.engine], ['screen', 'Ekran', MYDS_ICONS.screen], ['settings', 'Ayarlar', MYDS_ICONS.settings]];
+var DOCK = [['nav', 'Harita', MYDS_ICONS.nav], ['music', 'Müzik', MYDS_ICONS.music], ['aa', 'Android Auto', MYDS_ICONS.aa], ['apps', 'Uygulamalar', MYDS_ICONS.apps], ['engine', 'Motor sesi', MYDS_ICONS.engine], ['screen', 'Ekran', MYDS_ICONS.screen], ['settings', 'Ayarlar', MYDS_ICONS.settings]];
 function closePops() { [].forEach.call(document.querySelectorAll('.pop'), function (p) { p.classList.remove('on'); }); }
 DOCK.forEach(function (d) {
   var b = document.createElement('button'); b.className = 'key';
@@ -193,7 +193,7 @@ DOCK.forEach(function (d) {
     e.stopPropagation();
     if (d[0] === 'screen' || d[0] === 'engine' || d[0] === 'music') { var p = $(d[0] + 'P'), was = p.classList.contains('on'); closePops(); if (!was) p.classList.add('on'); return; }
     closePops();
-    call('open', d[0] === 'music' ? 'srcPick' : d[0] === 'apps' ? 'apps' : 'settings');
+    call('open', d[0] === 'nav' ? (car.s.hasMaps ? 'gmaps' : 'split') : d[0] === 'aa' ? 'aa' : d[0] === 'apps' ? 'apps' : 'settings');
   };
   $('dock').appendChild(b);
 });

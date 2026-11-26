@@ -1,0 +1,13 @@
+/* Panel 80 skin for every MYDS page: the dash's VFD cyan on black at night, the same "display lights" on a
+   pale bezel by day, and the one mono font everywhere. Loaded by common.js when Panel 80 is the home theme. */
+html.p80 body,html.p80 button,html.p80 input{font-family:'Share Tech Mono',monospace !important}
+html.p80 body.day.day{
+  --pv:#007f8c;--pv2:#5f9aa0;--pvr:0,127,140;
+  --a:#007f8c;--on:#FFFFFF;--hot:#b0208f;
+  --bg:#d9dde0;--fg:#007f8c;--text:#007f8c;--card:#eef1f3;--inner:#e6eaec;--chip:#e3e8ea;--track:#d0d6d9;
+  --muted:#5f9aa0;--mut:#5f9aa0;--sub:#5f9aa0;--line:rgba(0,90,100,.28);--sep:rgba(0,90,100,.2);
+  background:#d9dde0 !important;
+}
+html.p80 body.day .card,html.p80 body.day .c,html.p80 body.day .e,html.p80 body.day .tile{box-shadow:inset 0 0 0 1px var(--line),0 .6vh 1.6vh rgba(0,0,0,.10) !important}
+html.p80 body.day *{text-shadow:none !important}
+html.p80 body.day #stage{background:radial-gradient(70% 70% at 50% 40%,#f2f5f6,#d9dde0 70%) !important}

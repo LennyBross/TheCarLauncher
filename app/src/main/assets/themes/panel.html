@@ -114,6 +114,7 @@ body.day svg.seg7 .on{filter:none}
     <svg id="tach" viewBox="0 0 400 120" preserveAspectRatio="xMidYMid meet"></svg>
     <div id="spd"></div><span id="spdV" style="display:none"></span>
     <div id="spdU">KM/H</div>
+    <div id="gearP" class="glow" style="font-size:3.4vh;color:var(--amb);letter-spacing:.6vh;min-height:4vh"></div>
     <div id="rpmT"></div>
   </div>
 
@@ -144,6 +145,7 @@ var K = [
   ['nav', MYDS_ICONS.nav, 'Harita'], ['srcPick', MYDS_ICONS.music, 'Müzik'], ['radio', MYDS_ICONS.radio, 'Radyo'], ['aa', MYDS_ICONS.aa, 'Android Auto'],
   ['engine', MYDS_ICONS.engine, 'Motor sesi', 'mag'], ['eq', MYDS_ICONS.eq, 'Hi-Fi'], ['settings', MYDS_ICONS.settings, 'Ayarlar']];
 var hasMaps = false;
+$('mid').onclick = function () { call('open', 'vehicle'); };
 var SEG7 = { '0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc', '5': 'afgcd', '6': 'afgedc', '7': 'abc', '8': 'abcdefg', '9': 'abcdfg', '-': 'g', ' ': '' };
 function seg7(str, colon) {
   var W = 60, H = 100, t = 11, g = 2, x = 0, out = '';
@@ -241,6 +243,7 @@ car.on(function (s) {
   $('eco').textContent = eco.feed(s);
   var ov = s.obd && s.obd.ok && s.obd.v ? s.obd.v.speed : null;   // the car's own speed first, then GPS
   var v = ov != null ? Math.round(ov) : s.gps === 'ok' ? Math.round(s.speed || 0) : null;
+  $('gearP').textContent = s.gearObd ? (/^[1-9]$/.test(s.gearObd) ? 'D' + s.gearObd : s.gearObd) : '';
   $('spdV').textContent = v === null ? '---' : pad(v, 3);
   var sv = v === null ? '---' : String(Math.round(v)); while (sv.length < 3) sv = ' ' + sv;
   $('spd').innerHTML = seg7(sv);

@@ -70,6 +70,10 @@ button{background:none;border:none;padding:0;color:inherit}
 #ma{left:216px;top:134px;width:212px;font-size:19px;color:#B7B2A9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #msrc{left:216px;top:164px;font-size:13px;letter-spacing:2px;color:#8f8a80;text-transform:uppercase}
 #ecoB{left:250px;top:52px;height:30px;padding:0 14px;border-radius:15px;font-size:14px;letter-spacing:1px;color:#D8D3CA;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);display:flex;align-items:center;gap:8px}
+#motB{top:52px;height:30px;padding:0 14px;border-radius:15px;font-size:14px;letter-spacing:1px;color:#D8D3CA;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);display:flex;align-items:center;gap:8px}
+#motB i{width:8px;height:8px;border-radius:50%;background:#55524c}
+#motB.on i{background:var(--acc);box-shadow:0 0 8px var(--acc)}
+#app.L-day #motB{color:#2a2a2d;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
 #ecoB b{font-size:17px;font-style:italic;color:var(--acc)}
 #eqB{right:124px;top:24px;height:30px;padding:0 14px;border-radius:15px;font-size:14px;letter-spacing:1px;color:#D8D3CA;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
 #radioB{right:30px;top:24px;height:30px;padding:0 14px;border-radius:15px;font-size:14px;letter-spacing:1px;color:#D8D3CA;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
@@ -219,6 +223,7 @@ button{background:none;border:none;padding:0;color:inherit}
  <div id="temp" class="ab it">--°C</div>
  <div id="tempL" class="ab it" style="display:none"></div>
  <div id="ecoB" class="ab it">EKO <b id="eco">--</b></div>
+ <button id="motB" class="ab it" aria-label="Motor sesi">MOTOR <i id="motDot"></i></button>
  <img id="logo" class="ab" src="ds-logo.png" alt="DS">
  <div id="stat" class="ab">
   <button id="lightB" class="it"><svg id="lightI" class="ic" viewBox="0 0 24 24"></svg><span id="lightT">OTO</span></button>
@@ -369,6 +374,11 @@ function go(w) {
 }
 document.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () { go(b.getAttribute('data-go')); }; });
 $('clock').onclick = function () { call('open', 'minimal'); };
+var motT = null, motHeld = false;
+$('motB').addEventListener('pointerdown', function () { motHeld = false; motT = setTimeout(function () { motHeld = true; call('open', 'engine'); }, 700); });
+$('motB').addEventListener('pointerup', function () { clearTimeout(motT); });
+$('motB').onclick = function () { if (motHeld) return; call('open', hasCp ? 'cpToggle' : 'engine'); };
+$('dial').onclick = function () { call('open', 'vehicle'); };
 $('radioB').onclick = function () { call('open', 'radio'); };
 $('eqB').onclick = function () { call('open', 'eq'); };
 $('prev').onclick = function () { call('media', 'prev'); };
@@ -487,6 +497,8 @@ car.on(function (s) {
   $('rpmD').textContent = s.rpm ? s.rpm + ' d/d' : brg ? '— d/d' : '';
   $('temp').textContent = out ? Math.round(s.outdoor) + '°C' : (s.temp !== undefined ? s.temp + '°C' : '--°C');
   $('ecoB').style.left = ($('temp').offsetWidth + 56) + 'px';
+  $('motB').style.left = ($('temp').offsetWidth + 56 + $('ecoB').offsetWidth + 12) + 'px';
+  $('motB').classList.toggle('on', !!s.cpOn);
   $('bt').style.opacity = s.bt ? 1 : 0.3;
   $('net').style.opacity = s.net ? 1 : 0.3;
   $('netT').textContent = s.net === 'wifi' ? 'Wi-Fi' : s.net ? '4G' : '—';

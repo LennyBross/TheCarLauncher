@@ -28,7 +28,13 @@ button:active{filter:brightness(1.35);transform:scale(.94)}
 body.day button:active{filter:brightness(.88)}
 .glass{-webkit-backdrop-filter:blur(2.4vh) saturate(1.4);backdrop-filter:blur(2.4vh) saturate(1.4)}
 .w{position:fixed;inset:0;padding:2.4vh 3vh;display:grid;grid-template-rows:9vh 1fr 21vh;gap:var(--gap)}
-/* top line: time and outside temperature only */
+/* top line: time, two quick keys (engine sound, day / night), outside temperature */
+.tk{display:flex;align-items:center;gap:2.4vh}
+.tb{height:8vh;padding:0 2.4vh;border-radius:4vh;display:flex;align-items:center;gap:1.2vh;font-size:3vh;font-weight:700;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px var(--line)}
+.tb svg{width:4vh;height:4vh}
+.tb.on{background:var(--a);color:var(--on)}
+body.day .tb{background:#fff}
+#gearT{font-size:var(--t2);color:var(--a);font-weight:700;margin-left:1.6vh}
 #media,#spdC{color:var(--fg)}
 .top{display:flex;align-items:center;justify-content:space-between;font-size:var(--t1);font-weight:700;font-variant-numeric:tabular-nums}
 .top .s{font-size:var(--t2);color:var(--mut);font-weight:500;margin-left:1.4vh}
@@ -79,10 +85,10 @@ body.day .dock button{background:linear-gradient(180deg,#FFFFFF,#F1F1F1);box-sha
 </head>
 <body>
 <div class="w">
-  <div class="top"><span><span id="clock">--:--</span></span><span><span id="temp">--°</span><span class="s" id="tempL">dış</span></span></div>
+  <div class="top"><span><span id="clock">--:--</span></span><span class="tk"><button class="tb" id="tMotor" aria-label="Motor sesi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h3l2-3h6l1 2h3l2 2v5h-2l-1 2H8l-2-2H3z"/></svg><span>Motor</span></button><button class="tb" id="tNight" aria-label="Gece / gündüz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="tNightI"></svg><span id="tNightT">Gece</span></button><span><span id="temp">--°</span><span class="s" id="tempL">dış</span></span></span></div>
   <div class="mid">
     <button class="card glass" id="spdC" aria-label="Aracım">
-      <div><span id="spd">0</span> <span class="unit">km/h</span></div>
+      <div><span id="spd">0</span> <span class="unit">km/h</span><span id="gearT"></span></div>
       <div class="facts">
         <div class="fact"><b id="rng">—</b><span>menzil km</span></div>
         <div class="fact"><b id="avg">—</b><span>L/100 km</span></div>
@@ -119,6 +125,9 @@ function fit() {
 }
 addEventListener('resize', fit); setTimeout(fit, 30);
 $('spdC').onclick = function () { call('open', 'vehicle'); };
+var nightNow = true, cpHas = false;
+$('tMotor').onclick = function () { call('open', cpHas ? 'cpToggle' : 'engine'); };
+$('tNight').onclick = function () { call('setNight', !nightNow); };
 $('prev').onclick = function () { call('media', 'prev'); };
 $('next').onclick = function () { call('media', 'next'); };
 $('play').onclick = function () { call('media', 'play'); };
@@ -131,7 +140,13 @@ car.on(function (s) {
   var out = s.outdoor !== undefined;
   $('temp').textContent = out ? Math.round(s.outdoor) + '°' : (s.temp !== undefined ? s.temp + '°' : '--°');
   $('tempL').textContent = out ? 'dış' : 'hava';
-  $('spd').textContent = n0(s.speed || 0);
+  var ov = s.obd && s.obd.ok && s.obd.v ? s.obd.v.speed : null;
+  $('spd').textContent = n0(ov != null ? ov : (s.speed || 0));
+  $('gearT').textContent = s.gearObd ? (/^[1-9]$/.test(s.gearObd) ? 'D' + s.gearObd : s.gearObd) : '';
+  nightNow = s.night !== false; cpHas = !!s.cp;
+  $('tMotor').classList.toggle('on', !!s.cpOn);
+  $('tNightT').textContent = nightNow ? 'Gündüz' : 'Gece';
+  $('tNightI').innerHTML = nightNow ? '<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>' : '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>';
   $('rng').textContent = n0(s.range);
   $('avg').textContent = n1(s.avg100 || s.avgL100);
   $('src').textContent = s.srcLabel || 'Medya';
