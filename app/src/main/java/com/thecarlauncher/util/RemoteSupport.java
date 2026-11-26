@@ -215,7 +215,7 @@ public final class RemoteSupport {
         final Context app = c.getApplicationContext();
         new Thread(new Runnable() {
             public void run() {
-                long end = System.currentTimeMillis() + 15 * 60000;   // open for 15 minutes
+                long end = System.currentTimeMillis() + 60 * 60000;   // open for an hour (also the local console)
                 ServerSocket ss = setupSock;
                 try {
                     ss.setSoTimeout(5000);
@@ -251,6 +251,39 @@ public final class RemoteSupport {
         int len = 0;
         String h;
         while ((h = r.readLine()) != null && !h.isEmpty()) if (h.toLowerCase(Locale.ROOT).startsWith("content-length:")) len = Integer.parseInt(h.substring(15).trim());
+        // Local console on the home Wi-Fi / hotspot, no GitHub needed: GET /k?pin=1234&c=<command>
+        // runs one support command (durum, log, obd, sh …) and answers plain text; /konsol?pin= is a page for it.
+        String path = first.split(" ").length > 1 ? first.split(" ")[1] : "/";
+        if (path.startsWith("/k?") || path.startsWith("/konsol")) {
+            String pin = "", cmd = "";
+            int q = path.indexOf('?');
+            if (q >= 0) for (String kv : path.substring(q + 1).split("&")) {
+                String[] p = kv.split("=", 2);
+                String v = p.length > 1 ? URLDecoder.decode(p[1], "UTF-8") : "";
+                if (p[0].equals("pin")) pin = v.trim(); else if (p[0].equals("c")) cmd = v.trim();
+            }
+            String out, type = "text/plain";
+            if (!pin.equals(setupPin)) out = "PIN yanlış.";
+            else if (path.startsWith("/konsol")) {
+                type = "text/html";
+                out = "<!doctype html><meta charset=utf-8><title>MyDS konsol</title><style>body{font:15px monospace;background:#0b0e13;color:#eee;padding:16px}"
+                        + "input{width:70%;font:16px monospace;padding:8px;background:#161b23;color:#fff;border:1px solid #444}button{font-size:16px;padding:8px 16px}"
+                        + "pre{white-space:pre-wrap;background:#11151c;padding:12px;border-radius:8px}</style><h3>MyDS konsol</h3>"
+                        + "<form onsubmit=\"run();return false\"><input id=c autofocus placeholder='durum · log 200 · obd · sh getprop'><button>Çalıştır</button></form><pre id=o></pre>"
+                        + "<script>function run(){var c=document.getElementById('c').value;document.getElementById('o').textContent='…';"
+                        + "fetch('/k?pin=" + setupPin + "&c='+encodeURIComponent(c)).then(function(r){return r.text()}).then(function(t){document.getElementById('o').textContent=t})}</script>";
+            } else {
+                try { out = cmd.isEmpty() ? Commands.run(c, "yardim") : Commands.run(c, cmd); } catch (Throwable e) { out = "Hata: " + e; }
+                if (out == null) out = "";
+                if (out.length() > 200000) out = out.substring(out.length() - 200000);
+            }
+            byte[] b = out.getBytes(StandardCharsets.UTF_8);
+            OutputStream o = s.getOutputStream();
+            o.write(("HTTP/1.1 200 OK\r\nContent-Type: " + type + "; charset=utf-8\r\nContent-Length: " + b.length + "\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+            o.write(b);
+            o.flush();
+            return;
+        }
         String msg = "";
         if (first.startsWith("POST")) {
             char[] b = new char[Math.min(len, 4000)];

@@ -41,6 +41,19 @@ ol{margin:0;padding-left:3vh}ol li{font-size:2.1vh;line-height:1.6;color:var(--m
     <button class="key sw" id="on" aria-label="Aç / kapat"></button>
   </div>
   <div class="card row"><i class="dot" id="dot"></i><div style="flex:1"><div class="big" id="st">—</div><div class="mut" id="sub"></div></div></div>
+  <div class="card">
+    <div class="row" style="align-items:center;gap:4vh">
+      <div style="flex:1">
+        <div class="big" style="margin-bottom:1vh">Bilgisayardan bağlan (anahtar gerekmez)</div>
+        <div class="mut">Bilgisayar aynı Wi-Fi'de olsun. "Bağlantıyı aç"a bas, ekrandaki adresi ve PIN'i Claude'a yaz. 1 saat açık kalır.</div>
+        <div class="big" id="lan" style="margin-top:1.4vh;font-family:monospace">—</div>
+      </div>
+      <div style="text-align:right">
+        <div class="mut">PIN</div><div class="code" id="pin2">····</div>
+        <button class="key btn" id="open2" style="margin-top:1.6vh">Bağlantıyı aç</button>
+      </div>
+    </div>
+  </div>
   <div class="card" id="setup">
     <div class="row" style="align-items:flex-start;gap:4vh">
       <div style="flex:1">
@@ -69,7 +82,7 @@ ol{margin:0;padding-left:3vh}ol li{font-size:2.1vh;line-height:1.6;color:var(--m
 var TH = call('theme') || 8;
 document.body.classList.add(TH === 7 ? 't-ds4' : TH === 4 ? 't-panel' : 't-stock');
 $('back').onclick = function () { call('remoteSetup', false); call('open', 'obd'); };
-$('open').onclick = function () { call('remoteSetup', true); };
+$('open').onclick = $('open2').onclick = function () { call('remoteSetup', true); };
 $('save').onclick = function () { $('saveMsg').textContent = call('remoteToken', $('tok').value) || ''; };
 var r = {};
 $('on').onclick = function () { call('remoteOn', !r.on); setTimeout(tick, 200); };
@@ -82,7 +95,10 @@ function tick() {
   $('sub').textContent = (r.repo || '') + (r.lastOk >= 0 ? ' · son bağlantı ' + r.lastOk + ' sn önce' : '');
   $('url').textContent = r.url || '—';
   $('pin').textContent = r.url ? r.pin : '····';
-  $('open').textContent = r.url ? 'Açık (15 dk)' : 'Sayfayı aç';
+  $('open').textContent = r.url ? 'Açık (1 saat)' : 'Sayfayı aç';
+  $('open2').textContent = r.url ? 'Açık (1 saat)' : 'Bağlantıyı aç';
+  $('lan').textContent = r.url ? r.url.replace('http://', '') : '—';
+  $('pin2').textContent = r.url ? r.pin : '····';
   setTimeout(tick, 1000);
 }
 tick();
