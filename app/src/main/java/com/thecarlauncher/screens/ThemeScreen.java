@@ -533,7 +533,7 @@ public class ThemeScreen extends Screen {
             if (!Float.isNaN(bv)) o.put("batV", bv);
             if (!Float.isNaN(bs)) o.put("batSoc", bs);
             JSONArray ty = new JSONArray();
-            for (String k : new String[]{"tyreFL", "tyreFR", "tyreRL", "tyreRR"}) { float t = ob.value(k); ty.put(Float.isNaN(t) ? JSONObject.NULL : (Object) (Math.round(t * 100) / 100.0)); }
+            for (String k : new String[]{"tyreFL", "tyreFR", "tyreRL", "tyreRR"}) { float tp = ob.value(k); ty.put(Float.isNaN(tp) ? JSONObject.NULL : (Object) (Math.round(tp * 100) / 100.0)); }
             if (!Float.isNaN(ob.value("tyreFL")) || !Float.isNaN(ob.value("tyreRR"))) o.put("tyres", ty);
         }
         o.put("alerts", com.thecarlauncher.util.CarAlerts.get().list());
