@@ -73,12 +73,26 @@ body.day .bars i.on{box-shadow:none}
 #lookM .seg button.on{background:var(--vfd);color:var(--bg)}
 #lookM .sw{width:6vh;height:6vh;border-radius:50%;border:none;flex:none;box-shadow:inset 0 0 0 2px rgba(0,0,0,.5)}
 #lookM .sw.on{box-shadow:0 0 0 .5vh var(--bg),0 0 0 .9vh currentColor,0 0 2vh currentColor}
+/* ---- v2 (owner's notes): one font everywhere, a real 80s dash — seven-segment read-outs, chrome bezel */
+button,input,select,em,b,small{font-family:'Share Tech Mono',monospace !important}
+*{font-family:'Share Tech Mono',monospace}
+.box{background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 30%),var(--bez);box-shadow:inset 0 0 0 1px var(--edge),inset 0 .25vh 0 rgba(255,255,255,.08),inset 0 0 4vh rgba(0,0,0,.6),0 0 0 .35vh #15191c,0 0 0 .5vh rgba(255,255,255,.06)}
+.lbl,.s,#spdU,#srcT,#ma,.keys button em{text-transform:uppercase;letter-spacing:.35vh}
+svg.seg7 .on{fill:var(--vfd);filter:drop-shadow(0 0 .7vh var(--vfd))}
+svg.seg7 .of{fill:var(--off)}
+body.day svg.seg7 .on{filter:none}
+#spd{font-size:0;line-height:0}
+#spd svg{height:23vh;width:auto;display:block}
+#clockS svg{height:5vh;width:auto;display:block}
+.keys{gap:1.4vh}
+.keys button svg{width:4.8vh;height:4.8vh}
+.keys button em{font-size:2vh;opacity:1;font-style:normal}
 </style>
 </head>
 <body>
 <div class="d">
   <div class="box" id="top">
-    <span class="t glow" id="clock">--:--</span>
+    <span class="t" id="clockS"></span><span id="clock" style="display:none">--:--</span>
     <span class="s" id="date"></span>
     <span style="flex:1"></span>
     <span class="s glow"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v11"/><circle cx="12" cy="17" r="3.5"/><path d="M15 6h3M15 9h2"/></svg><b id="tmp">--</b>°C</span>
@@ -98,7 +112,7 @@ body.day .bars i.on{box-shadow:none}
 
   <div class="box" id="mid">
     <svg id="tach" viewBox="0 0 400 120" preserveAspectRatio="xMidYMid meet"></svg>
-    <div id="spd" class="glow"><span id="spdGhost">888</span><span id="spdV">---</span></div>
+    <div id="spd"></div><span id="spdV" style="display:none"></span>
     <div id="spdU">KM/H</div>
     <div id="rpmT"></div>
   </div>
@@ -128,8 +142,25 @@ body.day .bars i.on{box-shadow:none}
 // Tell-tale style pictograms for the key row (no words)
 var K = [
   ['nav', MYDS_ICONS.nav, 'Harita'], ['srcPick', MYDS_ICONS.music, 'Müzik'], ['radio', MYDS_ICONS.radio, 'Radyo'], ['aa', MYDS_ICONS.aa, 'Android Auto'],
-  ['engine', MYDS_ICONS.engine, 'Motor sesi', 'mag'], ['vehicle', MYDS_ICONS.car, 'Aracım'], ['minimal', MYDS_ICONS.gauge, 'Sade ekran'], ['settings', MYDS_ICONS.settings, 'Ayarlar']];
+  ['engine', MYDS_ICONS.engine, 'Motor sesi', 'mag'], ['eq', MYDS_ICONS.eq, 'Hi-Fi'], ['settings', MYDS_ICONS.settings, 'Ayarlar']];
 var hasMaps = false;
+var SEG7 = { '0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc', '5': 'afgcd', '6': 'afgedc', '7': 'abc', '8': 'abcdefg', '9': 'abcdfg', '-': 'g', ' ': '' };
+function seg7(str, colon) {
+  var W = 60, H = 100, t = 11, g = 2, x = 0, out = '';
+  function poly(pts, on) { return '<polygon class="' + (on ? 'on' : 'of') + '" points="' + pts + '"/>'; }
+  for (var i = 0; i < str.length; i++) {
+    var ch = str[i];
+    if (ch === ':') { out += '<rect class="on" x="' + (x + 4) + '" y="30" width="9" height="9"/><rect class="on" x="' + (x + 4) + '" y="62" width="9" height="9"/>'; x += 20; continue; }
+    var L = SEG7[ch] || '', X = x, sk = 6;   // slight italic slant, like the old dashes
+    function hs(y, on) { return poly((X + t / 2 + g + sk * (1 - y / H)) + ',' + y + ' ' + (X + W - t / 2 - g + sk * (1 - y / H)) + ',' + y + ' ' + (X + W - t - g + sk * (1 - (y + t / 2) / H)) + ',' + (y + t / 2) + ' ' + (X + t + g + sk * (1 - (y + t / 2) / H)) + ',' + (y + t / 2) + ' ' + (X + t + g + sk * (1 - (y - t / 2) / H)) + ',' + (y - t / 2) + ' ' + (X + W - t - g + sk * (1 - (y - t / 2) / H)) + ',' + (y - t / 2), on); }
+    function vs(xx, y1, y2, on) { var a = X + xx; return poly((a + sk * (1 - (y1 + g) / H)) + ',' + (y1 + g) + ' ' + (a + t / 2 + sk * (1 - (y1 + t / 2 + g) / H)) + ',' + (y1 + t / 2 + g) + ' ' + (a + t / 2 + sk * (1 - (y2 - t / 2 - g) / H)) + ',' + (y2 - t / 2 - g) + ' ' + (a + sk * (1 - (y2 - g) / H)) + ',' + (y2 - g) + ' ' + (a - t / 2 + sk * (1 - (y2 - t / 2 - g) / H)) + ',' + (y2 - t / 2 - g) + ' ' + (a - t / 2 + sk * (1 - (y1 + t / 2 + g) / H)) + ',' + (y1 + t / 2 + g), on); }
+    out += hs(t / 2, L.indexOf('a') >= 0) + hs(H / 2, L.indexOf('g') >= 0) + hs(H - t / 2, L.indexOf('d') >= 0);
+    out += vs(t / 2, t / 2, H / 2, L.indexOf('f') >= 0) + vs(W - t / 2, t / 2, H / 2, L.indexOf('b') >= 0);
+    out += vs(t / 2, H / 2, H - t / 2, L.indexOf('e') >= 0) + vs(W - t / 2, H / 2, H - t / 2, L.indexOf('c') >= 0);
+    x += W + 14;
+  }
+  return '<svg class="seg7" viewBox="-2 -2 ' + (x + 4) + ' ' + (H + 4) + '">' + out + '</svg>';
+}
 K.forEach(function (k) {
   var b = document.createElement('button'); b.className = 'key' + (k[3] ? ' ' + k[3] : ''); b.id = 'k-' + k[0];
   b.setAttribute('aria-label', k[2]);
@@ -137,7 +168,7 @@ K.forEach(function (k) {
   b.onclick = function () {
     var w = k[0];
     if (w === 'nav') w = 'split';
-    if (w === 'srcPick') w = 'spotify';
+    if (w === 'srcPick') w = 'music';
     if (w === 'engine') { if (cpOn !== null) { call('open', 'cpToggle'); return; } }
     call('open', w);
   };
@@ -203,12 +234,16 @@ function pad(v, n) { v = String(v); while (v.length < n) v = ' ' + v; return v; 
 car.on(function (s) {
   hasMaps = !!s.hasMaps;
   $('clock').textContent = s.time || '--:--';
+  $('clockS').innerHTML = seg7((s.time || '--:--').replace(/^(\d):/, ' $1:'));
   $('date').textContent = (s.date || '').toLocaleUpperCase('tr-TR');
   night = s.night !== false; document.body.classList.toggle('day', !night);
   $('tmp').textContent = s.outdoor !== undefined ? Math.round(s.outdoor) : s.temp !== undefined ? s.temp : '--';
   $('eco').textContent = eco.feed(s);
-  var v = s.gps === 'ok' ? Math.round(s.speed || 0) : null;
+  var ov = s.obd && s.obd.ok && s.obd.v ? s.obd.v.speed : null;   // the car's own speed first, then GPS
+  var v = ov != null ? Math.round(ov) : s.gps === 'ok' ? Math.round(s.speed || 0) : null;
   $('spdV').textContent = v === null ? '---' : pad(v, 3);
+  var sv = v === null ? '---' : String(Math.round(v)); while (sv.length < 3) sv = ' ' + sv;
+  $('spd').innerHTML = seg7(sv);
   cpOn = s.cp ? !!s.cpOn : null;
   $('k-engine').classList.toggle('on', !!s.cpOn);
   if (s.rpm) { tach(s.rpm / 7000, true); $('rpmT').textContent = s.rpm + ' D/D' + (s.coolant !== undefined ? '  ·  ' + Math.round(s.coolant) + '°C' : ''); }

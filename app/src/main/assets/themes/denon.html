@@ -70,8 +70,8 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;strok
 .right{flex:1;min-width:0;display:flex;flex-direction:column;gap:3.2vh;padding-top:.6vh}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:1.7vh}
 .pre2{min-height:8.9vh;border-radius:1.7vh;border:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:.6vh;padding:0 2.6vh;text-align:left}
-.pre2 b{font-family:'Jost';font-weight:400;font-size:2.4vh;letter-spacing:.18em;text-transform:uppercase}
-.pre2 small{font-size:1.95vh;color:var(--mut)}
+.pre2 b{font-family:'Jost';font-weight:600;font-size:2.7vh;letter-spacing:.18em;text-transform:uppercase}
+.pre2 small{font-size:2.15vh;color:var(--mut)}
 .pre2.on{border-color:var(--a);background:var(--card2)}
 .knob{display:flex;align-items:center;gap:2.8vh;padding:2.5vh 2.8vh;border-radius:1.9vh;border:1px solid var(--line);background:var(--card)}
 .kr{width:15vh;height:15vh;flex-shrink:0;border-radius:50%;padding:.5vh;background:var(--metal);touch-action:none}
@@ -80,10 +80,10 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;strok
 .kr .hub{position:absolute;left:50%;top:50%;width:1.4vh;height:1.4vh;margin:-.7vh 0 0 -.7vh;border-radius:50%;background:#2A2E34}
 .kv{display:flex;flex-direction:column;gap:1.3vh;flex:1}
 .kv b{font-family:'Jost';font-weight:200;font-size:5.6vh;line-height:1}
-.pm{display:flex;gap:1.1vh}.pm button{width:6.7vh;height:6.1vh;border-radius:1.4vh;border:1px solid var(--line2);background:none;font-family:'Jost';font-size:3vh;font-weight:300}
-.moods{display:flex;flex-wrap:wrap;gap:1.1vh}
-.mood{min-height:5.6vh;padding:0 2.2vh;border-radius:2.8vh;border:1px solid var(--line2);background:none;color:var(--mut);font-size:1.85vh;font-weight:500;letter-spacing:.2em;text-transform:uppercase}
-.mood.on{border-color:var(--a);color:var(--fg)}
+.pm{display:flex;gap:1.1vh}.pm button{width:8vh;height:7vh;border-radius:1.6vh;border:1px solid var(--line2);background:var(--card2);font-family:'Jost';font-size:3.6vh;font-weight:500}
+.moods{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2vh}
+.mood{height:6.6vh;padding:0 1vh;border-radius:1.6vh;border:1px solid var(--line2);background:var(--card);color:var(--fg);font-size:2.25vh;font-weight:600;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mood.on{border-color:var(--a);background:var(--a);color:var(--bg)}
 .svc{display:flex;align-items:center;justify-content:space-between;gap:2.8vh;padding-top:2.5vh;border-top:1px solid var(--line)}
 .svc b{font-family:'Jost';font-weight:400;font-size:2.3vh;letter-spacing:.16em;text-transform:uppercase}
 .svc small{display:block;font-size:1.95vh;color:var(--mut);margin-top:.5vh}
@@ -244,7 +244,7 @@ var SPK = [[44, 96, 14], [186, 96, 14], [8, 196, 22], [222, 196, 22], [8, 286, 1
   window.carU = u;
 })();
 var H = null;
-var MOODS = [['flat', 'Yok'], ['denon', 'Denon Hi-Fi'], ['live', 'Canlı performans'], ['electronic', 'Elektronik'], ['rock', 'Rock'], ['blues', 'Blues'], ['jazz', 'Caz'],
+var MOODS = [['flat', 'Yok'], ['denon', 'Denon Hi-Fi'], ['live', 'Canlı'], ['electronic', 'Elektronik'], ['rock', 'Rock'], ['blues', 'Blues'], ['jazz', 'Caz'],
   ['pop', 'Pop'], ['hiphop', 'Hip-hop'], ['classic', 'Klasik'], ['acoustic', 'Akustik'], ['turkish', 'Türk müziği'], ['vocal', 'Vokal'], ['night', 'Gece'], ['road', 'Otoyol']];
 function hifiLoad() { try { H = JSON.parse(call('hifi') || 'null'); } catch (e) { H = null; } if (!H) H = { preset: 'flat', bass: 0, treble: 0, focus: 'all', svc: 0 }; drawSound(); }
 function fmt(v) { return v > 0 ? '+' + v : String(v); }

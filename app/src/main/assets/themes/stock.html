@@ -7,7 +7,8 @@
 <title>Stock</title>
 <link rel="stylesheet" href="common.css">
 <style>
-:root{--fg:#EEEAE2;--mut:#A8A39A;--gold:#E8D5B0;--line:rgba(255,255,255,.13)}
+:root{--fg:#EEEAE2;--mut:#A8A39A;--gold:#E8D5B0;--line:rgba(255,255,255,.13);--acc:#E8D5B0;--accR:232,213,176}
+body.c-ice{--acc:#9FD8FF;--accR:159,216,255}body.c-red{--acc:#FF6B5A;--accR:255,107,90}body.c-green{--acc:#8CE6A8;--accR:140,230,168}body.c-violet{--acc:#C7A6FF;--accR:199,166,255}body.c-amber{--acc:#FFB341;--accR:255,179,65}
 html,body{background:#000}
 body{font-family:'Montserrat',sans-serif;color:var(--fg)}
 #app{--dx:0px;position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;overflow:hidden;
@@ -22,13 +23,13 @@ button{background:none;border:none;padding:0;color:inherit}
 /* left rail */
 #rail{left:0;top:0;width:100px;height:720px;border-right:1px solid rgba(255,255,255,.08);
   background:linear-gradient(90deg,#0a0a0c,#111215)}
-#rail::after{content:'';position:absolute;right:-1px;top:110px;bottom:110px;width:1px;background:linear-gradient(transparent,rgba(232,213,176,.35),transparent)}
+#rail::after{content:'';position:absolute;right:-1px;top:110px;bottom:110px;width:1px;background:linear-gradient(transparent,rgba(var(--accR),.35),transparent)}
 #rail button{position:absolute;left:24px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;color:#DDD8CF;border-radius:14px}
 #rail button{flex-direction:column;gap:2px;height:62px}
 #rail button svg{width:30px;height:30px}
 #rail button em{font-style:normal;font-size:10px;letter-spacing:.5px;opacity:.75}
 #rail .rI{display:flex}
-#rail button:active{background:rgba(232,213,176,.12)}
+#rail button:active{background:rgba(var(--accR),.12)}
 #rail #pw.on{color:#ff4a3f;filter:drop-shadow(0 0 6px rgba(255,60,40,.9))}
 
 /* header */
@@ -69,7 +70,7 @@ button{background:none;border:none;padding:0;color:inherit}
 #ma{left:216px;top:134px;width:212px;font-size:19px;color:#B7B2A9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #msrc{left:216px;top:164px;font-size:13px;letter-spacing:2px;color:#8f8a80;text-transform:uppercase}
 #ecoB{left:250px;top:52px;height:30px;padding:0 14px;border-radius:15px;font-size:14px;letter-spacing:1px;color:#D8D3CA;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);display:flex;align-items:center;gap:8px}
-#ecoB b{font-size:17px;font-style:italic;color:#E8D5B0}
+#ecoB b{font-size:17px;font-style:italic;color:var(--acc)}
 #eqB{right:124px;top:24px;height:30px;padding:0 14px;border-radius:15px;font-size:14px;letter-spacing:1px;color:#D8D3CA;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
 #radioB{right:30px;top:24px;height:30px;padding:0 14px;border-radius:15px;font-size:14px;letter-spacing:1px;color:#D8D3CA;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
 #bar{left:100px;top:212px;width:calc(320px + var(--dx));height:3px;border-radius:2px;background:rgba(255,255,255,.28)}
@@ -80,7 +81,7 @@ button{background:none;border:none;padding:0;color:inherit}
 #ctl button{width:62px;height:62px;display:flex;align-items:center;justify-content:center;border-radius:50%}
 #ctl button svg{width:34px;height:34px}
 #play{box-shadow:0 0 0 2px #E2CFA8,0 0 14px rgba(226,207,168,.35),inset 0 0 12px rgba(226,207,168,.15)}
-#ctl button:active{background:rgba(232,213,176,.12)}
+#ctl button:active{background:rgba(var(--accR),.12)}
 
 /* dial */
 #dial{left:calc(387px + var(--dx));top:55px;width:506px;height:506px}
@@ -146,18 +147,49 @@ button{background:none;border:none;padding:0;color:inherit}
 #radioC img{width:84px;height:84px;border-radius:14px;object-fit:contain;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.6);display:none}
 #rcF{font-size:66px;font-weight:600;font-style:italic;letter-spacing:-1px;line-height:1;color:#F2EEE6}
 #rcF small{font-size:20px;margin-left:6px;color:#A8A39A;letter-spacing:0}
-#rcN{font-size:22px;font-style:italic;font-weight:600;color:#E8D5B0;max-width:330px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rcN{font-size:22px;font-style:italic;font-weight:600;color:var(--acc);max-width:330px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #mediaC{left:calc(470px + var(--dx));top:228px;width:340px;height:180px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;pointer-events:auto}
 #mediaC.on{display:flex}
 #mediaC{gap:5px}
-#mcArt{width:88px;height:88px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px rgba(232,213,176,.55),0 10px 30px rgba(0,0,0,.7);background:#1a1b1e}
+#mcArt{width:88px;height:88px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px rgba(var(--accR),.55),0 10px 30px rgba(0,0,0,.7);background:#1a1b1e}
 #mcArt.spin{animation:mcspin 18s linear infinite}
 @keyframes mcspin{to{transform:rotate(360deg)}}
-#mcNo{width:88px;height:88px;border-radius:50%;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#2a2b2f,#121215);box-shadow:0 0 0 3px rgba(232,213,176,.4)}
+#mcNo{width:88px;height:88px;border-radius:50%;display:none;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#2a2b2f,#121215);box-shadow:0 0 0 3px rgba(var(--accR),.4)}
 #mcT{font-size:18px;font-weight:600;font-style:italic;color:#F2EEE6;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#mcA{font-size:14px;font-style:italic;color:#E8D5B0;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mcA{font-size:14px;font-style:italic;color:var(--acc);max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #rcT{font-size:15px;color:#A8A39A;max-width:330px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #car.hide,#dots.hide{visibility:hidden}
+/* ---- v2 (owner's notes) ---- */
+/* no left menu: everything moves 50 px left, so the page stays centred */
+#rail{display:none !important}
+#app>.ab,#app>svg.ab{margin-left:-50px}
+/* centre: a digital speedometer when nothing plays (the car's own look), media / radio when it does */
+#car,#dots{display:none !important}
+#dspd{left:calc(470px + var(--dx));top:178px;width:340px;height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+#dspd.hide{display:none}
+#dsN{font-size:132px;font-weight:600;font-style:italic;letter-spacing:-4px;line-height:.9;color:#F7F3EC;text-shadow:0 0 24px rgba(var(--accR),.35);font-variant-numeric:tabular-nums}
+#dsU{font-size:20px;font-style:italic;letter-spacing:3px;color:var(--mut);margin-top:4px}
+#dsG{margin-top:12px;font-size:22px;font-style:italic;font-weight:600;letter-spacing:2px;color:var(--acc)}
+#app.L-day #dsN{color:#1c1c1f;text-shadow:none}
+/* rows show what they are; values that take turns slide in */
+.row span.lbl{display:block;font-size:15px;font-style:italic;color:#CFCAC1;margin-top:5px;letter-spacing:.5px}
+.row b.sw{animation:swap .45s ease}
+@keyframes swap{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* bottom keys: 10 % lower, 15 % shorter, glass */
+#btns{left:calc(206px + var(--dx));top:578px;width:969px;height:106px;gap:12px}
+#arc{stroke:var(--acc)}
+.bt{height:106px;background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.03) 55%,rgba(255,255,255,.06));
+  -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.35),0 12px 26px rgba(0,0,0,.5);transition:transform .14s cubic-bezier(.3,.7,.4,1.4)}
+.bt:active{transform:skewX(-14deg) scale(.95)}
+.bt::after{content:'';position:absolute;left:6%;right:6%;top:4px;height:34%;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,.14),transparent);pointer-events:none}
+.bt svg{color:var(--acc)}
+/* colour choice in the light menu */
+#colRow{display:flex;gap:10px;padding:8px 6px 2px}
+#colRow button{width:34px;height:34px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.25)}
+#colRow button.on{box-shadow:0 0 0 3px #fff}
+#srcM .it2>button.na{opacity:.45}
+#srcM .it2>button small{display:block;font-size:12px;font-style:normal;opacity:.8}
 </style>
 </head>
 <body>
@@ -251,6 +283,7 @@ button{background:none;border:none;padding:0;color:inherit}
 <div id="car" class="ab"><canvas id="c"></canvas><img id="spin" alt=""></div>
 <div id="load" class="ab">3D YÜKLENİYOR</div>
 <div id="mediaC" class="ab"><img id="mcArt" alt=""><div id="mcNo"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#E8D5B0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div><div id="mcT"></div><div id="mcA"></div></div>
+<div id="dspd" class="ab"><div id="dsN">0</div><div id="dsU">KM/H</div><div id="dsG"></div></div>
 <div id="radioC" class="ab"><img id="rcL" alt=""><div id="rcF"></div><div id="rcN"></div><div id="rcT"></div></div>
 <div id="dots" class="ab"><button data-v="0" class="on"></button><button data-v="1"></button><button data-v="2"></button></div>
 
@@ -343,14 +376,14 @@ $('next').onclick = function () { call('media', 'next'); };
 $('play').onclick = function () { call('media', 'play'); };
 $('mt').onclick = $('cover').onclick = function (e) { e.stopPropagation(); $('srcM').classList.toggle('on'); };
 // Music source picker: tap = play in the background (stay in MYDS), ↗ = open the app itself
-var SRCS = [['Spotify', 'spotify', 'spotifyApp', /spotify/i], ['YouTube Music', 'ytmusic', 'ytmusicApp', /youtube/i],
+var SRCS = [['USB · şarkı listesi', 'music', null, /usb|müzik|music/i], ['Spotify', 'spotify', 'spotifyApp', /spotify/i, 'hasSpotify'], ['YouTube Music', 'ytmusic', 'ytmusicApp', /youtube/i, 'hasYtMusic'],
   ['Telefon (Bluetooth)', 'btMusic', null, /blue|bt|telefon/i], ['Radyo', 'radio', null, /radyo|radio|fm/i]];
 SRCS.forEach(function (x) {
   var row = document.createElement('div'); row.className = 'it2';
   row.innerHTML = '<button class="key">' + x[0] + '</button>' + (x[2] ? '<button class="key op" aria-label="Uygulamayı aç">↗</button>' : '');
   row.children[0].onclick = function () { call('open', x[1]); $('srcM').classList.remove('on'); };
   if (x[2]) row.children[1].onclick = function () { call('open', x[2]); $('srcM').classList.remove('on'); };
-  row.dataset.re = x[3].source;
+  row.dataset.re = x[3].source; if (x[4]) row.dataset.need = x[4];
   $('srcM').appendChild(row);
 });
 $('srcM').insertAdjacentHTML('beforeend', '<div class="hint">Dokun: arka planda çalar, MYDS\'te kalırsın · ↗ uygulamayı açar</div>');
@@ -375,6 +408,23 @@ LIGHT.forEach(function (l) {
   b.onclick = function () { setLight(l[0], true); $('lightM').classList.remove('on'); };
   $('lightM').appendChild(b);
 });
+var COLS = [['', '#E8D5B0', 'Şampanya'], ['c-ice', '#9FD8FF', 'Buz mavisi'], ['c-red', '#FF6B5A', 'DS kırmızı'], ['c-amber', '#FFB341', 'Kehribar'], ['c-green', '#8CE6A8', 'Yeşil'], ['c-violet', '#C7A6FF', 'Mor']];
+(function () {
+  var r = document.createElement('div'); r.id = 'colRow';
+  COLS.forEach(function (c) {
+    var b = document.createElement('button'); b.style.background = c[1]; b.title = c[2]; b.dataset.c = c[0];
+    b.onclick = function (e) { e.stopPropagation(); setCol(c[0]); };
+    r.appendChild(b);
+  });
+  $('lightM').appendChild(r);
+  function setCol(k) {
+    COLS.forEach(function (c) { if (c[0]) document.body.classList.remove(c[0]); });
+    if (k) document.body.classList.add(k);
+    store('stock.col', k);
+    [].forEach.call(r.children, function (b) { b.classList.toggle('on', b.dataset.c === k); });
+  }
+  setCol(store('stock.col') || '');
+})();
 $('lightB').onclick = function (e) { e.stopPropagation(); $('lightM').classList.toggle('on'); };
 $('app').addEventListener('click', function (e) { if (!$('lightM').contains(e.target) && e.target !== $('lightB')) $('lightM').classList.remove('on'); });
 function applyLight() {
@@ -383,7 +433,7 @@ function applyLight() {
   $('app').classList.toggle('L-dark', eff === 'dark');
   var m = LIGHT.filter(function (l) { return l[0] === light; })[0];
   $('lightI').innerHTML = m[3]; $('lightT').textContent = m[1].toLocaleUpperCase('tr-TR');
-  [].forEach.call($('lightM').children, function (b) { b.classList.toggle('on', b.dataset.l === light); });
+  [].forEach.call($('lightM').children, function (b) { if (b.dataset.l) b.classList.toggle('on', b.dataset.l === light); });
 }
 function setLight(l, user) {
   light = l; store('stock.light', l);
@@ -397,6 +447,28 @@ function setLight(l, user) {
 }
 car.on(function (s) { if (s.night !== undefined && autoNight !== !!s.night) { autoNight = !!s.night; applyLight(); } });
 applyLight();
+// ---- Driving facts that take turns: consumption (now / 100 km / 1000 km), and speed / trip / fuel
+var rotI = 0, rotAt = 0;
+function rot(s) {
+  var now = Date.now(); if (rot.done && now - rotAt < 4000) return; rotAt = now; rot.done = true; rotI++;
+  var C = [];
+  if (s.inst != null) C.push([s.inst, 'L/100 km', 'Anlık tüketim']);
+  if (s.avg100 > 0 || s.avgL100 > 0) C.push([s.avg100 || s.avgL100, 'L/100 km', 'Ortalama · son 100 km']);
+  if (s.avg1000 > 0) C.push([s.avg1000, 'L/100 km', 'Ortalama · son 1000 km']);
+  var T = [[avgS.n ? Math.round(avgS.sum / avgS.n) : '--', 'km/h', 'Ortalama hız']];
+  if (s.tripKm != null) T.push([Number(s.tripKm).toFixed(1).replace('.', ','), 'km', 'Bu yol']);
+  if (s.fuelLeft > 0) T.push([String(Math.round(s.fuelLeft)), 'L', 'Depoda']);
+  function put(id, arr) {
+    if (!arr.length) return;
+    var x = arr[rotI % arr.length], b = $(id);
+    b.classList.remove('sw'); void b.offsetWidth; b.classList.add('sw');
+    b.innerHTML = (typeof x[0] === 'number' ? num(x[0], 1) : x[0]) + '<small>' + x[1] + '</small>';
+    var l = b.parentNode.querySelector('span'); l.className = 'lbl'; l.textContent = x[2]; l.style.color = '';
+  }
+  put('cons', C); put('avg', T);
+  var rl = $('range').parentNode.querySelector('span'); rl.className = 'lbl'; rl.textContent = 'Menzil';
+}
+
 // ---- Live data --------------------------------------------------------------------------------
 var avgS = (function () { try { return JSON.parse(store('stock.avg') || '') || { n: 0, sum: 0 }; } catch (e) { return { n: 0, sum: 0 }; } })();
 var lastTrip = null, artId = -1, pos = 0, dur = 0, playing = false;
@@ -421,26 +493,35 @@ car.on(function (s) {
 
   $('range').innerHTML = (s.range ? Math.round(s.range) : '--') + '<small>km</small>';
   var avgOK = s.avgL100 > 0, c = avgOK ? s.avgL100 : (s.inst !== undefined ? s.inst : s.l100);
-  $('cons').innerHTML = num(c, 1) + '<small>L/100 km</small>';
+  if (!rot.done) $('cons').innerHTML = num(c, 1) + '<small>L/100 km</small>';
   var diag = c === undefined && s.canDiag;
-  $('consL').textContent = diag ? s.canDiag : '';
-  $('consL').classList.toggle('diag', !!diag);
+  if (diag) { $('consL').textContent = s.canDiag; $('consL').classList.add('diag'); }
   $('consL').style.color = diag ? '#F0A050' : '';
   $('r2').onclick = diag ? function () { call('open', 'canFix'); } : null;
-  var v = s.gps === 'ok' ? (s.speed || 0) : 0;
+  var ov = s.obd && s.obd.ok && s.obd.v ? s.obd.v.speed : null;
+  var v = ov != null ? ov : s.gps === 'ok' || s.speed != null ? (s.speed || 0) : 0;
   setSpeed(v);
+  $('dsN').textContent = Math.round(v);
+  $('dsG').textContent = s.gearObd ? (/^[1-9]$/.test(s.gearObd) ? 'D' + s.gearObd : s.gearObd) : '';
   if (lastTrip !== null && s.tripKm !== undefined && s.tripKm < lastTrip - 0.5) avgS = { n: 0, sum: 0 };   // new trip
   if (s.tripKm !== undefined) lastTrip = s.tripKm;
   if (v > 3) { avgS.n++; avgS.sum += v; if (avgS.n % 15 === 0) store('stock.avg', JSON.stringify(avgS)); }
   var ec = eco.feed(s); $('eco').textContent = ec; $('eco').style.color = ec >= 80 ? '#E8D5B0' : ec >= 60 ? '#E0A030' : '#E05040';
-  $('avg').innerHTML = (avgS.n ? Math.round(avgS.sum / avgS.n) : '--') + '<small>km/h</small>';
+  if (!rot.done) $('avg').innerHTML = (avgS.n ? Math.round(avgS.sum / avgS.n) : '--') + '<small>km/h</small>';
 
   var tun = !!s.tuner && s.khz;
   $('mt').textContent = tun ? (s.khz > 30000 ? (s.khz / 1000).toFixed(1).replace('.', ',') + ' MHz' : s.khz + ' kHz') : (s.title || 'Çalan bir şey yok');
   $('ma').textContent = tun ? 'Radyo · ' + (s.band || 'FM') + (s.stereo ? ' · stereo' : '') : (s.artist || '');
   $('bar').style.visibility = $('t1').style.visibility = $('t2').style.visibility = tun ? 'hidden' : 'visible';
   $('msrc').textContent = s.srcLabel || '';
-  [].forEach.call($('srcM').querySelectorAll('.it2'), function (r) { r.children[0].classList.toggle('on', new RegExp(r.dataset.re, 'i').test(s.srcLabel || '')); });
+  [].forEach.call($('srcM').querySelectorAll('.it2'), function (r) {
+    r.children[0].classList.toggle('on', new RegExp(r.dataset.re, 'i').test(s.srcLabel || ''));
+    // an app that is not on the unit: dimmed, and it says so
+    var na = !!r.dataset.need && s[r.dataset.need] === false, sm = r.children[0].querySelector('small');
+    r.children[0].classList.toggle('na', na);
+    if (na && !sm) r.children[0].insertAdjacentHTML('beforeend', '<small>bu cihazda yüklü değil</small>');
+    if (!na && sm) sm.remove();
+  });
   playing = !!s.playing;
   $('playI').innerHTML = playing ? '<path d="M9 5v14M15 5v14" stroke-width="2.4"/>' : '<path d="M8 5v14l11-7z"/>';
   if (s.dur !== undefined) { dur = s.dur; pos = s.pos || 0; showPos(); }
@@ -460,6 +541,9 @@ car.on(function (s) {
   if (song) { $('mcT').textContent = s.title; $('mcA').textContent = s.artist || s.srcLabel || ''; }
   $('radioC').classList.toggle('on', !!tun);
   $('car').classList.toggle('hide', !!tun || song); $('dots').classList.toggle('hide', !!tun || song);
+  $('dspd').classList.toggle('hide', !!tun || song);
+  $('rpmD').style.display = 'none';
+  rot(s);
   if (tun) {
     var mhz = s.khz > 30000 ? (s.khz / 1000).toFixed(1).replace('.', ',') : String(s.khz);
     $('rcF').innerHTML = mhz + '<small>' + (s.khz > 30000 ? 'MHz' : 'kHz') + '</small>';

@@ -20,17 +20,29 @@
   --t1:5.6vh;--t2:4.45vh;--gap:3.2vh;--r:2.4vh}
 body.day{--bg:#ECECEC;--card:#FFFFFF;--key:#F4F4F4;--fg:#000000;--mut:#3F3F3F;--line:#C9C9C9;--a:#8A5A00;--on:#fff;--hot:#C62828}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;overflow:hidden;user-select:none}
+html,body{margin:0;height:100%;background:radial-gradient(60vw 60vh at 12% 30%,rgba(255,150,0,.20),transparent 70%),radial-gradient(60vw 70vh at 88% 35%,rgba(40,140,255,.22),transparent 70%),var(--bg);color:var(--fg);font-family:'Inter',sans-serif;overflow:hidden;user-select:none}
 button{font-family:inherit;color:inherit;border:none;cursor:pointer}
 /* instant press feedback (≤ 0.25 s), no transitions */
-button:active{filter:brightness(1.35)}
+button{transition:transform .14s cubic-bezier(.3,.7,.4,1.4),filter .14s}
+button:active{filter:brightness(1.35);transform:scale(.94)}
 body.day button:active{filter:brightness(.88)}
+.glass{-webkit-backdrop-filter:blur(2.4vh) saturate(1.4);backdrop-filter:blur(2.4vh) saturate(1.4)}
 .w{position:fixed;inset:0;padding:2.4vh 3vh;display:grid;grid-template-rows:9vh 1fr 21vh;gap:var(--gap)}
 /* top line: time and outside temperature only */
+#media,#spdC{color:var(--fg)}
 .top{display:flex;align-items:center;justify-content:space-between;font-size:var(--t1);font-weight:700;font-variant-numeric:tabular-nums}
 .top .s{font-size:var(--t2);color:var(--mut);font-weight:500;margin-left:1.4vh}
 .mid{display:grid;grid-template-columns:40% 1fr;gap:var(--gap);min-height:0}
-.card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);min-height:0}
+.card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);min-height:0;position:relative;overflow:hidden}
+/* trip card: warm amber glass · player: blue glass (two colours, never the same white) */
+#spdC{background:linear-gradient(140deg,rgba(255,176,0,.30),rgba(255,120,0,.08) 60%,rgba(255,176,0,.04));box-shadow:inset 0 0 0 1px rgba(255,190,80,.38),inset 0 .3vh 0 rgba(255,230,180,.18)}
+#media{background:linear-gradient(140deg,rgba(60,150,255,.32),rgba(40,90,255,.08) 60%,rgba(60,150,255,.04));box-shadow:inset 0 0 0 1px rgba(110,180,255,.40),inset 0 .3vh 0 rgba(190,225,255,.18)}
+body.day #spdC{background:linear-gradient(140deg,#FFE3A8,#FFF4DC);box-shadow:inset 0 0 0 1px #E8B85A}
+body.day #media{background:linear-gradient(140deg,#CFE3FF,#EEF5FF);box-shadow:inset 0 0 0 1px #8DB8F2}
+/* a slow light sweep across a card while music plays */
+#media::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.07) 50%,transparent 70%);transform:translateX(-100%);pointer-events:none}
+body.playing #media::after{animation:sweep 6s ease-in-out infinite}
+@keyframes sweep{0%{transform:translateX(-100%)}55%,100%{transform:translateX(100%)}}
 /* speed: the one number that matters most; tap = vehicle page */
 #spdC{display:flex;flex-direction:column;justify-content:center;padding:2.4vh 3.2vh;text-align:left}
 #spd{font-size:21vh;line-height:.95;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.6vh}
@@ -46,14 +58,19 @@ body.day button:active{filter:brightness(.88)}
 .ctl{display:flex;gap:4vh;align-items:center}
 .ctl button{width:15vh;height:15vh;border-radius:50%;background:var(--key);box-shadow:inset 0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center}
 .ctl button svg{width:7vh;height:7vh}
-.ctl #play{width:17vh;height:17vh;background:var(--fg);color:var(--bg);box-shadow:none}
+.ctl button{background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.ctl #play{width:17vh;height:17vh;background:#4DA3FF;color:#00142E;box-shadow:0 0 0 0 rgba(77,163,255,.5)}
+body.playing .ctl #play{animation:pulse 2.4s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(77,163,255,.45)}100%{box-shadow:0 0 0 3vh rgba(77,163,255,0)}}
+body.day .ctl #play{background:#1565C0;color:#fff}
 .ctl #play svg{width:8vh;height:8vh}
 /* six destinations, icon + word, each ≥ 76 dp */
-.dock{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--gap)}
-.dock button{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2vh;min-width:0}
+.dock{display:grid;grid-template-columns:repeat(7,1fr);gap:2.4vh}
+.dock button{background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.04));border-radius:var(--r);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),inset 0 .3vh 0 rgba(255,255,255,.14),0 1vh 2.4vh rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.2vh;min-width:0}
 .dock svg{width:7.2vh;height:7.2vh}
 .dock span{font-size:var(--t2);font-weight:600;white-space:nowrap}
 .dock button.go{color:var(--a)}
+body.day .dock button{background:linear-gradient(180deg,#FFFFFF,#F1F1F1);box-shadow:inset 0 0 0 1px var(--line)}
 .dock button.go span{color:var(--fg)}
 .dock button{position:relative}
 .dock button .live{position:absolute;top:1.6vh;right:1.8vh;width:1.8vh;height:1.8vh;border-radius:50%;background:#2ECC71;display:none}
@@ -64,14 +81,14 @@ body.day button:active{filter:brightness(.88)}
 <div class="w">
   <div class="top"><span><span id="clock">--:--</span></span><span><span id="temp">--°</span><span class="s" id="tempL">dış</span></span></div>
   <div class="mid">
-    <button class="card" id="spdC" aria-label="Aracım">
+    <button class="card glass" id="spdC" aria-label="Aracım">
       <div><span id="spd">0</span> <span class="unit">km/h</span></div>
       <div class="facts">
         <div class="fact"><b id="rng">—</b><span>menzil km</span></div>
         <div class="fact"><b id="avg">—</b><span>L/100 km</span></div>
       </div>
     </button>
-    <div class="card" id="media">
+    <div class="card glass" id="media">
       <div><div id="src">Medya</div><div id="ttl">Çalan bir şey yok</div><div id="art"></div></div>
       <div class="ctl">
         <button id="prev" aria-label="Önceki"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2.2v14H6zM19 5v14L9.2 12z"/></svg></button>
@@ -86,10 +103,10 @@ body.day button:active{filter:brightness(.88)}
 <script>
 var PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12.5-7.5z"/></svg>',
     PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg>';
-var DOCK = [['nav', 'Harita', 'split'], ['music', 'Müzik', 'srcPick'], ['radio', 'Radyo', 'radio'], ['phone', 'Telefon', 'phone'], ['aa', 'Android Auto', 'aa'], ['settings', 'Ayarlar', 'settings']];
+var DOCK = [['nav', 'Harita', 'split'], ['music', 'Müzik', 'music'], ['radio', 'Radyo', 'radio'], ['phone', 'Telefon', 'phone'], ['aa', 'Android Auto', 'aa'], ['eq', 'Hi-Fi', 'eq'], ['settings', 'Ayarlar', 'settings']];
 DOCK.forEach(function (d) {
   var b = document.createElement('button'); b.className = 'key go'; b.setAttribute('aria-label', d[1]);
-  b.innerHTML = icon(d[0], 'li') + '<span>' + d[1] + '</span><i class="live"></i>'; b.dataset.k = d[0];
+  b.innerHTML = icon(d[0], 'li') + '<span>' + d[1] + '</span><i class="live"></i>'; b.dataset.k = d[0]; b.classList.add('glass');
   b.onclick = function () { call('open', d[2]); };
   $('dock').appendChild(b);
 });
@@ -121,6 +138,7 @@ car.on(function (s) {
   $('ttl').textContent = s.title || 'Çalan bir şey yok';
   $('art').textContent = s.artist || '';
   $('play').innerHTML = s.playing ? PAUSE : PLAY;
+  document.body.classList.toggle('playing', !!s.playing);
   // phone connected to Android Auto: a green dot on its button
   var aa = document.querySelector('.dock button[data-k="aa"]'); if (aa) aa.classList.toggle('on', !!s.aaOn);
 });

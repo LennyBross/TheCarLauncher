@@ -41,7 +41,7 @@ public class ThemeScreen extends Screen {
     public static final String P_THEME = "home_theme", P_PREV = "home_theme_prev";
     public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7, STOCK = 8, LIVE = 9, DENON = 10, LITERATUR = 11;
     /** The themes offered in Settings (ids into NAMES). */
-    public static final int[] OFFERED = {LITERATUR, DENON, LIVE, STOCK, DS4PLUS, PANEL};
+    public static final int[] OFFERED = {LITERATUR, LIVE, STOCK, DS4PLUS, PANEL};   // Denon is now the Hi-Fi page of every theme
     public static final String[][] NAMES = {
             {"Klasična", "Classic"}, {"Moderna", "Modern"}, {"Retro", "Retro"}, {"Pilot", "Pilot"}, {"Panel", "Panel"},
             {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}, {"Stock", "Stock"}, {"DS Live", "DS Live"}, {"Denon", "Denon"}, {"Literatür (sürüş için)", "Literatür (for driving)"}};
@@ -113,7 +113,7 @@ public class ThemeScreen extends Screen {
     public static int current(Context c) {
         int t = Prefs.integer(c, P_THEME, -1);
         // Only DS4+, Panel and Stock are offered now; anything else moves to Stock.
-        if (t != DS4PLUS && t != PANEL && t != STOCK && t != LIVE && t != DENON && t != LITERATUR) {
+        if (t != DS4PLUS && t != PANEL && t != STOCK && t != LIVE && t != LITERATUR) {
             t = STOCK;
             Prefs.put(c, P_THEME, t);
             Prefs.put(c, ModernScreen.P_MODERN, false);
@@ -480,6 +480,7 @@ public class ThemeScreen extends Screen {
         float temp = Prefs.of(act).getFloat("weather_temp", Float.NaN);
         if (!Float.isNaN(temp)) o.put("temp", Math.round(temp));
         o.put("hasMaps", installed(PKG_MAPS));
+        o.put("hasSpotify", installed(PKG_SPOTIFY)).put("hasYtMusic", installed(PKG_YTMUSIC));
         // Live CAN (CataraPatara CAN bridge) and engine sound (CataraPatara)
         if (com.thecarlauncher.util.CanLive.canFresh()) {
             if (com.thecarlauncher.util.CanLive.l100 >= 0) o.put("inst", com.thecarlauncher.util.CanLive.l100);
