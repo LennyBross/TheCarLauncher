@@ -71,6 +71,23 @@ body.day .db i svg{stroke:#0A0A0A !important;color:#0A0A0A}
 .c .sg{font-weight:600}
 .tv{display:flex;flex-direction:column;gap:.3vh}.tv b{font-family:'Inter',sans-serif;font-size:4.2vh;font-weight:300;line-height:1;letter-spacing:-.1vh;white-space:nowrap}.tv span{font-size:1.75vh;color:var(--muted);letter-spacing:.05vh}
 .sg{letter-spacing:-.05vh}
+/* music player card */
+#mp{display:flex;align-items:center;gap:2.2vh;padding:1.9vh 2.4vh;cursor:pointer;position:relative;overflow:hidden}
+#mpCov{width:15.5vh;height:15.5vh;flex:none;border-radius:2.2vh;background:var(--track);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 1vh 3vh rgba(0,0,0,.35)}
+#mpCov img{width:100%;height:100%;object-fit:cover}#mpCov svg{width:5vh;height:5vh;color:var(--muted)}
+#mpTx{flex:1;min-width:0;display:flex;flex-direction:column;gap:.5vh}
+#mpT{font-size:2.7vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mpArtRow{display:flex;align-items:center;gap:1vh;min-width:0}
+#mpPic{width:3.6vh;height:3.6vh;border-radius:50%;object-fit:cover;flex:none;display:none;box-shadow:0 0 0 .2vh var(--card)}
+#mpA{font-size:2.05vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mpAl{font-size:1.75vh;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mpBar{height:.6vh;border-radius:.3vh;background:var(--track);overflow:hidden;margin-top:.6vh}#mpBar i{display:block;height:100%;width:0;background:var(--a);transition:width .9s linear}
+#mpTm{display:flex;justify-content:space-between;font-size:1.5vh;color:var(--muted);font-variant-numeric:tabular-nums}
+#mpCtl{display:flex;align-items:center;gap:1.2vh;flex:none}
+#mpCtl button{width:7.2vh;height:7.2vh;border-radius:50%;border:none;background:var(--track);color:var(--fg);display:flex;align-items:center;justify-content:center}
+#mpCtl button svg{width:3vh;height:3vh}
+#mpCtl #mpPlay{width:8.6vh;height:8.6vh;background:var(--a);color:var(--on,#0B0E13)}
+#mpSrc{position:absolute;right:2.4vh;top:1.4vh;font-size:1.45vh;color:var(--muted);letter-spacing:.06vh}
 </style>
 </head>
 <body>
@@ -86,6 +103,22 @@ body.day .db i svg{stroke:#0A0A0A !important;color:#0A0A0A}
 <svg style="width:6.11vh;height:6.11vh;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="var(--a)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H8a5 5 0 1 1 1-9.9A6 6 0 0 1 20 11a4 4 0 0 1-2.5 8z"/></svg>
 <div style="display:flex;flex-direction:column;min-width:0"><span class="sg" style="font-size:6.2vh;line-height:1" id="temp">—</span><span style="font-size:1.81vh;color:var(--muted);white-space:nowrap" id="tempLab">Hava durumu</span></div>
 </div>
+</div>
+<div class="c key" id="mp" role="button" aria-label="Müzik">
+<div id="mpCov"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div>
+<div id="mpTx">
+<div id="mpT">Çalan bir şey yok</div>
+<div id="mpArtRow"><img id="mpPic" alt=""><span id="mpA">Müziğe dokun · şarkı listesi</span></div>
+<div id="mpAl"></div>
+<div id="mpBar"><i></i></div>
+<div id="mpTm"><span id="mpPos"></span><span id="mpDur"></span></div>
+</div>
+<div id="mpCtl">
+<button data-mm="prev" aria-label="Önceki"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 5L9 12l10 7z"/><rect x="5" y="5" width="2.2" height="14" rx="1"/></svg></button>
+<button data-mm="play" id="mpPlay" aria-label="Çal / duraklat"><svg viewBox="0 0 24 24" fill="currentColor" id="mpPlayIc"><path d="M7 4l13 8-13 8z"/></svg></button>
+<button data-mm="next" aria-label="Sonraki"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5l10 7-10 7z"/><rect x="16.8" y="5" width="2.2" height="14" rx="1"/></svg></button>
+</div>
+<span id="mpSrc"></span>
 </div>
 <div class="c" style="flex:1;min-height:0;padding:2.5vh 3.33vh;display:flex;gap:3.33vh;align-items:center">
 <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2.22vh">
@@ -120,7 +153,7 @@ body.day .db i svg{stroke:#0A0A0A !important;color:#0A0A0A}
 <button id="carBox" class="key" aria-label="Aracım">
 <img id="carSpin" alt="" src="" style="position:absolute;left:-9%;top:2%;width:118%;height:112%;object-fit:contain;pointer-events:none">
 <span id="carShade" style="position:absolute;left:0;right:0;top:0;height:40%;background:linear-gradient(rgba(0,0,0,.62),transparent);pointer-events:none;display:none"></span>
-<span id="carTitle" style="position:absolute;left:3.33vh;top:2.78vh;display:flex;flex-direction:column;align-items:flex-start"><span class="sg" style="font-size:3.06vh;color:var(--fg)">Citroën DS4</span><span style="font-size:1.94vh;color:var(--muted)">10 KE 424 · 3D ve bilgiler</span></span>
+<span id="carTitle" style="position:absolute;left:3.33vh;top:2.78vh;display:flex;flex-direction:column;align-items:flex-start"><span class="sg" style="font-size:3.06vh;color:var(--fg)">Citroën DS4</span><span style="font-size:1.94vh;color:var(--muted)">10 KE 424 · Araç bilgileri</span></span>
 </button>
 </div>
 </div>
@@ -153,6 +186,33 @@ var IC = {
   $('dock').appendChild(b);
 });
 $('carBox').onclick = function () { call('open', 'vehicle'); };
+
+// ---- music player: cover, song, artist (with picture), album; tap = the Müzik page with the song list
+$('mp').onclick = function (e) { if (!e.target.closest('#mpCtl')) call('open', 'music'); };
+[].forEach.call(document.querySelectorAll('#mpCtl [data-mm]'), function (b) { b.onclick = function (e) { e.stopPropagation(); call('media', b.dataset.mm); }; });
+var mpArt = null, mpArtist = null, mpPicTry = 0;
+function mmss(v) { v = Math.max(0, Math.round(v || 0)); return Math.floor(v / 60) + ':' + ('0' + v % 60).slice(-2); }
+function mpPic() {
+  var u = call('mediaArtistPic') || '';
+  $('mpPic').style.display = u ? 'block' : 'none'; if (u) $('mpPic').src = u;
+  if (!u && ++mpPicTry < 6) setTimeout(mpPic, 3000);   // fetched in the background the first time
+}
+car.on(function (s) {
+  var has = !!s.title;
+  $('mpT').textContent = has ? s.title : 'Çalan bir şey yok';
+  $('mpA').textContent = has ? (s.artist || 'Bilinmeyen sanatçı') : 'Müziğe dokun · şarkı listesi';
+  $('mpAl').textContent = has && s.album ? s.album : '';
+  $('mpSrc').textContent = has && s.srcLabel ? s.srcLabel.toLocaleUpperCase('tr') : '';
+  $('mpBar').firstChild.style.width = s.dur ? Math.min(100, (s.pos || 0) / s.dur * 100) + '%' : '0';
+  $('mpPos').textContent = s.dur ? mmss(s.pos) : ''; $('mpDur').textContent = s.dur ? mmss(s.dur) : '';
+  $('mpPlayIc').innerHTML = s.playing ? '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>' : '<path d="M7 4l13 8-13 8z"/>';
+  if (s.artId !== mpArt) {
+    mpArt = s.artId; var u = s.artId ? call('mediaArt') : '';
+    $('mpCov').innerHTML = u ? '<img src="' + u + '" alt="">' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>';
+  }
+  if (has && s.artist !== mpArtist) { mpArtist = s.artist; mpPicTry = 0; $('mpPic').style.display = 'none'; mpPic(); }
+  if (!has) { mpArtist = null; $('mpPic').style.display = 'none'; }
+});
 
 // Screen light and day / night
 var bri = $('bri');

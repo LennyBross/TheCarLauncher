@@ -409,6 +409,8 @@ public class ThemeScreen extends Screen {
         if (m.hasTrackInfo()) {
             o.put("title", m.title());
             o.put("artist", m.artist() == null ? "" : m.artist());
+            String alb = m.album();
+            if (alb != null && !alb.trim().isEmpty() && !alb.startsWith("<")) o.put("album", alb);
         }
         o.put("playing", m.isPlaying());
         o.put("pos", m.position() / 1000);
@@ -993,6 +995,13 @@ public class ThemeScreen extends Screen {
 
         @JavascriptInterface
         public int theme() { return theme; }
+
+        /** The artist's picture as a data URL ("" until it has been fetched once). */
+        @JavascriptInterface
+        public String mediaArtistPic() {
+            MediaHub mh = MediaHub.get(act);
+            return mh.hasTrackInfo() ? com.thecarlauncher.util.ArtistPhoto.get(act, mh.artist()) : "";
+        }
 
         /** The current cover as a small JPEG data URL ("" when there is none). */
         @JavascriptInterface
