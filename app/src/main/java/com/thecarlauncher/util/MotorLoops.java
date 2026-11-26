@@ -30,7 +30,9 @@ import java.nio.ByteOrder;
  * Follows the car (OBD rpm, engine load as the accelerator), or a test pedal from motor.html.
  */
 final class MotorLoops {
-    private static final int SR = 24000, BLOCK = 240, PTS = 8;
+    private static final int BLOCK = 240;
+    // sample rate and number of rpm points come with each engine (engines.json): 24 kHz × 8 or 44.1 kHz × 16
+    private int SR = 24000, PTS = 8;
 
     private final Context app;
     private final SharedPreferences p;
@@ -84,6 +86,8 @@ final class MotorLoops {
         try {
             JSONObject man = new JSONObject(readAsset("motor/eng/engines.json")).getJSONObject(engine);
             JSONArray rp = man.getJSONArray("rpm");
+            SR = man.optInt("sr", 24000);
+            PTS = rp.length();
             final float idle = (float) man.optDouble("idle", 800), red = (float) man.optDouble("red", 7000);
             float[] rpmPts = new float[PTS];
             for (int i = 0; i < PTS; i++) rpmPts[i] = (float) rp.getDouble(i);
@@ -122,9 +126,7 @@ final class MotorLoops {
                     ObdHub h = ObdHub.get();
                     if (h != null) {
                         carRpm = Math.max(0, h.rpm());
-                        float load = h.value("load"), tv = h.value("thr");
-                        float a = !Float.isNaN(load) ? (load - 12f) / 70f : !Float.isNaN(tv) ? (tv - 15f) / 70f : 0f;
-                        carThr = Math.max(0, Math.min(1, a));
+                        carThr = h.demand();
                     }
                     float f = Math.max(0, Math.min(1.02f, (carRpm - carIdle) / Math.max(500, carMax - carIdle)));
                     targetRpm = idle + f * (red * 0.97f - idle);

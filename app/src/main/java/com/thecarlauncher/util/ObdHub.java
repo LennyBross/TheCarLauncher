@@ -214,7 +214,35 @@ public final class ObdHub implements Obd.Listener {
 
     // ---- from the adapter ----
 
-    @Override public void onRpm(float r) { rpm = r; rpmAt = System.currentTimeMillis(); send(false); }
+    @Override public void onRpm(float r) {
+        long now = System.currentTimeMillis();
+        // how fast the revs climb (rpm per second, smoothed): the driver's demand when no pedal value comes
+        if (rpmAt > 0 && now - rpmAt < 1500 && now > rpmAt) {
+            float rate = (r - rpm) * 1000f / (now - rpmAt);
+            rise += (rate - rise) * 0.35f;
+        }
+        rpm = r; rpmAt = now; send(false);
+    }
+    private volatile float rise;
+
+    /**
+     * Driver's demand 0…1 for the engine sound: the accelerator pedal when the ECU gives it, else the
+     * calculated load, else read from the revs (climbing = on the gas; cruising at speed = part gas).
+     */
+    public float demand() {
+        long now = System.currentTimeMillis();
+        float d = 0;
+        float load = value("load");
+        if (!Float.isNaN(load)) d = Math.max(d, (load - 12f) / 70f);
+        if (now - pedalAt < 3000 && pedal > 0.16f) d = Math.max(d, pedal);   // 0x11 on a diesel sits at 12.5 %: not a pedal
+        float r = rpm(), v = speed();
+        if (r > 0) {
+            d = Math.max(d, rise / 900f);                                   // +900 rpm/s ≈ full gas
+            if (v > 8 && r > 1250 && rise > -150) d = Math.max(d, 0.4f);   // cruising: part gas, not coasting
+            if (r > 2600) d = Math.max(d, 0.55f);
+        }
+        return Math.max(0, Math.min(1, d));
+    }
     @Override public void onPedal(float p) { pedal = p; pedalAt = System.currentTimeMillis(); }
     @Override public void onSpeed(float kmh) { speed = kmh; speedAt = System.currentTimeMillis(); }
     @Override public void onStatus(String t, boolean good) { status = t; ok = good; send(true); }

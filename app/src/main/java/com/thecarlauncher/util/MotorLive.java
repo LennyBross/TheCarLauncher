@@ -149,10 +149,7 @@ final class MotorLive {
                 o.put("rpm", rpm > 0 ? rpm : 0);
                 if (h != null) {
                     // a diesel's throttle valve says little; calculated load is the driver's demand
-                    float load = h.value("load");
-                    float thr = h.value("thr");
-                    float a = !Float.isNaN(load) ? (load - 12f) / 70f : !Float.isNaN(thr) ? (thr - 15f) / 70f : Float.NaN;
-                    if (!Float.isNaN(a)) o.put("thr", Math.max(0, Math.min(1, a)));
+                    o.put("thr", h.demand());
                     float v = h.speed();
                     if (v >= 0) o.put("kmh", v);
                 }
