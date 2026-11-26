@@ -125,6 +125,7 @@ public final class Obd {
             } else if (++miss == 5) {
                 l.onStatus("ECU yanıt vermiyor (kontak açık mı?)", false);
             }
+            rawTurn(in, out);
             if (miss >= 5) Thread.sleep(700); // ignition off: ask slowly until it answers again
         }
     }
@@ -428,6 +429,7 @@ public final class Obd {
                 String rv = cmd(in, out, "ATRV", 600).replaceAll("[^0-9.]", "");
                 try { if (!rv.isEmpty()) l.onPid("batt", Float.parseFloat(rv)); } catch (Exception ignored) { }
             }
+            rawTurn(in, out);
             if (wantDtc || now - dtcAt > 120000) {
                 wantDtc = false;
                 dtcAt = now;
@@ -636,7 +638,33 @@ public final class Obd {
         return out;
     }
 
+    // ---- support: the last adapter exchanges, and one raw command sent from the support console
+    private static final java.util.ArrayDeque<String> TRACE = new java.util.ArrayDeque<>();
+    private static volatile String rawReq, rawResp;
+    public static String trace() { synchronized (TRACE) { StringBuilder b = new StringBuilder(); for (String t : TRACE) b.append(t).append('\n'); return b.toString(); } }
+    /** Sends one command to the adapter between polls; the answer, or null after 8 s. */
+    public static String raw(String c) throws InterruptedException {
+        rawResp = null; rawReq = c;
+        for (int i = 0; i < 80 && rawResp == null; i++) Thread.sleep(100);
+        return rawResp;
+    }
+    private static void rawTurn(InputStream in, OutputStream out) throws Exception {
+        String q = rawReq;
+        if (q == null) return;
+        rawReq = null;
+        rawResp = cmd(in, out, q, 4000);
+    }
+
     private static String cmd(InputStream in, OutputStream out, String c, long timeoutMs) throws Exception {
+        String r = cmd0(in, out, c, timeoutMs);
+        synchronized (TRACE) {
+            TRACE.addLast(String.format(java.util.Locale.US, "%tT %-10s → %s", System.currentTimeMillis(), c, r.replace('\r', ' ').replace('\n', ' ').trim()));
+            while (TRACE.size() > 160) TRACE.removeFirst();
+        }
+        return r;
+    }
+
+    private static String cmd0(InputStream in, OutputStream out, String c, long timeoutMs) throws Exception {
         out.write((c + "\r").getBytes("US-ASCII"));
         out.flush();
         StringBuilder sb = new StringBuilder();

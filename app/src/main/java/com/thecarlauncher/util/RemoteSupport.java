@@ -363,7 +363,7 @@ public final class RemoteSupport {
             String a = w.length > 1 ? w[1] : "";
             switch (w[0].toLowerCase(Locale.ROOT)) {
                 case "yardim": case "help":
-                    return "durum · obd · ara · bagla <MAC> [le] · pin <PIN> · log [satır] [süzgeç] · sh <komut> · guncelle · yeniden";
+                    return "durum · obd · obdiz · elm <komut> · motor [ac|kapat|{json}] · ara · bagla <MAC> [le] · pin <PIN> · log [satır] [süzgeç] · sh <komut> · guncelle · yeniden";
                 case "durum": return state(c);
                 case "obd": { ObdHub h = ObdHub.get(); return h == null ? "ObdHub yok" : h.json().toString(2); }
                 case "ara": {
@@ -398,6 +398,15 @@ public final class RemoteSupport {
                     return sb.toString();
                 }
                 case "sh": return sh(a, 25000);
+                case "obdiz": return com.catarapatara.Obd.trace();
+                case "elm": { String r = com.catarapatara.Obd.raw(a.trim().toUpperCase(Locale.ROOT)); return r == null ? "yanıt yok (OBD bağlı mı?)" : r; }
+                case "motor": {
+                    MotorSesi m = MotorSesi.get(c);
+                    if (a.trim().equals("ac")) m.set("{\"on\":true}"); else if (a.trim().equals("kapat")) m.set("{\"on\":false}");
+                    else if (a.trim().startsWith("{")) m.set(a.trim());
+                    Thread.sleep(a.trim().isEmpty() ? 0 : 1500);
+                    return "ayarlar: " + m.settings() + "\ndurum: " + m.state();
+                }
                 case "guncelle": {
                     final StringBuilder r = new StringBuilder();
                     final Object lock = new Object();
