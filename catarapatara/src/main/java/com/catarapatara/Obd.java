@@ -39,12 +39,14 @@ public final class Obd {
      * e-HDi (Bosch EDC17, diesel): rail pressure, boost (MAP − baro), EGR, MAF, temperatures.
      */
     static final int[][] SLOW_PIDS = {{0x05}, {0x0B}, {0x23}, {0x10}, {0x04}, {0x0F}, {0x42}, {0x2C}, {0x2D}, {0x2F}, {0x5C},
-            {0x46}, {0x33}, {0x1F}, {0x01}, {0x5E}, {0x0E}, {0x11}, {0x06}, {0x07}, {0x31}, {0x21}, {0x30}, {0x7C}};
+            {0x46}, {0x33}, {0x1F}, {0x01}, {0x5E}, {0x0E}, {0x11}, {0x06}, {0x07}, {0x31}, {0x21}, {0x30}, {0x7C}, {0xA4}};
 
     /** Decodes a mode 01 answer to the value in display units; NaN if unknown. key out[0]. */
     static float value(int pid, int[] b, String[] key) {
         switch (pid) {
             case 0x05: key[0] = "cool"; return b[0] - 40;
+            // transmission actual gear (SAE J1979 PID A4): byte B high nibble; 0 = neutral / not engaged
+            case 0xA4: key[0] = "gearA4"; return (b[0] & 1) != 0 ? (b[1] >> 4) : Float.NaN;
             case 0x0B: key[0] = "map"; return b[0];
             case 0x23: key[0] = "rail"; return ((b[0] << 8) | b[1]) * 10f / 1000f;      // MPa
             case 0x10: key[0] = "maf"; return ((b[0] << 8) | b[1]) / 100f;              // g/s
@@ -75,7 +77,7 @@ public final class Obd {
     static int len(int pid) {
         switch (pid) {
             case 0x23: case 0x10: case 0x42: case 0x1F: case 0x5E: case 0x31: case 0x21: case 0x7C: return 2;
-            case 0x01: return 4;
+            case 0x01: case 0xA4: return 4;
             default: return 1;
         }
     }
@@ -358,8 +360,8 @@ public final class Obd {
         }
         l.onStatus("OBD bağlı", true);
         // Which PIDs does this engine answer? (bitmaps 01-20, 21-40, 41-60, 61-80)
-        boolean[] sup = new boolean[0x81];
-        for (int base = 0; base <= 0x60; base += 0x20) {
+        boolean[] sup = new boolean[0x101];
+        for (int base = 0; base <= 0xA0; base += 0x20) {
             int[] m = data(cmd(in, out, String.format(Locale.US, "01%02X", base), 1500), base, 4);
             if (m == null) break;
             long bits = ((long) m[0] << 24) | (m[1] << 16) | (m[2] << 8) | m[3];
@@ -370,7 +372,7 @@ public final class Obd {
         int ns = 0;
         for (int[] sp : SLOW_PIDS) if (sup[sp[0]]) slow[ns++] = sp[0];
         if (ns == 0) for (int[] sp : SLOW_PIDS) slow[ns++] = sp[0]; // no bitmap: try them all, drop the silent ones
-        int[] miss = new int[0x81];
+        int[] miss = new int[0x101];
         l.onPid("pids", ns);
         boolean pedalD = true;
         // CAN engines answer several PIDs in one request: rpm + pedal in one round trip instead of two.

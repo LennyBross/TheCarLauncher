@@ -440,15 +440,22 @@ public class ThemeScreen extends Screen {
         // Doors, boot, bonnet, lights, indicators (learned from the CAN box frames)
         o.put("body", com.thecarlauncher.util.CarBody.json());
         // Gear from road speed / engine rpm (DS4 1.6 e-HDi, 6-speed: km/h per 1000 rpm)
-        if (o.has("rpm") && o.has("speed")) {
+        com.thecarlauncher.util.ObdHub obh0 = com.thecarlauncher.util.ObdHub.get();
+        // The ECU's own gear (PID A4) wins when it gives one. Standing still: the ratio says nothing, so "D" if we
+        // drove a moment ago (automatic left in drive), else "–" — never a made-up "N".
+        float gA4 = obh0 != null ? obh0.value("gearA4") : Float.NaN;
+        if (!Float.isNaN(gA4) && gA4 >= 1 && gA4 <= 9) { o.put("gearObd", String.valueOf((int) gA4)); lastDriveAt = System.currentTimeMillis(); }
+        else if (o.has("rpm") && o.has("speed")) {
             double r = o.optDouble("rpm"), v = o.optDouble("speed");
-            if (r > 600 && v > 4) {
+            if (v <= 4 && r > 300) o.put("gearObd", System.currentTimeMillis() - lastDriveAt < 20 * 60000L ? "D" : "–");
+            else if (r > 600 && v > 4) {
+                lastDriveAt = System.currentTimeMillis();
                 double k = v / (r / 1000.0);
                 double[] G = {8.2, 14.6, 22.4, 30.8, 39.0, 47.5};
                 int best = 0; double bd = 1e9;
                 for (int g = 0; g < G.length; g++) { double d = Math.abs(Math.log(k / G[g])); if (d < bd) { bd = d; best = g; } }
-                o.put("gearObd", bd < 0.12 ? String.valueOf(best + 1) : "N");
-            } else if (r > 300) o.put("gearObd", "N");
+                o.put("gearObd", bd < 0.12 ? String.valueOf(best + 1) : "D");   // between ratios = converter slipping, still in drive
+            }
         }
         // Phone bridge: Wi-Fi link and ECU freshness, shown separately.
         com.thecarlauncher.util.ObdHub obh = com.thecarlauncher.util.ObdHub.get();
@@ -619,6 +626,8 @@ public class ThemeScreen extends Screen {
     // ---- Calls from the page --------------------------------------------------------------------
 
     private void ui(Runnable r) { main.post(r); }
+
+    private long lastDriveAt;
 
     private class Bridge {
         @JavascriptInterface
