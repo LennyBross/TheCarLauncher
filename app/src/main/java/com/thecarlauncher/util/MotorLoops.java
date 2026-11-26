@@ -111,6 +111,10 @@ final class MotorLoops {
             at.play();
 
             float[] mix = new float[BLOCK];
+            // overrun crackle (lift off at high revs): short noise bursts through a resonator + a low thump
+            java.util.Random rnd = new java.util.Random();
+            float thrSlow = 0, crackleLeft = 0, burstLeft = 0, burstAmp = 0, burstDecay = 0, gapLeft = 0;
+            float rz1 = 0, rz2 = 0, ra1 = 0, ra2 = 0, thump = 0, thumpPh = 0;
             short[] out = new short[BLOCK];
             float rpm = idle, thr = 0, vol = 0, testRpm = idle;
             long lastState = 0;
@@ -168,6 +172,36 @@ final class MotorLoops {
                         ph += rate; if (ph >= L) ph -= L;
                     }
                     phase[i][t] = ph; gain[i][t] = want;
+                }
+                // ---- crackle trigger: the demand fell fast while the engine was revving
+                float pops = (float) c.optDouble("pops", 0.6);
+                thrSlow += (thr - thrSlow) * 0.02f;
+                if (pops > 0.01f && crackleLeft <= 0 && thrSlow - thr > 0.3f && rpm > idle * 2.0f) {
+                    crackleLeft = SR * (0.6f + 0.9f * pops) * (0.7f + rnd.nextFloat() * 0.6f);
+                    gapLeft = 0;
+                }
+                if (crackleLeft > 0 || burstLeft > 0) {
+                    for (int n = 0; n < BLOCK; n++) {
+                        if (burstLeft <= 0 && crackleLeft > 0 && --gapLeft <= 0) {
+                            // next pop: some loud with a thump, most small crackles
+                            boolean big = rnd.nextFloat() < 0.18f;
+                            burstLeft = SR * (big ? 0.035f : 0.006f + rnd.nextFloat() * 0.012f);
+                            burstAmp = 9000f * pops * (big ? 1.6f : 0.35f + rnd.nextFloat() * 0.65f) * Math.min(1f, crackleLeft / (SR * 0.4f) + 0.3f);
+                            burstDecay = (float) Math.exp(-1.0 / (SR * (big ? 0.012f : 0.003f)));
+                            gapLeft = SR * (0.015f + rnd.nextFloat() * (big ? 0.12f : 0.07f));
+                            if (big) { thump = burstAmp * 0.9f; thumpPh = 0; }
+                            // resonator a bit different each pop (900 Hz … 2.6 kHz)
+                            double f0 = 900 + rnd.nextFloat() * 1700, r = 0.93;
+                            ra1 = (float) (2 * r * Math.cos(2 * Math.PI * f0 / SR)); ra2 = (float) (-r * r);
+                        }
+                        float x = 0;
+                        if (burstLeft > 0) { x = (rnd.nextFloat() * 2 - 1) * burstAmp; burstAmp *= burstDecay; burstLeft--; }
+                        float y = x * 0.08f + ra1 * rz1 + ra2 * rz2;   // the resonator rings ≈ ×14 rz2 = rz1; rz1 = y;
+                        float th = 0;
+                        if (thump > 1) { th = (float) Math.sin(thumpPh) * thump; thumpPh += 2 * Math.PI * 70 / SR; thump *= 0.9985f; }
+                        mix[n] += y + th;
+                        if (crackleLeft > 0) crackleLeft--;
+                    }
                 }
                 float dv = (vol - vStart) / BLOCK, v = vStart;
                 for (int n = 0; n < BLOCK; n++) {
