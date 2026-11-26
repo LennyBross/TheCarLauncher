@@ -105,7 +105,7 @@ body.photo #spin,body.photo #glowF,body.photo #glowR,body.photo .blk{display:blo
 
 <div id="gearC">
   <div id="gearL">VİTES</div>
-  <div class="n" id="gear">N</div>
+  <div class="n" id="gear">–</div>
   <div class="n" id="spd">--<small>km/h</small></div>
 </div>
 
@@ -423,8 +423,8 @@ function fpsTick(now) {
   };
 })();
 // Live 3D by default (lighter model: no interior, black glass); photos when chosen on the vehicle page.
-if (store('myds.3d') !== '3d') toPhoto('pref');   // home: photo unless 3D was switched on (the unit's GPU)
-else {
+toPhoto('pref');   // the 3D model was removed: photos only
+if (false) {
   var ls = function (l, done) { if (!l.length) return done(); var e = document.createElement('script'); e.src = l[0]; e.onload = function () { ls(l.slice(1), done); }; e.onerror = function () { toPhoto('nofile'); }; document.body.appendChild(e); };
   ls(['3d/three.min.js', '3d/GLTFLoader.js'], function () { try { init3D(); } catch (e) { toPhoto('error'); } });
   setTimeout(function () { if (!window.__shown3d) toPhoto('slow'); }, 15000);
@@ -466,7 +466,7 @@ car.on(function (s) {
   var rpm = s.rpm || (s.cpOn ? s.cpRpm : 0);
   $('rpmN').innerHTML = (s.rpm ? s.rpm : '--') + '<small>d/d</small>';
   rpmBar(rpm || 0);
-  $('gear').textContent = s.gearObd || (s.cpOn && s.cpGear ? s.cpGear : 'N');
+  $('gear').textContent = s.gearObd || (s.cpOn && s.cpGear ? s.cpGear : '–');
   $('npT').textContent = s.title ? '♪ ' + s.title + (s.artist ? ' · ' + s.artist : '') : 'Müzik';
   $('eOn').classList.toggle('on', !!s.cpOn); $('eOnT').textContent = s.cpOn ? 'Kapat' : 'Aç';
   var b = demo ? demoBody() : null;

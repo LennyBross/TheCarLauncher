@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Müzik</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* Müzik: the play queue and the USB library as lists (one tap = play). Takes the home theme's skin. */
+:root{--a:#5CC8B0;--on:#0B0E13;--bg:#0B0E13;--fg:#F3F5F7;--card:#161B23;--chip:#1E252F;--muted:#A3ADBA;--line:#232A35;--r:3vh;--rb:2vh;--row:9vh}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+.r{width:100vw;height:100vh;padding:2.4vh;display:flex;gap:2.2vh}
+.card{border-radius:var(--r);background:var(--card)}
+button{font:inherit;color:inherit;border:none;background:none;padding:0}
+.chip{border-radius:var(--rb);background:var(--chip);height:7vh;padding:0 2.2vh;font-size:2.2vh;font-weight:600;display:inline-flex;align-items:center;gap:1vh;white-space:nowrap}
+.chip.on{background:var(--a);color:var(--on)}
+.ic{width:3.2vh;height:3.2vh;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* left: now playing + sections */
+#left{width:34%;display:flex;flex-direction:column;gap:1.8vh;min-width:0}
+#np{padding:2.6vh;display:flex;flex-direction:column;gap:1.4vh}
+#npT{font-size:3.2vh;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#npA{font-size:2.3vh;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:-.6vh}
+#bar{height:.8vh;border-radius:.4vh;background:var(--chip);overflow:hidden}#bar i{display:block;height:100%;width:0;background:var(--a)}
+#ctl{display:flex;justify-content:space-between;align-items:center;margin-top:.6vh}
+.ctl{width:11vh;height:11vh;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center}
+.ctl.big{width:13vh;height:13vh;background:var(--a);color:var(--on)}
+.ctl .ic{width:4.6vh;height:4.6vh}
+#tabs{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:1.2vh}
+.tab{border-radius:var(--rb);background:var(--card);display:flex;align-items:center;gap:1.4vh;padding:0 2vh;font-size:2.4vh;font-weight:600;text-align:left}
+.tab.on{background:var(--a);color:var(--on)}
+/* right: the list */
+#right{flex:1;min-width:0;display:flex;flex-direction:column;gap:1.4vh}
+#top{display:flex;align-items:center;gap:1.2vh}
+#crumb{flex:1;font-size:2.8vh;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#crumb small{font-size:2vh;color:var(--muted);font-weight:500;margin-left:1vh}
+#listBox{flex:1;min-height:0;position:relative;display:flex;gap:1vh}
+#list{flex:1;position:relative;overflow-y:auto;overflow-x:hidden;border-radius:var(--r);background:var(--card);-webkit-overflow-scrolling:touch}
+#list::-webkit-scrollbar{width:0}
+#sizer{position:relative;width:100%}
+.row{position:absolute;left:0;right:0;height:var(--row);display:flex;align-items:center;gap:2vh;padding:0 2.4vh;border-bottom:1px solid var(--line)}
+.row .no{width:6vh;flex:none;text-align:right;font-size:2vh;color:var(--muted);font-variant-numeric:tabular-nums}
+.row .tx{flex:1;min-width:0}
+.row b{display:block;font-size:2.6vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row span{display:block;font-size:1.9vh;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.3vh}
+.row .du{flex:none;font-size:2vh;color:var(--muted);font-variant-numeric:tabular-nums}
+.row.cur{background:var(--a);color:var(--on)}.row.cur span,.row.cur .no,.row.cur .du{color:var(--on);opacity:.75}
+.row:active{background:var(--chip)}
+#idx{width:5.4vh;flex:none;display:flex;flex-direction:column;justify-content:space-between;border-radius:var(--rb);background:var(--card);padding:.8vh 0;touch-action:none}
+#idx button{flex:1;font-size:1.6vh;font-weight:700;color:var(--muted)}
+#idx button.has{color:var(--fg)}
+#empty{position:absolute;inset:0;display:none;white-space:pre-line;align-items:center;justify-content:center;text-align:center;font-size:2.6vh;color:var(--muted);padding:6vh;line-height:1.5}
+#jump{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:16vh;height:16vh;border-radius:3vh;background:var(--a);color:var(--on);font-size:9vh;font-weight:800;display:none;align-items:center;justify-content:center;pointer-events:none}
+/* day */
+body.day{--bg:#EEF1F4;--fg:#11161D;--card:#FFFFFF;--chip:#E3E8EE;--muted:#56606C;--a:#1F8F78;--on:#fff;--line:#E6EAF0}
+/* Stock */
+body.t-stock{--a:#E8D5B0;--on:#111;--bg:#050506;--card:#141518;--chip:#1f2024;--muted:#A8A39A;--fg:#EEEAE2;--line:#26272b;font-family:'Montserrat',sans-serif}
+/* Panel 80 */
+body.t-panel{--a:var(--pv,#56F2FF);--on:#031014;--bg:#030608;--fg:var(--pv,#56F2FF);--card:#0b1114;--chip:#0f181c;--muted:var(--pv2,#2a8f98);--line:rgba(86,242,255,.18);--r:1.4vh;--rb:1.2vh;font-family:'Share Tech Mono',monospace}
+</style>
+</head>
+<body>
+<div class="r">
+  <div id="left">
+    <div style="display:flex;gap:1.2vh">
+      <button class="chip" id="back" aria-label="Geri"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="chip on" id="srcUsb">USB</button>
+      <button class="chip" id="srcOther">Bluetooth / diğer</button>
+      <button class="chip" id="srcSpot">Spotify</button>
+    </div>
+    <div class="card" id="np">
+      <div id="npT">—</div>
+      <div id="npA"></div>
+      <div id="bar"><i></i></div>
+      <div id="ctl">
+        <button class="ctl" id="prev" aria-label="Önceki"><svg class="ic" viewBox="0 0 24 24"><path d="M19 5L9 12l10 7z"/><path d="M5 5v14"/></svg></button>
+        <button class="ctl big" id="play" aria-label="Çal / duraklat"><svg class="ic" viewBox="0 0 24 24" id="playIc"><path d="M7 4l13 8-13 8z"/></svg></button>
+        <button class="ctl" id="next" aria-label="Sonraki"><svg class="ic" viewBox="0 0 24 24"><path d="M5 5l10 7-10 7z"/><path d="M19 5v14"/></svg></button>
+      </div>
+    </div>
+    <div id="tabs"></div>
+  </div>
+  <div id="right">
+    <div id="top">
+      <button class="chip" id="up" style="display:none" aria-label="Geri"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div id="crumb">Çalma listesi</div>
+      <button class="chip" id="toCur" aria-label="Çalan şarkıya git"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>Çalan</button>
+      <button class="chip on" id="playAll" style="display:none"><svg class="ic" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>Tümünü çal</button>
+    </div>
+    <div id="listBox">
+      <div id="list"><div id="sizer"></div><div id="empty"></div></div>
+      <div id="idx"></div>
+      <div id="jump"></div>
+    </div>
+  </div>
+</div>
+<script src="common.js"></script>
+<script>
+var TH = call('theme') || 7;
+document.body.classList.add(TH === 8 ? 't-stock' : TH === 4 ? 't-panel' : 't-ds4');
+var IC = {
+  q: '<path d="M4 6h12M4 12h12M4 18h8"/><path d="M17 14v6l4-3z"/>',
+  songs: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+  albums: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/>',
+  artists: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+  genres: '<path d="M4 20V10M10 20V4M16 20v-8M22 20V8"/>',
+  folders: '<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'
+};
+var TABS = [['q', 'Çalma listesi'], ['songs', 'Şarkılar'], ['albums', 'Albümler'], ['artists', 'Sanatçılar'], ['genres', 'Türler'], ['folders', 'Klasörler']];
+var view = 'q', group = null, rows = [], kind = 'tracks', qIdx = -1, ROWH = 0;
+TABS.forEach(function (t) {
+  var b = document.createElement('button'); b.className = 'tab'; b.dataset.k = t[0];
+  b.innerHTML = '<svg class="ic" viewBox="0 0 24 24">' + IC[t[0]] + '</svg>' + t[1];
+  b.onclick = function () { view = t[0]; group = null; store('muzik.tab', view); load(true); };
+  $('tabs').appendChild(b);
+});
+function fmt(s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
+function J(x, d) { try { return JSON.parse(x || ''); } catch (e) { return d; } }
+
+// ---- the list: only the rows on screen are drawn (thousands of songs stay light on the unit)
+var L = $('list'), drawn = {};
+function rowH() { if (!ROWH) ROWH = Math.round(innerHeight * 0.09); return ROWH; }
+function paint() {
+  var h = rowH(), top = L.scrollTop, a = Math.max(0, Math.floor(top / h) - 6), b = Math.min(rows.length, Math.ceil((top + L.clientHeight) / h) + 6);
+  for (var k in drawn) if (k < a || k >= b) { drawn[k].remove(); delete drawn[k]; }
+  for (var i = a; i < b; i++) {
+    if (drawn[i]) { drawn[i].classList.toggle('cur', view === 'q' && i === qIdx); continue; }
+    var r = rows[i], d = document.createElement('div');
+    d.className = 'row' + (view === 'q' && i === qIdx ? ' cur' : ''); d.style.top = (i * h) + 'px'; d.dataset.i = i;
+    if (kind === 'groups') d.innerHTML = '<div class="tx"><b></b><span></span></div><div class="du"></div><svg class="ic" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>';
+    else d.innerHTML = '<div class="no"></div><div class="tx"><b></b><span></span></div><div class="du"></div>';
+    d.querySelector('b').textContent = r.t || '—';
+    d.querySelector('span').textContent = kind === 'groups' ? (r.s || '') : (r.a || '');
+    d.querySelector('.du').textContent = kind === 'groups' ? (r.n ? r.n + ' şarkı' : '') : (r.d ? fmt(r.d) : '');
+    if (kind !== 'groups') d.querySelector('.no').textContent = i + 1;
+    L.appendChild(d); drawn[i] = d;
+  }
+}
+L.addEventListener('scroll', function () { requestAnimationFrame(paint); }, { passive: true });
+L.addEventListener('click', function (e) {
+  var d = e.target.closest('.row'); if (!d) return;
+  var i = +d.dataset.i, r = rows[i];
+  if (kind === 'groups') { group = r; load(true); return; }
+  if (view === 'q') call('musicQueuePlay', i);
+  else call('musicPlay', group ? group.k : '', i);
+  setTimeout(function () { if (view !== 'q') { view = 'q'; group = null; } load(true); }, 700);   // back to the play list, on the song
+});
+
+function setRows(list, k, scrollTo) {
+  rows = list || []; kind = k;
+  for (var x in drawn) drawn[x].remove(); drawn = {};
+  $('sizer').style.height = (rows.length * rowH()) + 'px';
+  $('empty').style.display = rows.length ? 'none' : 'flex';
+  if (scrollTo != null && scrollTo >= 0) L.scrollTop = Math.max(0, scrollTo * rowH() - L.clientHeight / 2 + rowH() / 2);
+  else if (scrollTo === -2) L.scrollTop = 0;
+  paint(); index();
+}
+function load(reset) {
+  [].forEach.call($('tabs').children, function (b) { b.classList.toggle('on', b.dataset.k === view); });
+  var tabName = TABS.filter(function (t) { return t[0] === view; })[0][1];
+  $('up').style.display = group ? '' : 'none';
+  $('playAll').style.display = group || view === 'songs' ? '' : 'none';
+  $('toCur').style.display = view === 'q' ? '' : 'none';
+  if (view === 'q') {
+    var q = J(call('musicQueue'), { list: [], i: -1 });
+    qIdx = q.i;
+    $('crumb').innerHTML = 'Çalma listesi<small>' + (q.list.length ? q.list.length + ' şarkı' : '') + '</small>';
+    $('empty').textContent = 'Çalma listesi boş.\nŞarkılar, Albümler ya da Sanatçılar\'dan bir şarkı seç.';
+    setRows(q.list, 'tracks', reset ? qIdx : null);
+    return;
+  }
+  var res = J(call('musicLib', view, group ? group.k : ''), {});
+  $('crumb').innerHTML = '';
+  $('crumb').appendChild(document.createTextNode(group ? group.t : tabName));
+  $('empty').textContent = res.perm === false ? 'Müziğe erişim izni yok. Ayarlar\'dan izin ver.' : 'Burada şarkı yok. USB belleği tak.';
+  if (res.groups) setRows(res.groups, 'groups', -2);
+  else setRows(res.tracks, 'tracks', -2);
+  var n = rows.length; if (n) { var sm = document.createElement('small'); sm.textContent = n + (kind === 'groups' ? '' : ' şarkı'); $('crumb').appendChild(sm); }
+}
+$('up').onclick = function () { group = null; load(true); };
+$('playAll').onclick = function () { call('musicPlay', group ? group.k : '', 0); setTimeout(function () { view = 'q'; group = null; load(true); }, 700); };
+$('toCur').onclick = function () { load(true); };
+
+// ---- letter index: jump to the first row starting with that letter (Turkish alphabet)
+var ABC = 'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ#'.split('');
+function first(s) { var c = (s || '').trim().charAt(0).toLocaleUpperCase('tr'); return ABC.indexOf(c) >= 0 ? c : '#'; }
+function index() {
+  var box = $('idx'); box.innerHTML = '';
+  var show = rows.length > 25 && view !== 'q';
+  box.style.display = show ? 'flex' : 'none';
+  if (!show) return;
+  var has = {}; rows.forEach(function (r, i) { var c = first(r.t); if (!(c in has)) has[c] = i; });
+  ABC.forEach(function (c) { var b = document.createElement('button'); b.textContent = c; b.dataset.c = c; if (c in has) b.className = 'has'; box.appendChild(b); });
+  function go(c) {
+    if (!(c in has)) { var k = ABC.indexOf(c); while (k < ABC.length && !(ABC[k] in has)) k++; c = ABC[k]; if (!c) return; }
+    L.scrollTop = has[c] * rowH(); $('jump').textContent = c; $('jump').style.display = 'flex';
+    clearTimeout(go.t); go.t = setTimeout(function () { $('jump').style.display = 'none'; }, 600);
+  }
+  function at(e) { var t = e.touches ? e.touches[0] : e, el = document.elementFromPoint(t.clientX, t.clientY); if (el && el.dataset && el.dataset.c) go(el.dataset.c); }
+  box.ontouchstart = box.ontouchmove = function (e) { e.preventDefault(); at(e); };
+  box.onclick = at;
+}
+
+// ---- now playing
+$('back').onclick = function () { call('open', 'themehome'); };
+$('srcOther').onclick = function () { call('open', 'mediaNative'); };
+$('srcSpot').onclick = function () { call('open', 'spotify'); };
+$('srcUsb').onclick = function () { view = 'q'; group = null; load(true); };
+$('prev').onclick = function () { call('media', 'prev'); setTimeout(refreshQ, 700); };
+$('next').onclick = function () { call('media', 'next'); setTimeout(refreshQ, 700); };
+$('play').onclick = function () { call('media', 'play'); };
+function refreshQ() { if (view === 'q') { var q = J(call('musicQueue'), { i: -1 }); if (q.i !== qIdx) { qIdx = q.i; paint(); } } }
+var lastTitle = null;
+car.on(function (s) {
+  if (TH !== 8) document.body.classList.toggle('day', s.night === false);
+  $('npT').textContent = s.title || 'Çalan bir şey yok';
+  $('npA').textContent = s.artist || '';
+  $('bar').firstChild.style.width = s.dur ? Math.min(100, (s.pos || 0) / s.dur * 100) + '%' : '0';
+  $('playIc').innerHTML = s.playing ? '<path d="M8 5v14M16 5v14"/>' : '<path d="M7 4l13 8-13 8z"/>';
+  if (s.title !== lastTitle) { lastTitle = s.title; refreshQ(); }
+});
+view = store('muzik.tab') || 'q';
+if (!TABS.some(function (t) { return t[0] === view; })) view = 'q';
+load(true);
+if (view === 'q' && !rows.length) { view = 'songs'; load(true); }   // nothing queued yet: show the songs
+</script>
+</body>
+</html>

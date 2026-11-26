@@ -629,6 +629,17 @@ public class ThemeScreen extends Screen {
 
     private long lastDriveAt;
 
+    private void playWhenReady(final java.util.List<com.thecarlauncher.media.Track> q, final int start, final String ctx, final int tries) {
+        com.thecarlauncher.media.MusicService svc = com.thecarlauncher.media.MusicService.get();
+        if (svc == null) {
+            if (tries == 0) com.thecarlauncher.media.MusicService.start(act);
+            if (tries < 20) new Handler(Looper.getMainLooper()).postDelayed(new Runnable() { public void run() { playWhenReady(q, start, ctx, tries + 1); } }, 150);
+            return;
+        }
+        svc.playQueue(q, start, ctx);
+        MediaHub.get(act).selectOwn();
+    }
+
     private class Bridge {
         @JavascriptInterface
         public void open(final String what) {
@@ -640,7 +651,9 @@ public class ThemeScreen extends Screen {
                             else act.openRadio();
                             break;
                         case "radioFactory": openPkg("com.hcn.autoradio"); break;
-                        case "media": act.show(LauncherActivity.MEDIA, true); break;
+                        // Müzik: our song list page (queue, songs, albums, artists, genres, folders)
+                        case "music": case "media": load("muzik.html"); break;
+                        case "mediaNative": act.show(LauncherActivity.MEDIA, true); break;
                         case "srcApp": {
                             String sp = MediaHub.get(act).packageName();
                             if (sp != null && !sp.isEmpty() && act.getPackageManager().getLaunchIntentForPackage(sp) != null) openPkg(sp);
@@ -822,6 +835,63 @@ public class ThemeScreen extends Screen {
         public String carPhotoData() { return com.thecarlauncher.util.OwnCarPhoto.cutData(act); }
         @JavascriptInterface
         public boolean carPhotoSave(String dataUrl) { return com.thecarlauncher.util.OwnCarPhoto.save(act, dataUrl); }
+        // ---- Müzik page: the play queue and the library as lists
+        private org.json.JSONObject trackJson(com.thecarlauncher.media.Track t) throws Exception {
+            return new JSONObject().put("t", t.title).put("a", t.artist == null ? "" : t.artist).put("d", t.duration / 1000);
+        }
+        @JavascriptInterface
+        public String musicQueue() {
+            try {
+                com.thecarlauncher.media.MusicService svc = com.thecarlauncher.media.MusicService.get();
+                JSONArray a = new JSONArray();
+                int idx = -1;
+                if (svc != null) {
+                    java.util.List<com.thecarlauncher.media.Track> q = svc.queue();
+                    com.thecarlauncher.media.Track cur = svc.current();
+                    for (int i = 0; i < q.size(); i++) { a.put(trackJson(q.get(i))); if (q.get(i) == cur) idx = i; }
+                }
+                return new JSONObject().put("list", a).put("i", idx).put("playing", svc != null && svc.isPlaying()).toString();
+            } catch (Exception e) { return "{\"list\":[],\"i\":-1}"; }
+        }
+        @JavascriptInterface
+        public String musicLib(String kind, String key) {
+            try {
+                JSONArray a = new JSONArray();
+                if (key != null && !key.isEmpty() || "songs".equals(kind)) {
+                    for (com.thecarlauncher.media.Track t : com.thecarlauncher.media.MusicLibrary.resolve(act, key == null || key.isEmpty() ? com.thecarlauncher.media.MusicLibrary.CTX_ALL : key)) a.put(trackJson(t));
+                    return new JSONObject().put("tracks", a).toString();
+                }
+                java.util.List<com.thecarlauncher.media.MusicLibrary.Group> g =
+                        "albums".equals(kind) ? com.thecarlauncher.media.MusicLibrary.albums(act)
+                        : "artists".equals(kind) ? com.thecarlauncher.media.MusicLibrary.artists(act)
+                        : "genres".equals(kind) ? com.thecarlauncher.media.MusicLibrary.genres(act)
+                        : com.thecarlauncher.media.MusicLibrary.folders(act);
+                for (com.thecarlauncher.media.MusicLibrary.Group x : g)
+                    a.put(new JSONObject().put("k", x.key).put("t", x.title).put("s", x.subtitle == null ? "" : x.subtitle).put("n", x.count));
+                return new JSONObject().put("groups", a).put("perm", com.thecarlauncher.media.MusicLibrary.hasPermission(act)).toString();
+            } catch (Exception e) { return "{\"groups\":[]}"; }
+        }
+        /** Plays the list (all songs, or one album / artist / genre / folder) from song i. */
+        @JavascriptInterface
+        public void musicPlay(final String key, final int i) {
+            act.runOnUiThread(new Runnable() { public void run() {
+                String ctx = key == null || key.isEmpty() ? com.thecarlauncher.media.MusicLibrary.CTX_ALL : key;
+                java.util.List<com.thecarlauncher.media.Track> q = new java.util.ArrayList<>(com.thecarlauncher.media.MusicLibrary.resolve(act, ctx));
+                if (q.isEmpty()) return;
+                MediaHub.get(act).selectOwn();
+                playWhenReady(q, Math.max(0, Math.min(q.size() - 1, i)), ctx, 0);
+            } });
+        }
+        /** Jumps to song i of the current queue. */
+        @JavascriptInterface
+        public void musicQueuePlay(final int i) {
+            act.runOnUiThread(new Runnable() { public void run() {
+                com.thecarlauncher.media.MusicService svc = com.thecarlauncher.media.MusicService.get();
+                if (svc == null || i < 0 || i >= svc.queue().size()) return;
+                MediaHub.get(act).selectOwn();
+                svc.playIndex(i);
+            } });
+        }
         @JavascriptInterface
         public String uiFont() { return Prefs.str(act, "ui_font", ""); }
         @JavascriptInterface

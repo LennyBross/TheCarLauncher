@@ -174,7 +174,7 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;strok
         <div style="display:flex;align-items:center;gap:2.8vh"><span class="cap">Aydınlatma</span><div class="seg" id="bl"><button data-b="white">Beyaz</button><button data-b="blue">● Mavi</button></div></div></div>
       <div class="gw">
         <div class="dial" style="width:34.7vh;height:34.7vh"><div><svg id="tach" viewBox="0 0 200 200"></svg></div></div>
-        <div class="dial" style="width:47.2vh;height:47.2vh"><div><svg id="ticks" viewBox="0 0 200 200"></svg><div id="gear">N</div><div id="spd">0</div><div class="unit">KM/S</div></div></div>
+        <div class="dial" style="width:47.2vh;height:47.2vh"><div><svg id="ticks" viewBox="0 0 200 200"></svg><div id="gear">–</div><div id="spd">0</div><div class="unit">KM/S</div></div></div>
         <div class="dial" style="width:34.7vh;height:34.7vh"><div><div class="side">
           <div class="bar"><span>YAKIT</span><span id="fuelP">—</span></div><div><i id="fuelB"></i></div>
           <div class="bar"><span>SU ISISI</span><span id="coolP">—</span></div><div><i id="coolB"></i></div>
@@ -337,7 +337,7 @@ car.on(function (s) {
   var sp = s.gps === 'ok' || s.obd ? Math.round(s.speed || 0) : 0;
   $('spd').textContent = sp;
   $('spArc').setAttribute('d', arc(sp / 240));
-  var g = s.gearObd || s.cpGear || 'N'; $('gear').textContent = /^[1-9]$/.test(String(g)) ? 'D' + g : g;
+  var g = s.gearObd || s.cpGear || '–'; $('gear').textContent = /^[1-9]$/.test(String(g)) ? 'D' + g : g;
   var r = s.rpm || (s.cpOn ? s.cpRpm : 0) || 0;
   rpmShown += (r - rpmShown) * .5;
   var nd = $('needle'); if (nd) nd.setAttribute('transform', 'rotate(' + (-135 + 270 * Math.min(1, rpmShown / RPMMAX)) + ' 100 100)');

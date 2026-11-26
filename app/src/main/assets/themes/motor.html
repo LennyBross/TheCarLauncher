@@ -91,14 +91,14 @@ body.loop .liveOnly{display:none !important}
       <div id="err"></div>
       <div id="diag"></div>
     </div>
-    <div class="seg" id="kind"><button data-k="live">Canlı ses (en gerçekçi)</button><button data-k="loop">Kayıtlı (en hafif)</button></div>
+    <div class="seg" id="kind" style="display:none"><button data-k="loop">Kayıtlı</button></div>
     <div class="seg" id="mode"><button data-f="1">Arabamı takip et (OBD)</button><button data-f="0">Deneme (pedal)</button></div>
     <div id="pedals"><button id="brk">FREN</button><button id="gas">GAZ</button></div>
     <div class="card" style="display:flex;flex-direction:column;gap:1.2vh;overflow:auto">
       <div class="seg liveOnly" id="qual"><button data-q="1">Ünite ayarı</button><button data-q="0">Tam (telefon gibi · bu ünitede kesilir)</button></div>
       <div class="seg liveOnly" id="view"><button data-v="1">Kabinden</button><button data-v="0">Dışarıdan</button></div>
       <div class="sl"><label>Ses seviyesi <b id="vVol"></b></label><input type="range" id="vol" min="0" max="100" step="5"></div>
-      <div class="sl liveOnly"><label>Egzoz patlamaları <b id="vPop"></b></label><input type="range" id="pop" min="0" max="100" step="5"></div>
+      <div class="sl"><label>Egzoz patlamaları (gazdan çekince) <b id="vPop"></b></label><input type="range" id="pop" min="0" max="100" step="5"></div>
       <div class="sl liveOnly"><label>Uğultu (bas) <b id="vRum"></b></label><input type="range" id="rum" min="0" max="200" step="10"></div>
       <div class="sl liveOnly"><label>Parlaklık <b id="vBri"></b></label><input type="range" id="bri" min="0" max="200" step="10"></div>
       <div class="sl liveOnly"><label>Vuruş <b id="vPun"></b></label><input type="range" id="pun" min="0" max="200" step="10"></div>
@@ -111,12 +111,12 @@ body.loop .liveOnly{display:none !important}
 <script>
 try { var TH = Car.theme(); if (TH === 9) document.documentElement.classList.add('t-live'); if (TH === 4) document.documentElement.classList.add('t-panel'); } catch (e) {}
 var ENGINES = [
-  ['i4', '4 silindir', '2.0 atmosferik · önerilen'],
-  ['v8flat', 'Ferrari tarzı V8', '4.5 düz krank · 9000 d/dk · ağır: bu ünitede takılabilir'],
-  ['v12', 'V12', '6.5 · Ferrari / Aston tarzı · ağır: bu ünitede takılabilir'],
-  ['v8tt', 'AMG tarzı V8', '4.0 biturbo · çapraz krank · ağır: bu ünitede takılabilir'],
-  ['v8cross', 'Jaguar / Mustang V8', '5.0 çapraz krank · gurultu · ağır: bu ünitede takılabilir'],
-  ['v10', 'V10', '5.2 · Lamborghini / Audi tarzı · ağır: bu ünitede takılabilir'],
+  ['v8flat', 'Ferrari tarzı V8', '4.5 düz krank · yüksek kalite kayıt'],
+  ['i4', '4 silindir', '2.0 · yüksek kalite kayıt'],
+  ['v12', 'V12', '6.5 · Ferrari / Aston tarzı'],
+  ['v8tt', 'AMG tarzı V8', '4.0 biturbo · çapraz krank'],
+  ['v8cross', 'Jaguar / Mustang V8', '5.0 çapraz krank · gurultu'],
+  ['v10', 'V10', '5.2 · Lamborghini / Audi tarzı'],
   ['flat6', 'Porsche tarzı boxer 6', '3.8 · 8500 d/dk'],
   ['v6tt', 'Biturbo V6', '3.8 · GT-R tarzı'],
   ['i6', 'Sıralı 6', '3.0 turbo · BMW tarzı'],
@@ -174,7 +174,7 @@ function draw() {
   $('power').classList.toggle('on', !!C.on); $('power').textContent = C.on ? 'AÇIK' : 'AÇ';
   [].forEach.call($('eng').children, function (b) { b.classList.toggle('on', b.dataset.id === C.engine); });
   [].forEach.call($('veh').children, function (b) { b.classList.toggle('on', b.dataset.id === C.vehicle); });
-  var kind = C.mode === 'loop' ? 'loop' : 'live'; document.body.classList.toggle('loop', kind === 'loop');
+  var kind = 'loop'; document.body.classList.add('loop');   // the live simulation was removed: recorded voice only
   [].forEach.call($('kind').children, function (b) { b.classList.toggle('on', b.dataset.k === kind); });
   [].forEach.call($('mode').children, function (b) { b.classList.toggle('on', (b.dataset.f === '1') === (C.follow !== false)); });
   [].forEach.call($('qual').children, function (b) { b.classList.toggle('on', (b.dataset.q === '1') === (C.lite !== false)); });

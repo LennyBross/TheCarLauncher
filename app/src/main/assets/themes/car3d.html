@@ -103,9 +103,7 @@ body.t-panel .sg,body.t-panel .tile b{font-family:'Share Tech Mono',monospace;fo
 
 <script src="common.js"></script>
 <script>
-// Live 3D by default; studio photos when the "3D" button is switched off (or for the offline photo render).
-if (store('myds.3d') !== 'photo' || location.hash === '#render')
-  document.write('<script src="3d/three.min.js"><\/script><script src="3d/OrbitControls.js"><\/script><script src="3d/GLTFLoader.js"><\/script><script src="3d/RoomEnvironment.js"><\/script>');
+// The 3D model was removed (too heavy for the unit): the vehicle page shows the photos.
 </script>
 <script>
 // ---- Vehicle info (kept on the unit) ----------------------------------------------------------
@@ -194,11 +192,12 @@ function fallback(why) {
 }
 (function () {
   var live = store('myds.3d') !== 'photo', b = $('mode3d');
+  b.style.display = 'none';   // no 3D any more
   b.classList.toggle('on', live);
   b.onclick = function () { store('myds.3d', live ? 'photo' : '3d'); location.reload(); };
 })();
-if (!RENDER_MODE && (store('myds.3d') === 'photo' || !webglOK())) fallback('nogl');
-else {
+fallback('nogl');
+if (false) {
   try { init3D(); } catch (e) { fallback('error'); }
   // Still nothing on screen after 15 s (slow GPU / old WebView): use the photo spin.
   if (!RENDER_MODE) setTimeout(function () { if (!window.__shown3d) fallback('slow'); }, 15000);

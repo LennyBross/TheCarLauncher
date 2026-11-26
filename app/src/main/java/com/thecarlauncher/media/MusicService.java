@@ -164,6 +164,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         load(Math.max(0, Math.min(start, queue.size() - 1)), 0, true);
     }
 
+    /** Jumps to song i of the current queue (the Müzik page's play list). */
+    public void playIndex(int i) {
+        if (i < 0 || i >= queue.size()) return;
+        errorStreak = 0;
+        load(i, 0, true);
+    }
+
     /** Shuffles the whole library: the "just play something" button. */
     public void playEverything() {
         new Thread(new Runnable() {
