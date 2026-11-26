@@ -232,3 +232,39 @@ var MYDS_ICONS = (function () {
 function icon(name, cls) {
   return '<svg class="' + (cls || 'ic') + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (MYDS_ICONS[name] || '') + '</svg>';
 }
+
+// ---- Car warnings (CarAlerts.java): one strip at the top of every page ------------------------
+// Level 2 (act now) is red, level 1 amber. Several warnings take turns every 6 s; a tap hides the one
+// shown for 20 minutes. No animation: it appears and stays until the car says it is over.
+(function () {
+  var hidden = {}, at = 0, list = [], el = null, turn = null;
+  try { hidden = JSON.parse(store('alerts.hidden') || '{}') || {}; } catch (e) { hidden = {}; }
+  function visible() { var now = Date.now(); return list.filter(function (a) { return !(hidden[a.k] > now); }); }
+  function draw() {
+    var v = visible();
+    if (!v.length) { if (el) el.style.display = 'none'; return; }
+    if (!el) {
+      el = document.createElement('div'); el.id = 'mydsAlert';
+      el.style.cssText = 'position:fixed;left:50%;top:1.4vh;transform:translateX(-50%);z-index:99999;max-width:86vw;' +
+        'display:flex;align-items:center;gap:1.4vh;padding:1.2vh 2.6vh 1.2vh 1.8vh;border-radius:4vh;font:600 2.6vh/1.2 Inter,system-ui,sans-serif;' +
+        'color:#fff;box-shadow:0 1vh 4vh rgba(0,0,0,.45);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+      el.onclick = function () { var v2 = visible(); var a = v2[at % v2.length]; if (a) { hidden[a.k] = Date.now() + 20 * 60000; store('alerts.hidden', JSON.stringify(hidden)); } draw(); };
+      document.body.appendChild(el);
+    }
+    var a = v[at % v.length];
+    el.style.display = 'flex';
+    el.style.background = a.lvl >= 2 ? '#C62828' : '#B26A00';
+    el.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;width:3.2vh;height:3.2vh"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></svg><span></span>' +
+      (v.length > 1 ? '<span style="opacity:.75;font-weight:500;margin-left:.6vh">' + ((at % v.length) + 1) + '/' + v.length + '</span>' : '');
+    el.children[1].textContent = a.t;
+  }
+  if (window.car && car.on) car.on(function (s) {
+    var n = s && s.alerts ? s.alerts : [];
+    var sig = n.map(function (a) { return a.k; }).join(',');
+    var old = list.map(function (a) { return a.k; }).join(',');
+    list = n;
+    if (sig !== old) { at = 0; draw(); }
+    else if (el && list.length) { var v = visible(); if (v.length) el.children[1].textContent = v[at % v.length].t; }
+    if (!turn) turn = setInterval(function () { if (visible().length > 1) { at++; draw(); } }, 6000);
+  });
+})();

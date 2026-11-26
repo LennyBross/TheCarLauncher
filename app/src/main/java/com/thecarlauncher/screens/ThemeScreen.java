@@ -25,6 +25,7 @@ import com.thecarlauncher.util.DayNight;
 import com.thecarlauncher.util.NightDim;
 import com.thecarlauncher.util.Prefs;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
@@ -520,6 +521,23 @@ public class ThemeScreen extends Screen {
                 o.put("fuelSrc", "can");
             }
         }
+        // Citroën body computer (UDS 0x22 via OBD): the measured litres in the tank and the car's own range
+        if (ob != null) {
+            float psaL = ob.value("psaFuelL"), psaR = ob.value("psaRange"), psaT = ob.value("psaOutT");
+            if (!Float.isNaN(psaL) && psaL >= 0 && psaL < 120) { o.put("fuelLeft", psaL); o.put("fuelSrc", "bsi"); }
+            if (!Float.isNaN(psaR) && psaR > 0 && psaR < 2000 && !o.has("canRange")) { o.put("range", psaR); o.put("canRange", psaR); }
+            if (!Float.isNaN(psaT) && !o.has("outdoor")) o.put("outdoor", psaT);
+            float ol = ob.value("psaOilLvl"), ot = ob.value("psaOilT"), bv = ob.value("psaBatV"), bs = ob.value("psaBatSoc");
+            if (!Float.isNaN(ol)) o.put("oilLvl", ol);
+            if (!Float.isNaN(ot)) o.put("oilT", ot);
+            if (!Float.isNaN(bv)) o.put("batV", bv);
+            if (!Float.isNaN(bs)) o.put("batSoc", bs);
+            JSONArray ty = new JSONArray();
+            for (String k : new String[]{"tyreFL", "tyreFR", "tyreRL", "tyreRR"}) { float t = ob.value(k); ty.put(Float.isNaN(t) ? JSONObject.NULL : (Object) (Math.round(t * 100) / 100.0)); }
+            if (!Float.isNaN(ob.value("tyreFL")) || !Float.isNaN(ob.value("tyreRR"))) o.put("tyres", ty);
+        }
+        o.put("alerts", com.thecarlauncher.util.CarAlerts.get().list());
+        o.put("aaOn", com.thecarlauncher.util.ZLinkWatch.connected());
         if (!o.has("canRange") && o.has("fuelLeft")) {
             double use = fuelObd.has("avg100") ? fuelObd.optDouble("avg100") : avg;
             if (use > 2) o.put("range", o.optDouble("fuelLeft") / use * 100.0);

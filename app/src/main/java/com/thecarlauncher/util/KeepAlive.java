@@ -40,7 +40,8 @@ public class KeepAlive extends Service {
         try { retireCataraPatara(); } catch (Throwable ignored) { }
         try { MotorSesi.get(this).start();
         // the factory radio's tuner service, if it already runs (does not start it: that could take the speakers)
-        try { com.thecarlauncher.radio.HcnService.get(this).connect(false); } catch (Throwable ignored) { } } catch (Throwable ignored) { }
+        try { com.thecarlauncher.radio.HcnService.get(this).connect(false); } catch (Throwable ignored) { }
+        try { ZLinkWatch.start(this); } catch (Throwable ignored) { } } catch (Throwable ignored) { }
         try { AutoReturn.ensureAccess(this); } catch (Throwable ignored) { }
         try {
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);

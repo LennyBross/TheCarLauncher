@@ -372,14 +372,30 @@ public final class Obd {
         int[] miss = new int[0x81];
         l.onPid("pids", ns);
         boolean pedalD = true;
+        // CAN engines answer several PIDs in one request: rpm + pedal in one round trip instead of two.
+        boolean multi = false;
+        {
+            String t = cmd(in, out, "010C491", 700);
+            multi = data(t, 0x0C, 2) != null && after(t, 0x0C, 2, 0x49, 1) != null;
+        }
+        l.onPid("multi", multi ? 1 : 0);
+        PsaDids psa = new PsaDids();
         int n = 0, si = 0;
         long voltAt = 0, dtcAt = 0;
         String[] key = new String[1];
         while (run) {
+            if (multi && pedalD) {
+                String r = cmd(in, out, "010C491", 600);
+                int[] b = data(r, 0x0C, 2), p = after(r, 0x0C, 2, 0x49, 1);
+                if (b != null) l.onRpm(((b[0] << 8) | b[1]) / 4f);
+                if (p != null) l.onPedal(Math.max(0, (p[0] / 2.55f - 14f) / 66f));
+                else if (b == null) multi = false;          // the engine stopped answering it: back to one by one
+            } else {
             String r = cmd(in, out, "010C1", 600);
             int[] b = data(r, 0x0C, 2);
             if (b != null) l.onRpm(((b[0] << 8) | b[1]) / 4f);
-            if (n % 2 == 0) {
+            }
+            if (!(multi && pedalD) && n % 2 == 0) {
                 // Accelerator pedal position D (0x49); falls back to throttle position (0x11).
                 int[] p = data(cmd(in, out, pedalD ? "01491" : "01111", 600), pedalD ? 0x49 : 0x11, 1);
                 if (p == null && pedalD) pedalD = false;
@@ -406,6 +422,7 @@ public final class Obd {
                 }
             }
             long now = System.currentTimeMillis();
+            psa.poll(in, out, now);
             if (now - voltAt > 5000) {
                 voltAt = now;
                 String rv = cmd(in, out, "ATRV", 600).replaceAll("[^0-9.]", "");
@@ -506,6 +523,106 @@ public final class Obd {
             out.append(code);
         }
         return out.toString();
+    }
+
+    /** In a multi-PID answer ("410C1AF8491F"): the bytes of the PID that follows the first one. */
+    private static int[] after(String r, int pid, int len, int pid2, int len2) {
+        if (r == null) return null;
+        String h = r.replaceAll("[^0-9A-Fa-f]", "").toUpperCase(Locale.ROOT);
+        String key = String.format(Locale.US, "41%02X", pid);
+        int i = h.indexOf(key);
+        if (i < 0) return null;
+        int j = i + 4 + len * 2;
+        String k2 = String.format(Locale.US, "%02X", pid2);
+        if (h.length() < j + 2 + len2 * 2 || !h.startsWith(k2, j)) return null;
+        int[] b = new int[len2];
+        for (int q = 0; q < len2; q++) b[q] = Integer.parseInt(h.substring(j + 2 + q * 2, j + 4 + q * 2), 16);
+        return b;
+    }
+
+    /**
+     * Citroën / Peugeot (AEE2010, DS4 / C4 B7) extras read with UDS ReadDataByIdentifier (0x22) on the
+     * default session: the body computer (BSI, request 0x752, answer 0x652) knows the litres in the tank,
+     * oil level and temperature, battery voltage / charge / temperature, the alternator set point and the
+     * car's own range and consumption; the tyre module (0x6AF / 0x68F) the four pressures and temperatures.
+     * Addresses and scaling as documented by nico1080 (github.com/nico1080/OBD-LCD-display-for-PSA) for a
+     * DS4 with BSI2010. Read-only. One group every few seconds, so rpm stays quick; an identifier the car
+     * does not answer three times is dropped.
+     */
+    private final class PsaDids {
+        // {tx, rx, did, length, scale ×1e6, offset, key}
+        private final Object[][] BSI = {
+                {0x752, 0x652, 0xD8C3, 2, 10000, 0, "psaFuelL"},     // fuel in tank, measured (L)
+                {0x752, 0x652, 0xD8E1, 2, 1000000, 0, "psaRange"},   // range (km)
+                {0x752, 0x652, 0xDB84, 1, 1000000, 0, "psaOilLvl"},  // oil level measured (%)
+                {0x752, 0x652, 0xDB83, 1, 1000000, -40, "psaOilT"},  // oil temperature (°C)
+                {0x752, 0x652, 0xDA46, 2, 1000, 0, "psaBatV"},       // battery voltage (V)
+                {0x752, 0x652, 0xDA21, 1, 1000000, 0, "psaBatSoc"},  // battery charge (%)
+                {0x752, 0x652, 0xDA47, 1, 1000000, -40, "psaBatT"},  // battery temperature (°C)
+                {0x752, 0x652, 0xDA45, 1, 100000, 0, "psaAltSet"},   // alternator set point (V)
+                {0x752, 0x652, 0xD912, 1, 500000, -40, "psaOutT"},   // outside temperature (°C)
+                {0x752, 0x652, 0xD8C7, 2, 100000, 0, "psaInst"},     // car's instant consumption (L/100)
+        };
+        private final Object[][] TYRES = {
+                {0x6AF, 0x68F, 0xD610, 2, 1000, 0, "tyreFL"}, {0x6AF, 0x68F, 0xD60F, 2, 1000, 0, "tyreFR"},
+                {0x6AF, 0x68F, 0xD612, 2, 1000, 0, "tyreRL"}, {0x6AF, 0x68F, 0xD611, 2, 1000, 0, "tyreRR"},
+                {0x6AF, 0x68F, 0xD60E, 1, 1000000, -50, "tyreTFL"}, {0x6AF, 0x68F, 0xD60D, 1, 1000000, -50, "tyreTFR"},
+                {0x6AF, 0x68F, 0xD60C, 1, 1000000, -50, "tyreTRL"}, {0x6AF, 0x68F, 0xD60B, 1, 1000000, -50, "tyreTRR"},
+        };
+        private final java.util.HashMap<Integer, Integer> miss = new java.util.HashMap<>();
+        private long bsiAt, tyreAt;
+        private int bi;
+        private boolean tyresGone;
+
+        void poll(InputStream in, OutputStream out, long now) throws Exception {
+            if (now - bsiAt > 4000) {
+                bsiAt = now;
+                Object[][] g = new Object[3][];
+                for (int k = 0; k < 3; k++) g[k] = BSI[(bi++) % BSI.length];
+                read(in, out, g);
+            } else if (!tyresGone && now - tyreAt > 30000) {
+                tyreAt = now;
+                int before = miss.size();
+                read(in, out, TYRES);
+                int gone = 0;
+                for (Object[] d : TYRES) { Integer m = miss.get((Integer) d[2]); if (m != null && m >= 3) gone++; }
+                if (gone == TYRES.length) tyresGone = true;   // no tyre module on this car
+            }
+        }
+
+        private void read(InputStream in, OutputStream out, Object[][] list) throws Exception {
+            int tx = -1;
+            try {
+                for (Object[] d : list) {
+                    int did = (Integer) d[2];
+                    Integer m = miss.get(did);
+                    if (m != null && m >= 3) continue;
+                    if ((Integer) d[0] != tx) {
+                        tx = (Integer) d[0];
+                        cmd(in, out, String.format(Locale.US, "ATSH%03X", tx), 400);
+                        cmd(in, out, String.format(Locale.US, "ATCRA%03X", (Integer) d[1]), 400);
+                    }
+                    int len = (Integer) d[3];
+                    String r = cmd(in, out, String.format(Locale.US, "22%04X", did), 300);
+                    String h = r == null ? "" : r.replaceAll("[^0-9A-Fa-f]", "").toUpperCase(Locale.ROOT);
+                    String key = String.format(Locale.US, "62%04X", did);
+                    int i = h.indexOf(key);
+                    if (i < 0 || h.length() < i + 6 + len * 2) { miss.put(did, (m == null ? 0 : m) + 1); continue; }
+                    miss.put(did, 0);
+                    long raw = 0;
+                    for (int q = 0; q < len; q++) raw = (raw << 8) | Integer.parseInt(h.substring(i + 6 + q * 2, i + 8 + q * 2), 16);
+                    if (raw == (len == 1 ? 0xFF : 0xFFFF)) continue;   // "not available"
+                    float v = raw * ((Integer) d[4]) / 1e6f + (Integer) d[5];
+                    l.onPid((String) d[6], v);
+                }
+            } finally {
+                if (tx >= 0) {
+                    // back to the engine's OBD address for the next round
+                    cmd(in, out, "ATSH7DF", 400);
+                    cmd(in, out, "ATAR", 400);
+                }
+            }
+        }
     }
 
     private static int[] data(String r, int pid, int len) {

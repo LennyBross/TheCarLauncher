@@ -55,6 +55,9 @@ body.day button:active{filter:brightness(.88)}
 .dock span{font-size:var(--t2);font-weight:600;white-space:nowrap}
 .dock button.go{color:var(--a)}
 .dock button.go span{color:var(--fg)}
+.dock button{position:relative}
+.dock button .live{position:absolute;top:1.6vh;right:1.8vh;width:1.8vh;height:1.8vh;border-radius:50%;background:#2ECC71;display:none}
+.dock button.on .live{display:block}
 </style>
 </head>
 <body>
@@ -86,7 +89,7 @@ var PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12.5
 var DOCK = [['nav', 'Harita', 'split'], ['music', 'Müzik', 'srcPick'], ['radio', 'Radyo', 'radio'], ['phone', 'Telefon', 'phone'], ['aa', 'Android Auto', 'aa'], ['settings', 'Ayarlar', 'settings']];
 DOCK.forEach(function (d) {
   var b = document.createElement('button'); b.className = 'key go'; b.setAttribute('aria-label', d[1]);
-  b.innerHTML = icon(d[0], 'li') + '<span>' + d[1] + '</span>';
+  b.innerHTML = icon(d[0], 'li') + '<span>' + d[1] + '</span><i class="live"></i>'; b.dataset.k = d[0];
   b.onclick = function () { call('open', d[2]); };
   $('dock').appendChild(b);
 });
@@ -118,6 +121,8 @@ car.on(function (s) {
   $('ttl').textContent = s.title || 'Çalan bir şey yok';
   $('art').textContent = s.artist || '';
   $('play').innerHTML = s.playing ? PAUSE : PLAY;
+  // phone connected to Android Auto: a green dot on its button
+  var aa = document.querySelector('.dock button[data-k="aa"]'); if (aa) aa.classList.toggle('on', !!s.aaOn);
 });
 </script>
 </body>
