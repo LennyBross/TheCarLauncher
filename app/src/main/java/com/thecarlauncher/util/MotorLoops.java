@@ -194,9 +194,9 @@ final class MotorLoops {
                             double f0 = 900 + rnd.nextFloat() * 1700, r = 0.93;
                             ra1 = (float) (2 * r * Math.cos(2 * Math.PI * f0 / SR)); ra2 = (float) (-r * r);
                         }
-                        float x = 0;
-                        if (burstLeft > 0) { x = (rnd.nextFloat() * 2 - 1) * burstAmp; burstAmp *= burstDecay; burstLeft--; }
-                        float y = x * 0.08f + ra1 * rz1 + ra2 * rz2;   // the resonator rings ≈ ×14 rz2 = rz1; rz1 = y;
+                        float nz = 0;
+                        if (burstLeft > 0) { nz = (rnd.nextFloat() * 2 - 1) * burstAmp; burstAmp *= burstDecay; burstLeft--; }
+                        float y = nz * 0.08f + ra1 * rz1 + ra2 * rz2;   // the resonator rings ≈ ×14 rz2 = rz1; rz1 = y;
                         float th = 0;
                         if (thump > 1) { th = (float) Math.sin(thumpPh) * thump; thumpPh += 2 * Math.PI * 70 / SR; thump *= 0.9985f; }
                         mix[n] += y + th;
