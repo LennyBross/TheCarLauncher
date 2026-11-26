@@ -793,6 +793,12 @@ public class ThemeScreen extends Screen {
         @JavascriptInterface
         public void hifiBT(int bass, int treble) { com.thecarlauncher.media.Tone.get(act).bassTreble(bass, treble); }
 
+        /** Full tank: the litres it took (fuel estimate calibration). Returns {k, first}. */
+        @JavascriptInterface
+        public String fuelFill(float litres) {
+            float k = com.thecarlauncher.util.ObdFuel.get(act).fillUp(litres);
+            try { return new JSONObject().put("k", k).put("first", k < 0).toString(); } catch (Exception e) { return "{}"; }
+        }
         @JavascriptInterface
         public String webRadioState() { return com.thecarlauncher.radio.WebRadio.get(act).state(); }
         @JavascriptInterface

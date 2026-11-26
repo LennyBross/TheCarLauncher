@@ -81,6 +81,7 @@ body.day.t-stock .card{background:#fff}
     <span class="n" style="font-size:3vh">1.6 e-HDi</span>
     <div class="sp"></div>
     <button class="key chip" id="mil" aria-label="Arıza kodları"><svg class="ic" viewBox="0 0 24 24"><path d="M4 10h2V8h3V6h6v2h2l2 3h2v5h-2l-2 3H9l-2-3H4z"/></svg><span id="milT">—</span></button>
+    <button class="key chip" id="cFill" aria-label="Depoyu doldurdum"><svg class="ic" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M14 9h2a2 2 0 0 1 2 2v5a2 2 0 0 0 4 0V8l-3-3"/><path d="M6 8h6"/></svg><span>Depo</span></button>
     <button class="key chip" id="cRem" aria-label="Uzaktan destek"><svg class="ic" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg><span>Destek</span></button>
     <button class="key chip" id="cAdp" aria-label="Adaptör"><svg class="ic" viewBox="0 0 24 24"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg><span>Adaptör</span></button>
     <span class="chip" id="st"><i></i><span id="stT">ECU</span></span>
@@ -119,6 +120,21 @@ body.day.t-stock .card{background:#fff}
   <div id="adpL" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1.2vh"></div>
 </div>
 
+<div id="fillM" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+  <div class="card" style="width:min(92vw,110vh);padding:3vh 3.4vh;display:flex;flex-direction:column;gap:2.4vh">
+    <div style="display:flex;align-items:center;gap:1.6vh"><span class="n" style="font-size:3.4vh;flex:1">Depoyu doldurdum</span><button class="key rb" id="fillX" aria-label="Kapat"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div style="font-size:2.3vh;color:var(--muted);line-height:1.45">Depoyu ağzına kadar doldurduğunda pompanın gösterdiği litreyi gir. MYDS bunu önceki dolumdan beri tahmin ettiği yakıtla karşılaştırır ve tüketim hesabını aracına göre düzeltir.</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:2vh">
+      <button class="key chip" data-d="-5" style="height:10vh;min-width:11vh;font-size:3vh">−5</button>
+      <button class="key chip" data-d="-1" style="height:10vh;min-width:11vh;font-size:3vh">−1</button>
+      <span class="n" style="font-size:9vh;min-width:24vh;text-align:center"><span id="fillV">40</span><small style="font-size:3vh"> L</small></span>
+      <button class="key chip" data-d="1" style="height:10vh;min-width:11vh;font-size:3vh">+1</button>
+      <button class="key chip" data-d="5" style="height:10vh;min-width:11vh;font-size:3vh">+5</button>
+    </div>
+    <div id="fillInfo" style="font-size:2.2vh;color:var(--muted);text-align:center"></div>
+    <button class="key chip hot" id="fillOk" style="height:9vh;font-size:3vh;justify-content:center">Kaydet</button>
+  </div>
+</div>
 <div id="sheet">
   <div style="display:flex;align-items:center;gap:1.6vh">
     <button class="key rb" id="close" aria-label="Kapat"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -131,6 +147,7 @@ body.day.t-stock .card{background:#fff}
 
 <script src="common.js"></script>
 <script src="dtc_edc17.js"></script>
+<script src="dtc_tr.js"></script>
 <script>
 var TH = call('theme') || 8;
 document.body.classList.add(TH === 7 ? 't-ds4' : TH === 4 ? 't-panel' : 't-stock');
@@ -191,8 +208,13 @@ var DTC = {
 };
 function meaning(c) {
   if (DTC[c]) return DTC[c];
-  var k = c.charAt(0);
-  return k === 'P' ? (c.charAt(1) === '1' || c.charAt(1) === '3' ? 'Motor · üreticiye özel' : 'Motor / şanzıman') : k === 'C' ? 'Şasi' : k === 'B' ? 'Gövde' : 'Haberleşme';
+  return window.dtcRange ? dtcRange(c) : 'Motor / şanzıman';
+}
+// the 1.6 e-HDi ECU's own group for the code, in Turkish
+function ecuText(c) {
+  var e = window.DTC_EDC17 && DTC_EDC17[c];
+  if (!e) return '';
+  return (window.DTC_TR && DTC_TR[e]) || e;
 }
 var lastDtc = '';
 function showCodes(list) {
@@ -203,13 +225,34 @@ function showCodes(list) {
   }
   list.forEach(function (c) {
     var d = document.createElement('div'); d.className = 'card code';
-    var ecu = window.DTC_EDC17 && DTC_EDC17[c];
+    var ecu = ecuText(c);
     d.innerHTML = '<b class="n">' + c + '</b><span>' + (DTC[c] || (ecu ? '' : meaning(c))) + (ecu ? (DTC[c] ? '<small>' : '<span>') + ecu + (DTC[c] ? '</small>' : '</span>') : '') + '</span>';
     $('codes').appendChild(d);
   });
 }
 
 $('back').onclick = function () { call('open', 'themehome'); };
+// ---- full tank: calibrates the fuel estimate (no typing: steps of 1 and 5 litres)
+var fillL = +(store('fill.last') || 40);
+function fillDraw() {
+  $('fillV').textContent = fillL;
+  var f = car.s.fuelObd || car.s || {};
+  var k = f.fuelK, n = f.fuelKn, since = f.sinceFill;
+  $('fillInfo').textContent = (since ? 'Son dolumdan beri tahmin: ' + Number(since).toFixed(1).replace('.', ',') + ' L · ' : '') +
+    (k ? 'şu anki düzeltme ×' + Number(k).toFixed(2).replace('.', ',') + (n ? ' (' + n + ' ölçüm)' : '') : 'henüz düzeltme yok');
+}
+$('cFill').onclick = function () {
+  if ((car.s.speed || 0) > 5) { $('fillInfo').textContent = ''; return; }   // only when stopped
+  $('fillM').style.display = 'flex'; fillDraw();
+};
+$('fillX').onclick = function () { $('fillM').style.display = 'none'; };
+[].forEach.call(document.querySelectorAll('#fillM [data-d]'), function (b) { b.onclick = function () { fillL = Math.max(5, Math.min(80, fillL + +b.dataset.d)); fillDraw(); }; });
+$('fillOk').onclick = function () {
+  store('fill.last', fillL);
+  var r = {}; try { r = JSON.parse(call('fuelFill', fillL) || '{}'); } catch (e) {}
+  $('fillInfo').textContent = r.first ? 'Kaydedildi. Bir sonraki dolumda düzeltme hesaplanacak.' : 'Kaydedildi. Yeni düzeltme ×' + Number(r.k).toFixed(2).replace('.', ',');
+  setTimeout(function () { $('fillM').style.display = 'none'; }, 2200);
+};
 $('cRem').onclick = function () { call('open', 'remote'); };
 // Adapter search on the unit itself (like Car Scanner: unpaired devices too, classic or BLE).
 $('cAdp').onclick = function () { $('adpM').style.display = 'flex'; $('adpPin').value = (car.s.obd && car.s.obd.pin) || '1234'; if (!(car.s.obd && car.s.obd.devs && car.s.obd.devs.length)) call('obdScan'); };

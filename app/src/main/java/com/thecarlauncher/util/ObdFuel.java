@@ -28,6 +28,13 @@ public final class ObdFuel {
     private volatile float lph = -1, instL100 = -1, speedNow = -1;
     private volatile long fuelAt;
     private int sinceSave;
+    // Calibration: the estimate (MAF / air-fuel model) times k. k is learnt from the real tank:
+    // the Citroën BSI's measured litres while driving, and the litres entered at a full fill-up.
+    private float k = 1f;
+    private double rawSinceFill;            // estimated litres (before k) since the last full fill-up
+    private double rawSinceAnchor = 0;      // … since the BSI level anchor
+    private float anchorL = -1, levelL = -1;
+    private int kLearnt;
 
     public static synchronized ObdFuel get(Context c) {
         if (sInstance == null) sInstance = new ObdFuel(c.getApplicationContext());
@@ -40,6 +47,9 @@ public final class ObdFuel {
             String r = p.getString("ring", "");
             if (!r.isEmpty()) for (String v : r.split(",")) { perKm[head] = Float.parseFloat(v); head = (head + 1) % RING; count = Math.min(RING, count + 1); }
         } catch (Exception ignored) { }
+        k = p.getFloat("k", 1f);
+        kLearnt = p.getInt("kN", 0);
+        rawSinceFill = p.getFloat("sinceFill", 0f);
     }
 
     private static float afr(float loadPct) {
@@ -59,6 +69,8 @@ public final class ObdFuel {
             rate = Float.isNaN(maf) || rpm <= 0 ? (rpm > 0 ? 0.55f : 0f) : maf / afr(h.value("load")) * 3600f / DIESEL_G_PER_L;
         }
         if (rpm <= 0) rate = 0;   // engine off (Stop & Start): no fuel
+        float raw = rate;
+        if (Float.isNaN(h.value("lph")) || h.value("lph") <= 0) rate = raw * k;   // the ECU's own fuel rate needs no correction
         float v = h.speed();
         if (v < 0) v = gpsKmh;
         if (v < 0) v = 0;
@@ -68,6 +80,9 @@ public final class ObdFuel {
         // a new trip after 10 minutes parked
         if (v > 1 || rpm > 0) { if (now - lastMoveAt > 10 * 60000) { tripKm = 0; tripL = 0; } lastMoveAt = now; }
         float dKm = v * dt / 3600f, dL = rate * dt / 3600f;
+        rawSinceFill += raw * dt / 3600f;
+        rawSinceAnchor += raw * dt / 3600f;
+        learnFromTank(h.value("psaFuelL"));
         tripKm += dKm; tripL += dL;
         kmAcc += dKm; fuelAcc += dL;
         if (kmAcc >= 1f) {
@@ -77,8 +92,41 @@ public final class ObdFuel {
         }
     }
 
+    /**
+     * The BSI's measured litres, smoothed. After 8 L used (measured) against at least 3 L estimated,
+     * the ratio moves k a third of the way; a rising level (fill-up) starts again.
+     */
+    private void learnFromTank(float bsiL) {
+        if (Float.isNaN(bsiL) || bsiL <= 0 || bsiL > 120) return;
+        levelL = levelL < 0 ? bsiL : levelL * 0.97f + bsiL * 0.03f;
+        if (anchorL < 0 || levelL > anchorL + 3) { anchorL = levelL; rawSinceAnchor = 0; return; }
+        float used = anchorL - levelL;
+        if (used >= 8 && rawSinceAnchor >= 3) {
+            float obs = (float) (used / rawSinceAnchor);
+            if (obs > 0.5f && obs < 2f) { k = k * (2f / 3f) + obs / 3f; kLearnt++; }
+            anchorL = levelL; rawSinceAnchor = 0;
+            p.edit().putFloat("k", k).putInt("kN", kLearnt).apply();
+        }
+    }
+
+    /**
+     * Full tank: the litres it took. Compared with what was estimated since the previous full tank
+     * (at least 10 L), k moves half of the way. Returns the new k, or -1 if it was the first fill.
+     */
+    public synchronized float fillUp(float litres) {
+        float out = -1;
+        if (litres > 3 && rawSinceFill >= 10) {
+            float obs = (float) (litres / rawSinceFill);
+            if (obs > 0.5f && obs < 2f) { k = k * 0.5f + obs * 0.5f; kLearnt++; out = k; }
+        }
+        rawSinceFill = 0;
+        p.edit().putFloat("k", k).putInt("kN", kLearnt).putFloat("sinceFill", 0f).putLong("fillAt", System.currentTimeMillis()).apply();
+        return out;
+    }
+
     private void save() {
         sinceSave = 0;
+        p.edit().putFloat("sinceFill", (float) rawSinceFill).apply();
         StringBuilder sb = new StringBuilder();
         int start = (head - count + RING) % RING;
         for (int i = 0; i < count; i++) { if (i > 0) sb.append(','); sb.append(Math.round(perKm[(start + i) % RING] * 1000) / 1000f); }
@@ -108,6 +156,7 @@ public final class ObdFuel {
             if (a100 > 0) o.put("avg100", Math.round(a100 * 10) / 10f);
             if (a1000 > 0) o.put("avg1000", Math.round(a1000 * 10) / 10f);
             o.put("kmLogged", count);
+            o.put("fuelK", Math.round(k * 1000) / 1000f).put("fuelKn", kLearnt).put("sinceFill", Math.round(rawSinceFill * k * 10) / 10f);
         } catch (Exception ignored) { }
         return o;
     }
