@@ -26,6 +26,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Built-in FM radio (K706 / QuickFish MCU): audio routing via AudioManager.setParameters. -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- FM on HCN / AC8227L units: the tuner's sound is recorded from the FM input and played back -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.ACCESS_FM_RADIO" />
     <uses-permission android:name="hcn.permission.FM_PLUG_SERVICE" />
     <uses-permission

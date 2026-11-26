@@ -115,6 +115,7 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        live = this;
         com.thecarlauncher.util.CrashLog.install(this);
         com.thecarlauncher.util.StartupConnect.onLauncherStart(this);
         com.thecarlauncher.media.Tone.get(this).init();
@@ -557,6 +558,9 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         s.onShow();
         Mib.keyFeedback(v);
     }
+
+    /** The running launcher, for support commands that need an activity (permission prompts). */
+    public static volatile LauncherActivity live;
 
     public interface ImagePicked { void onPicked(android.net.Uri uri); }
     private static final int REQ_IMAGE = 4711;

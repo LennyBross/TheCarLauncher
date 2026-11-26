@@ -363,6 +363,63 @@ public final class RemoteSupport {
         return "Kaydedildi";
     }
 
+    // ---- Diagnosis helpers
+
+    /** Methods, fields (static values too) and constructors of a class on this unit. */
+    static String classDump(String name) {
+        StringBuilder b = new StringBuilder();
+        try {
+            Class<?> k = Class.forName(name);
+            b.append(k).append(" extends ").append(k.getSuperclass()).append('\n');
+            for (java.lang.reflect.Constructor<?> m : k.getDeclaredConstructors()) b.append("  new ").append(m).append('\n');
+            for (java.lang.reflect.Method m : k.getDeclaredMethods()) b.append("  ").append(m.toString().replace("java.lang.", "")).append('\n');
+            for (java.lang.reflect.Field f : k.getDeclaredFields()) {
+                b.append("  .").append(f.getType().getSimpleName()).append(' ').append(f.getName());
+                if (java.lang.reflect.Modifier.isStatic(f.getModifiers())) {
+                    try { f.setAccessible(true); b.append(" = ").append(f.get(null)); } catch (Throwable ignored) { }
+                }
+                b.append('\n');
+            }
+            for (Class<?> in : k.getDeclaredClasses()) b.append("  class ").append(in.getName()).append('\n');
+        } catch (Throwable e) {
+            b.append("yok: ").append(e);
+        }
+        return b.toString();
+    }
+
+    /** Which audio input carries the FM tuner's sound: half a second from each, loudness per input. */
+    static String fmProbe(Context c) {
+        if (c.checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            final com.thecarlauncher.LauncherActivity a = com.thecarlauncher.LauncherActivity.live;
+            if (a != null) a.runOnUiThread(new Runnable() { public void run() { a.requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, 77); } });
+            return "Ses kaydı izni yok: cihaz ekranında 'İzin ver'e bas, sonra tekrar fmtest.";
+        }
+        StringBuilder b = new StringBuilder();
+        int[] srcs = {1998, 0, 1, 5, 6, 7, 9, 10, 1999};
+        int[] rates = {44100, 48000};
+        for (int src : srcs) for (int rate : rates) {
+            android.media.AudioRecord r = null;
+            try {
+                int min = android.media.AudioRecord.getMinBufferSize(rate, android.media.AudioFormat.CHANNEL_IN_STEREO, android.media.AudioFormat.ENCODING_PCM_16BIT);
+                r = new android.media.AudioRecord(src, rate, android.media.AudioFormat.CHANNEL_IN_STEREO, android.media.AudioFormat.ENCODING_PCM_16BIT, Math.max(min, 8192) * 2);
+                if (r.getState() != android.media.AudioRecord.STATE_INITIALIZED) { b.append(String.format(Locale.US, "kaynak %4d %d: açılmadı%n", src, rate)); continue; }
+                r.startRecording();
+                short[] buf = new short[rate / 2 * 2];
+                int got = 0; long t0 = System.currentTimeMillis();
+                while (got < buf.length && System.currentTimeMillis() - t0 < 1500) { int n = r.read(buf, got, buf.length - got); if (n <= 0) break; got += n; }
+                double sum = 0; int peak = 0;
+                for (int i = 0; i < got; i++) { sum += (double) buf[i] * buf[i]; peak = Math.max(peak, Math.abs(buf[i])); }
+                b.append(String.format(Locale.US, "kaynak %4d %d: %d örnek · rms %.0f · tepe %d%n", src, rate, got, got > 0 ? Math.sqrt(sum / got) : 0, peak));
+                break;   // one working rate per source is enough
+            } catch (Throwable e) {
+                b.append(String.format(Locale.US, "kaynak %4d %d: %s%n", src, rate, e.getClass().getSimpleName()));
+            } finally {
+                try { if (r != null) { r.stop(); r.release(); } } catch (Throwable ignored) { }
+            }
+        }
+        return b.toString();
+    }
+
     // ---- Commands
 
     static final class Commands {
@@ -371,7 +428,7 @@ public final class RemoteSupport {
             String a = w.length > 1 ? w[1] : "";
             switch (w[0].toLowerCase(Locale.ROOT)) {
                 case "yardim": case "help":
-                    return "durum · obd · obdiz · elm <komut> · motor [ac|kapat|{json}] · ara · bagla <MAC> [le] · pin <PIN> · log [satır] [süzgeç] · sh <komut> · guncelle · yeniden";
+                    return "durum · obd · obdiz · sinif <sınıf> · fmtest · elm <komut> · motor [ac|kapat|{json}] · ara · bagla <MAC> [le] · pin <PIN> · log [satır] [süzgeç] · sh <komut> · guncelle · yeniden";
                 case "durum": return state(c);
                 case "obd": { ObdHub h = ObdHub.get(); return h == null ? "ObdHub yok" : h.json().toString(2); }
                 case "ara": {
@@ -407,6 +464,8 @@ public final class RemoteSupport {
                 }
                 case "sh": return sh(a, 25000);
                 case "obdiz": return com.catarapatara.Obd.trace();
+                case "sinif": return classDump(a.trim());
+                case "fmtest": return fmProbe(c);
                 case "elm": { String r = com.catarapatara.Obd.raw(a.trim().toUpperCase(Locale.ROOT)); return r == null ? "yanıt yok (OBD bağlı mı?)" : r; }
                 case "motor": {
                     MotorSesi m = MotorSesi.get(c);
