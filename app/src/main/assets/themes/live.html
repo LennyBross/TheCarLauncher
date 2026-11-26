@@ -423,7 +423,7 @@ function fpsTick(now) {
   };
 })();
 // Live 3D by default (lighter model: no interior, black glass); photos when chosen on the vehicle page.
-if (store('myds.3d') === 'photo') toPhoto('pref');
+if (store('myds.3d') !== '3d') toPhoto('pref');   // home: photo unless 3D was switched on (the unit's GPU)
 else {
   var ls = function (l, done) { if (!l.length) return done(); var e = document.createElement('script'); e.src = l[0]; e.onload = function () { ls(l.slice(1), done); }; e.onerror = function () { toPhoto('nofile'); }; document.body.appendChild(e); };
   ls(['3d/three.min.js', '3d/GLTFLoader.js'], function () { try { init3D(); } catch (e) { toPhoto('error'); } });

@@ -553,7 +553,7 @@ function loadScripts(list, done) {
   document.body.appendChild(s);
 }
 // Live 3D by default (lighter model: no interior, black glass); photos when chosen on the vehicle page.
-if (store('myds.3d') === 'photo' || !webglOK() || /sprite/.test(location.hash)) fallback('photo');
+if (store('myds.3d') !== '3d' || !webglOK() || /sprite/.test(location.hash)) fallback('photo');   // home: photo unless 3D was switched on
 else loadScripts(['3d/three.min.js', '3d/GLTFLoader.js', '3d/RoomEnvironment.js', '3d/ds4model.js'], function () { try { init3D(); } catch (e) { fallback('init'); } });
 if (mode !== 'sprite') setTimeout(function () { if (!api || !api.shown) fallback('timeout'); }, 15000);
 

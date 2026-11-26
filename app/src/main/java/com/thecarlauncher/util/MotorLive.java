@@ -61,6 +61,17 @@ final class MotorLive {
         main.post(new Runnable() { public void run() {
             if (want) ensure();
             if (ready && web != null) web.evaluateJavascript("window.M&&M.set(" + cfg + ")", null);
+            // live voice off (or the recorded voice chosen): close the hidden browser entirely after the
+            // page has stopped its audio — on this unit an idle WebView still costs memory and wake-ups
+            if (!want && web != null) {
+                final WebView w = web;
+                main.postDelayed(new Runnable() { public void run() {
+                    if (web != w || cfgForPage().contains("\"on\":true")) return;
+                    try { ((WindowManager) app.getSystemService(Context.WINDOW_SERVICE)).removeView(w); } catch (Throwable ignored) { }
+                    try { w.stopLoading(); w.loadUrl("about:blank"); w.destroy(); } catch (Throwable ignored) { }
+                    web = null; ready = false; state = "{\"on\":false}";
+                } }, 1500);
+            }
         } });
     }
 
