@@ -64,15 +64,54 @@ public final class OwnCarPhoto {
             FileOutputStream fo = new FileOutputStream(cut(c));
             fo.write(png);
             fo.close();
-            //noinspection ResultOfMethodCallIgnored
-            raw(c).delete();
+            Prefs.put(c, "owncar_pending", false);
             return true;
         } catch (Throwable e) {
             return false;
         }
     }
 
+    /** A picture taken from the stick that the page has not cut out yet. */
+    public static boolean pending(Context c) { return Prefs.bool(c, "owncar_pending", false) && raw(c).exists(); }
+
+    /**
+     * Looks on the USB sticks / SD cards for the owner's car picture: a file called arac / araç /
+     * car / ds4 / myds (.jpg .jpeg .png .webp) in the stick's top folder or in a MYDS folder.
+     * A new or changed file is taken over; true when it was.
+     */
+    public static boolean fromUsb(Context c) {
+        File best = null;
+        try {
+            for (File root : Storage.removableRoots(c)) {
+                for (File dir : new File[]{root, new File(root, "MYDS"), new File(root, "myds"), new File(root, "MyDS")}) {
+                    File[] fs = dir.listFiles();
+                    if (fs == null) continue;
+                    for (File f : fs) {
+                        String n = f.getName().toLowerCase(java.util.Locale.ROOT);
+                        int dot = n.lastIndexOf('.');
+                        if (dot < 1 || !f.isFile()) continue;
+                        String base = n.substring(0, dot), ext = n.substring(dot + 1);
+                        if (!(ext.equals("jpg") || ext.equals("jpeg") || ext.equals("png") || ext.equals("webp"))) continue;
+                        if (!(base.startsWith("arac") || base.startsWith("araç") || base.startsWith("car")
+                                || base.startsWith("ds4") || base.startsWith("myds"))) continue;
+                        if (best == null || f.lastModified() > best.lastModified()) best = f;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        if (best == null) return false;
+        String sig = best.getPath() + "|" + best.length() + "|" + best.lastModified();
+        if (sig.equals(Prefs.str(c, "owncar_src", ""))) return false;
+        if (!take(c, Uri.fromFile(best))) return false;
+        Prefs.put(c, "owncar_src", sig);
+        Prefs.put(c, "owncar_pending", true);
+        return true;
+    }
+
     public static void clear(Context c) {
+        Prefs.put(c, "owncar_pending", false);
+        Prefs.put(c, "owncar_src", "");
         //noinspection ResultOfMethodCallIgnored
         cut(c).delete();
         //noinspection ResultOfMethodCallIgnored

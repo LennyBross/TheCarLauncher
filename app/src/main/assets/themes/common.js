@@ -270,12 +270,25 @@ function icon(name, cls) {
 })();
 
 // ---- Home-screen picture of the car ----------------------------------------------------------------
-// 'front' = the real ¾ front photo, 'side' = a side view rendered from MYDS's own model (with the plate),
-// 'own' = the owner's own photo (kept only in the app's files; background cut out on the unit).
+// 'front' = the real ¾ front photo; 'own' = the owner's own photo (from the USB stick: arac.jpg, or picked
+// in the gallery; kept only in the app's files). myds.carbg: 'cut' = background removed, 'keep' = as taken.
 function homeCarSrc() {
-  var m = store('myds.carimg') || 'front';
-  if (m === 'own') { var d = ''; try { d = call('carPhotoData') || ''; } catch (e) {} if (d) return { src: d, mode: 'own' }; m = 'front'; }
-  return { src: m === 'side' ? '3d/foto/side_l.webp' : '3d/foto/real_front.webp', mode: m };
+  if (store('myds.carimg') === 'own') {
+    var keep = store('myds.carbg') === 'keep', d = '';
+    try { d = (keep ? call('carPhotoRaw') : call('carPhotoData')) || call('carPhotoData') || call('carPhotoRaw') || ''; } catch (e) {}
+    if (d) return { src: d, mode: keep ? 'keep' : 'own' };
+  }
+  return { src: '3d/foto/real_front.webp', mode: 'front' };
+}
+// A picture that just came from the stick: cut its background once, then show it. done() when ready.
+function ownCarPending(done) {
+  if (!call('carPhotoPending')) return false;
+  carCutout(call('carPhotoRaw'), function (url) {
+    if (url) call('carPhotoSave', url);
+    store('myds.carimg', 'own');
+    if (done) done();
+  });
+  return true;
 }
 // Cuts a plain-ish background away: flood fill from the picture's edges, soft edge, cropped to the car.
 // cb(dataUrl, share of the picture that stayed) — share near 0 or 1 means the cut didn't work.

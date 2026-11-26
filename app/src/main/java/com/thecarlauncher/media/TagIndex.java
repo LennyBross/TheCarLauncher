@@ -120,6 +120,8 @@ public final class TagIndex {
     }
 
     private static void pass(Context c) {
+        // the owner's car picture on the stick (arac.jpg …) goes to the home screen
+        try { com.thecarlauncher.util.OwnCarPhoto.fromUsb(c); } catch (Throwable ignored) {}
         load(c);
         List<File> todo = new ArrayList<>();
         List<File> roots = new ArrayList<>(com.thecarlauncher.util.Storage.removableRoots(c));

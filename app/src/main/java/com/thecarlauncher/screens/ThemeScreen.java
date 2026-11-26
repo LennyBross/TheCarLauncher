@@ -814,6 +814,8 @@ public class ThemeScreen extends Screen {
         @JavascriptInterface
         public boolean carPhotoSave(String dataUrl) { return com.thecarlauncher.util.OwnCarPhoto.save(act, dataUrl); }
         @JavascriptInterface
+        public boolean carPhotoPending() { return com.thecarlauncher.util.OwnCarPhoto.pending(act); }
+        @JavascriptInterface
         public void carPhotoClear() { com.thecarlauncher.util.OwnCarPhoto.clear(act); }
         @JavascriptInterface
         public String webRadioState() { return com.thecarlauncher.radio.WebRadio.get(act).state(); }

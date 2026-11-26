@@ -119,7 +119,8 @@ body.day .db i svg{stroke:#0A0A0A !important;color:#0A0A0A}
 </div>
 <button id="carBox" class="key" aria-label="Aracım">
 <img id="carSpin" alt="" src="" style="position:absolute;left:-9%;top:2%;width:118%;height:112%;object-fit:contain;pointer-events:none">
-<span style="position:absolute;left:3.33vh;top:2.78vh;display:flex;flex-direction:column;align-items:flex-start"><span class="sg" style="font-size:3.06vh;color:var(--fg)">Citroën DS4</span><span style="font-size:1.94vh;color:var(--muted)">10 KE 424 · 3D ve bilgiler</span></span>
+<span id="carShade" style="position:absolute;left:0;right:0;top:0;height:40%;background:linear-gradient(rgba(0,0,0,.62),transparent);pointer-events:none;display:none"></span>
+<span id="carTitle" style="position:absolute;left:3.33vh;top:2.78vh;display:flex;flex-direction:column;align-items:flex-start"><span class="sg" style="font-size:3.06vh;color:var(--fg)">Citroën DS4</span><span style="font-size:1.94vh;color:var(--muted)">10 KE 424 · 3D ve bilgiler</span></span>
 </button>
 </div>
 </div>
@@ -176,13 +177,23 @@ st.onclick = function () { if (held) return; if (hasCp) { st.classList.toggle('o
 
 // The car: one still picture, chosen on the vehicle page (no animation, the GPU stays free).
 (function () {
-  var el = $('carSpin'), im = new Image();
-  el.style.transition = 'opacity .6s ease'; el.style.opacity = '0';
-  var c = homeCarSrc();
-  // the side view and the owner's photo are wide: give them the card's full width, a little lower
-  if (c.mode !== 'front') el.style.cssText += ';left:5%;width:90%;top:6%;height:88%';
-  im.onload = function () { el.src = im.src; el.style.opacity = '1'; };
-  im.src = c.src;
+  var el = $('carSpin'), base = el.style.cssText;
+  el.style.transition = 'opacity .6s ease';
+  function show() {
+    var c = homeCarSrc(), im = new Image();
+    el.style.cssText = base; el.style.transition = 'opacity .6s ease'; el.style.opacity = '0';
+    // the owner's photo: cut out → the card's full width; kept as taken → fills the card like a picture
+    if (c.mode === 'own') el.style.cssText += ';left:5%;width:90%;top:6%;height:88%';
+    if (c.mode === 'keep') el.style.cssText += ';left:0;top:0;width:100%;height:100%;object-fit:cover';
+    var keep = c.mode === 'keep';
+    $('carShade').style.display = keep ? 'block' : 'none';
+    [].forEach.call($('carTitle').children, function (t) { t.style.color = keep ? '#fff' : ''; });
+    im.onload = function () { el.src = im.src; el.style.opacity = '1'; };
+    im.src = c.src;
+  }
+  show();
+  ownCarPending(show);   // a new arac.jpg from the stick
+  window.addEventListener('focus', function () { ownCarPending(show); });
 })();
 
 car.on(function (s) {
