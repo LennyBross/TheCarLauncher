@@ -329,6 +329,24 @@ public class SettingsScreen extends Screen {
                 });
             }
         });
+        // Font over every theme page (bundled, SIL OFL): empty = the theme's own fonts.
+        final String[] fonts = {"", "Roboto", "Montserrat", "Open Sans", "Google Sans", "Source Sans 3"};
+        final String curFont = Prefs.str(act, "ui_font", "");
+        int fi = 0;
+        for (int i = 0; i < fonts.length; i++) if (fonts[i].equals(curFont)) fi = i;
+        final int curFontIdx = fi;
+        final String[] fontNames = fonts.clone();
+        fontNames[0] = s("Podrazumevano za temu", "Theme default");
+        action(s("Font", "Font"), fontNames[curFontIdx], new Runnable() {
+            public void run() {
+                Dialogs.choose(act, s("Font", "Font"), fontNames, curFontIdx, new Dialogs.Chosen() {
+                    public void onChosen(int i) {
+                        Prefs.put(act, "ui_font", fonts[i]);
+                        act.restartUi();
+                    }
+                });
+            }
+        });
         if (modern) {
             final Object[][] w = com.thecarlauncher.screens.ModernScreen.WALLPAPERS;
             int cur = Math.max(0, Math.min(w.length - 1, Prefs.integer(act, com.thecarlauncher.screens.ModernScreen.P_WALLPAPER, 0)));

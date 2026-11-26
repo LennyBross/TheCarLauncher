@@ -84,6 +84,21 @@ var eco = (function () {
   } catch (e) {}
 })();
 
+// The owner's font choice (Setup → Font) over every theme: Roboto, Montserrat, Open Sans, Google Sans,
+// Source Sans 3 (all SIL OFL, bundled, Latin + Turkish only). Empty = the theme's own fonts.
+var MYDS_FONTS = { 'Roboto': 'Roboto.ttf', 'Montserrat': null, 'Open Sans': 'OpenSans.ttf', 'Google Sans': 'GoogleSans.ttf', 'Source Sans 3': 'SourceSans3.ttf' };
+(function () {
+  try {
+    var f = window.Car && Car.uiFont ? Car.uiFont() : '';
+    if (!f || !(f in MYDS_FONTS)) return;
+    var face = MYDS_FONTS[f] ? "@font-face{font-family:'" + f + "';src:url(fonts/" + MYDS_FONTS[f] + ") format('truetype');font-weight:400 700;font-display:block}" : '';
+    var st = document.createElement('style'); st.id = 'mydsfont';
+    st.textContent = face + "html body,html button,html input,html select,html .sg,html .num,html h1,html h2,html h3,html svg text{font-family:'" + f + "',sans-serif !important}";
+    (document.head || document.documentElement).appendChild(st);
+    document.documentElement.setAttribute('data-font', f);
+  } catch (e) {}
+})();
+
 // Stock theme: every page takes the Stock look (dark, champagne accents).
 (function () {
   try {
