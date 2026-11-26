@@ -254,6 +254,29 @@ public final class RemoteSupport {
         // Local console on the home Wi-Fi / hotspot, no GitHub needed: GET /k?pin=1234&c=<command>
         // runs one support command (durum, log, obd, sh …) and answers plain text; /konsol?pin= is a page for it.
         String path = first.split(" ").length > 1 ? first.split(" ")[1] : "/";
+        // GET /dosya?pin=1234&p=/system/app/AutoRadio/AutoRadio.apk → the file as a download (read-only, ≤ 64 MB)
+        if (path.startsWith("/dosya?")) {
+            String pin = "", fp = "";
+            for (String kv : path.substring(7).split("&")) {
+                String[] p = kv.split("=", 2);
+                String v = p.length > 1 ? URLDecoder.decode(p[1], "UTF-8") : "";
+                if (p[0].equals("pin")) pin = v.trim(); else if (p[0].equals("p")) fp = v.trim();
+            }
+            java.io.File f = new java.io.File(fp);
+            OutputStream o = s.getOutputStream();
+            if (!pin.equals(setupPin) || !f.isFile() || !f.canRead() || f.length() > 64L << 20) {
+                byte[] b = ("Yok / okunamıyor: " + fp).getBytes(StandardCharsets.UTF_8);
+                o.write(("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: " + b.length + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+                o.write(b); o.flush(); return;
+            }
+            s.setSoTimeout(60000);
+            o.write(("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Disposition: attachment; filename=\"" + f.getName() + "\"\r\nContent-Length: " + f.length() + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+            InputStream fi = new java.io.FileInputStream(f);
+            byte[] buf = new byte[65536]; int n;
+            while ((n = fi.read(buf)) > 0) o.write(buf, 0, n);
+            fi.close(); o.flush();
+            return;
+        }
         if (path.startsWith("/k?") || path.startsWith("/konsol")) {
             String pin = "", cmd = "";
             int q = path.indexOf('?');
