@@ -171,6 +171,7 @@ body.day .db i svg{stroke:#0A0A0A !important;color:#0A0A0A}
 </div>
 <button id="carBox" class="key" aria-label="Aracım">
 <img id="carSpin" alt="" src="" style="position:absolute;left:-9%;top:2%;width:118%;height:112%;object-fit:contain;pointer-events:none">
+<span id="carPhotoBtn" role="button" aria-label="Araç fotoğrafını değiştir" style="position:absolute;right:2.2vh;top:2.2vh;z-index:3;height:6.4vh;padding:0 2vh;border-radius:3.2vh;display:flex;align-items:center;gap:1vh;font-size:2.1vh;font-weight:600;color:var(--fg);background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)"><svg viewBox="0 0 24 24" style="width:3vh;height:3vh" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>Fotoğraf</span>
 <span id="carShade" style="position:absolute;left:0;right:0;top:0;height:40%;background:linear-gradient(rgba(0,0,0,.62),transparent);pointer-events:none;display:none"></span>
 <span id="carTitle" style="position:absolute;left:3.33vh;top:2.78vh;display:flex;flex-direction:column;align-items:flex-start"><span class="sg" style="font-size:3.06vh;color:var(--fg)">Citroën DS4</span><span style="font-size:1.94vh;color:var(--muted)">10 KE 424 · Araç bilgileri</span></span>
 </button>
@@ -204,7 +205,10 @@ var IC = {
   b.onclick = function () { if (a[3]) call('open', a[3]); };
   $('dock').appendChild(b);
 });
-$('carBox').onclick = function () { call('open', 'vehicle'); };
+$('carBox').onclick = function (e) {
+  if (e.target.closest('#carPhotoBtn')) { carPhotoPicker(function () { if (window.showCar) showCar(); }); return; }
+  call('open', 'vehicle');
+};
 
 // ---- music player: cover, song, artist (with picture), album; tap = the Müzik page with the song list
 $('mp').onclick = function (e) { if (!e.target.closest('#mpCtl')) call('open', 'music'); };
@@ -270,7 +274,7 @@ st.onclick = function () { if (held) return; if (hasCp) { st.classList.toggle('o
     im.onload = function () { el.src = im.src; el.style.opacity = '1'; };
     im.src = c.src;
   }
-  show();
+  show(); window.showCar = show;
   ownCarPending(show);   // a new arac.jpg from the stick
   window.addEventListener('focus', function () { ownCarPending(show); });
 })();

@@ -23,3 +23,23 @@ svg{display:block}
 @font-face{font-family:'Barlow Semi Condensed';src:url(fonts/Barlow-600-ext.woff2) format('woff2');font-weight:600;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F,U+20A0-20AB,U+20AD-20C4}
 @font-face{font-family:'Jost';src:url(fonts/Jost.woff2) format('woff2');font-weight:100 900;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212}
 @font-face{font-family:'Jost';src:url(fonts/Jost-ext.woff2) format('woff2');font-weight:100 900;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1E9F,U+20A0-20AB,U+20AD-20C4}
+
+/* ---- MYDS motion kit: small and cheap. Only transform + opacity (the GPU does them, the CPU stays free),
+   short, played once; nothing loops except where a theme asks for it. Off with html.nomotion. ---- */
+@keyframes mydsIn{from{opacity:0;transform:translateY(1.8vh) scale(.985)}to{opacity:1;transform:none}}
+@keyframes mydsPop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+@keyframes mydsFade{from{opacity:0}to{opacity:1}}
+@keyframes mydsTick{0%{opacity:.35;transform:translateY(.6vh)}100%{opacity:1;transform:none}}
+@keyframes mydsBreath{0%,100%{opacity:.55}50%{opacity:1}}
+.mydsIn{animation:mydsIn .46s cubic-bezier(.2,.8,.2,1) both;will-change:transform,opacity}
+.mydsTick{animation:mydsTick .32s cubic-bezier(.2,.8,.2,1)}
+/* menus and windows pop in */
+#srcM.on,#lightM.on,#lookM.on,#cpPick .cpIn,#fillM>.card,#picM>div{animation:mydsPop .2s cubic-bezier(.2,.8,.2,1)}
+.pop.on{animation:mydsFade .18s ease}
+#cpPick{animation:mydsFade .18s ease}
+/* touch: everything you press gives a little */
+button,[role=button],.key{transition:transform .13s cubic-bezier(.3,.7,.4,1.5),filter .13s,opacity .13s}
+button:active,[role=button]:active{transform:scale(.96)}
+/* progress bars glide instead of jumping */
+#barf,#mpBar i,#bar i,#bar>div,.bar i,#fuelBar i{transition:width .9s linear}
+html.nomotion *{animation:none !important;transition:none !important}

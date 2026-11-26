@@ -358,3 +358,85 @@ function carCutout(srcUrl, cb) {
   im.onerror = function () { cb('', 0); };
   im.src = srcUrl;
 }
+
+// ---- Car photo window, from any page: the real ¾ front photo, or the owner's own photo
+// (USB stick: arac.jpg in the top folder or MYDS, or the gallery; background removed or kept as taken).
+function carPhotoPicker(onDone) {
+  var old = document.getElementById('cpPick'); if (old) old.remove();
+  var M = document.createElement('div'); M.id = 'cpPick';
+  M.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.66);display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif';
+  M.innerHTML = '<div class="cpIn" style="width:min(94vw,150vh);background:#17191d;color:#fff;border-radius:3vh;padding:3vh 3.4vh;display:flex;flex-direction:column;gap:2.2vh;box-shadow:0 2vh 6vh rgba(0,0,0,.6)">' +
+    '<div style="display:flex;align-items:center;gap:1.6vh"><b style="font-size:3.4vh;flex:1">Ana ekrandaki araç fotoğrafı</b><button id="cpX" style="width:7vh;height:7vh;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:3.4vh">✕</button></div>' +
+    '<div id="cpOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:2vh"></div>' +
+    '<div id="cpMsg" style="font-size:2.2vh;opacity:.75;line-height:1.45">USB belleğe <b>arac.jpg</b> adıyla koy (ana klasör ya da MYDS klasörü), takınca kendisi gelir. Ya da galeriden seç. Fotoğraf sadece bu cihazda kalır. En iyi ölçü 1280 × 570.</div></div>';
+  document.body.appendChild(M);
+  function msg(t) { M.querySelector('#cpMsg').textContent = t; }
+  function draw() {
+    var box = M.querySelector('#cpOpts'), cur = homeCarSrc().mode === 'front' ? 'front' : 'own', keep = store('myds.carbg') === 'keep', own = '';
+    try { own = (keep ? call('carPhotoRaw') : call('carPhotoData')) || call('carPhotoData') || ''; } catch (e) {}
+    box.innerHTML = '';
+    [['front', 'Ön ¾ fotoğraf', '3d/foto/real_front.webp'], ['own', own ? 'Kendi fotoğrafım · değiştir' : 'Kendi fotoğrafım · seç', own]].forEach(function (o) {
+      var b = document.createElement('button'), on = cur === o[0];
+      b.style.cssText = 'display:flex;flex-direction:column;gap:1.4vh;padding:1.6vh;border-radius:2.2vh;border:.4vh solid ' + (on ? '#fff' : 'transparent') + ';background:rgba(255,255,255,.06);color:#fff;font-size:2.5vh;font-family:inherit';
+      b.innerHTML = '<div style="height:24vh;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3);border-radius:1.4vh;overflow:hidden">' +
+        (o[2] ? '<img src="' + o[2] + '" style="max-width:100%;max-height:100%;object-fit:contain">' : '<span style="font-size:7vh;opacity:.5">+</span>') + '</div><span>' + o[1] + '</span>';
+      b.onclick = function () {
+        if (o[0] === 'own' && (!own || on)) {
+          if ((car.s && car.s.speed || 0) > 5) { msg('Araç dururken seçebilirsin.'); return; }
+          msg('Galeri açılıyor…'); call('carPhotoPick'); return;
+        }
+        store('myds.carimg', o[0]); draw(); msg('Tamam.'); if (onDone) onDone();
+      };
+      box.appendChild(b);
+    });
+    if (own) {
+      [['Arka plan: ' + (keep ? 'olduğu gibi' : 'silindi'), function () { store('myds.carbg', keep ? 'cut' : 'keep'); draw(); if (onDone) onDone(); }],
+       ['Fotoğrafımı sil', function () { call('carPhotoClear'); if (store('myds.carimg') === 'own') store('myds.carimg', 'front'); draw(); if (onDone) onDone(); }]].forEach(function (x) {
+        var b = document.createElement('button'); b.textContent = x[0];
+        b.style.cssText = 'height:7vh;border-radius:1.6vh;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:2.3vh;font-family:inherit';
+        b.onclick = x[1]; box.appendChild(b);
+      });
+    }
+  }
+  window.onCarPicked = function (ok) {
+    if (!ok) { msg('Bu resim açılamadı.'); return; }
+    msg('Arka plan siliniyor…');
+    carCutout(call('carPhotoRaw'), function (url, share) {
+      if (!url || !call('carPhotoSave', url)) { msg('Kaydedilemedi.'); return; }
+      store('myds.carimg', 'own'); draw(); if (onDone) onDone();
+      msg(share > 0.97 || share < 0.04 ? 'Arka plan ayrılamadı, fotoğraf olduğu gibi kullanılıyor.' : 'Hazır.');
+    });
+  };
+  M.querySelector('#cpX').onclick = function () { M.remove(); };
+  M.onclick = function (e) { if (e.target === M) M.remove(); };
+  draw();
+  if (ownCarPending(function () { draw(); if (onDone) onDone(); })) msg('USB\'deki fotoğraf hazırlanıyor…');
+}
+
+// ---- motion: cards and keys rise in one after another when a page opens (once), and numbers that
+// change on a page give a small tick. Cheap: classes only, the CSS does the rest.
+(function () {
+  if (store('myds.motion') === 'off') { document.documentElement.classList.add('nomotion'); return; }
+  function enter() {
+    var sel = '.c,.card,.box,.pan,.tab,.dock,.db,#dock button,.dock button,.st,#mp,#np,#carBox,.row.card';   // never things placed with a transform (Stock's slanted keys, centred pop-ups)
+    var els = [].slice.call(document.querySelectorAll(sel)).filter(function (e) { return e.offsetParent !== null; }).slice(0, 28);
+    els.forEach(function (e, i) {
+      e.style.animationDelay = (i * 35) + 'ms';
+      e.classList.add('mydsIn');
+      e.addEventListener('animationend', function f() { e.classList.remove('mydsIn'); e.style.animationDelay = ''; e.removeEventListener('animationend', f); });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(enter, 30); });
+  else setTimeout(enter, 30);
+  // numbers: when the text of a big read-out changes, it ticks in (only short numeric texts, a few at a time)
+  var last = new WeakMap(), sel2 = 'b,.n,.num,#spd,#rng,#cons,#avg,#trp,#inst,#range,#liters,#temp,#clock,.tv b';
+  setInterval(function () {
+    var n = 0;
+    [].forEach.call(document.querySelectorAll(sel2), function (e) {
+      if (n > 6 || e.offsetParent === null) return;
+      var t = e.textContent; if (t.length > 12 || !/\d/.test(t)) return;
+      var p = last.get(e); last.set(e, t);
+      if (p !== undefined && p !== t) { n++; e.classList.remove('mydsTick'); void e.offsetWidth; e.classList.add('mydsTick'); }
+    });
+  }, 500);
+})();
