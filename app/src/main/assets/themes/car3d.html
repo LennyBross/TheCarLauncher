@@ -62,9 +62,17 @@ body.t-panel .sg,body.t-panel .tile b{font-family:'Share Tech Mono',monospace;fo
 <div style="flex:1"></div>
 <div id="colors" style="display:flex;gap:1.11vh"></div>
 <button class="key chip" id="mode3d" style="height:7.2vh;padding:0 2.2vh;font-weight:600;letter-spacing:.12em" aria-label="Canlı 3D">3D</button>
+<button class="key chip ik" id="homePic" aria-label="Ana ekran görseli"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg></button>
 <button class="key chip ik on" id="spin" aria-label="360° dönüş"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button>
 </div>
 <div id="views"></div>
+<div id="picM" style="display:none;position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.66);align-items:center;justify-content:center">
+  <div style="width:min(94vw,170vh);background:#17191d;box-shadow:0 2vh 6vh rgba(0,0,0,.6);border-radius:3vh;padding:3vh 3.4vh;display:flex;flex-direction:column;gap:2.4vh;color:var(--text,#fff)">
+    <div style="display:flex;align-items:center;gap:1.6vh"><span style="font-size:3.4vh;font-weight:600;flex:1">Ana ekrandaki araç görseli</span><button class="key chip ik" id="picX" aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div id="picOpts" style="display:grid;grid-template-columns:repeat(3,1fr);gap:2vh"></div>
+    <div id="picMsg" style="font-size:2.2vh;opacity:.7;min-height:3vh">Kendi fotoğrafın sadece bu cihazda saklanır. Arka plan otomatik silinir; en iyi sonuç düz zeminli, yandan çekilmiş fotoğrafta olur.</div>
+  </div>
+</div>
 </div>
 <div id="side">
 <div class="card" style="display:flex;flex-direction:column;gap:.56vh">
@@ -416,6 +424,51 @@ function startSprites() {
 }
 
 try { $('obdK').onclick = function () { call('open', 'obd'); }; } catch (e) {}
+
+// ---- picture for the home screen: real ¾ front, own side render, or the owner's photo
+(function () {
+  var M = $('picM'), box = $('picOpts');
+  var OPTS = [['front', 'Ön ¾ fotoğraf'], ['side', 'Yan görünüm'], ['own', 'Kendi fotoğrafım']];
+  function draw() {
+    var cur = homeCarSrc().mode, own = ''; try { own = call('carPhotoData') || ''; } catch (e) {}
+    box.innerHTML = '';
+    OPTS.forEach(function (o) {
+      var b = document.createElement('button'), on = cur === o[0];
+      b.className = 'key';
+      b.style.cssText = 'display:flex;flex-direction:column;gap:1.4vh;align-items:stretch;padding:1.6vh;border-radius:2.2vh;border:.4vh solid ' + (on ? 'var(--a,#4c8dff)' : 'transparent') + ';background:rgba(255,255,255,.06);color:inherit;font-size:2.6vh';
+      var src = o[0] === 'front' ? '3d/foto/real_front.webp' : o[0] === 'side' ? '3d/foto/side_l.webp' : own;
+      b.innerHTML = '<div style="height:22vh;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);border-radius:1.4vh;overflow:hidden">' +
+        (src ? '<img src="' + src + '" style="max-width:100%;max-height:100%;object-fit:contain">' : '<span style="font-size:6vh;opacity:.5">+</span>') + '</div>' +
+        '<span>' + o[1] + (o[0] === 'own' && own ? ' · değiştir' : '') + '</span>';
+      b.onclick = function () {
+        if (o[0] === 'own' && (!own || on)) {
+          if ((car.s && car.s.speed || 0) > 5) { $('picMsg').textContent = 'Araç dururken seçebilirsin.'; return; }
+          $('picMsg').textContent = 'Galeri açılıyor…'; call('carPhotoPick'); return;
+        }
+        store('myds.carimg', o[0]); draw();
+        $('picMsg').textContent = 'Tamam. Ana ekrana dönünce görünür.';
+      };
+      box.appendChild(b);
+    });
+    if (own) {
+      var rm = document.createElement('button'); rm.className = 'key chip';
+      rm.textContent = 'Kendi fotoğrafımı sil'; rm.style.cssText = 'grid-column:3;height:6vh;font-size:2.2vh;justify-content:center';
+      rm.onclick = function () { call('carPhotoClear'); if (store('myds.carimg') === 'own') store('myds.carimg', 'front'); draw(); };
+      box.appendChild(rm);
+    }
+  }
+  window.onCarPicked = function (ok) {
+    if (!ok) { $('picMsg').textContent = 'Bu resim açılamadı.'; return; }
+    $('picMsg').textContent = 'Arka plan siliniyor…';
+    carCutout(call('carPhotoRaw'), function (url, share) {
+      if (!url || !call('carPhotoSave', url)) { $('picMsg').textContent = 'Kaydedilemedi.'; return; }
+      store('myds.carimg', 'own'); draw();
+      $('picMsg').textContent = share > 0.97 || share < 0.04 ? 'Arka plan ayrılamadı, fotoğraf olduğu gibi kullanılıyor.' : 'Hazır. Ana ekrana dönünce görünür.';
+    });
+  };
+  $('homePic').onclick = function () { M.style.display = 'flex'; draw(); };
+  $('picX').onclick = function () { M.style.display = 'none'; };
+})();
 </script>
 </body>
 </html>

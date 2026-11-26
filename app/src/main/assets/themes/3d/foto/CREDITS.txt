@@ -6,3 +6,6 @@ real_front.webp, real_rear.webp: background removed and resized from
   These two adapted files are shared under the same licence.
 
 c0_*.webp: renders of the MYDS 3D model.
+
+side_l.webp, side_r.webp: side views rendered by MYDS from its own model (black glass, owner's plate). No third-party photo.
+The owner's own car photo is never part of the app: it is picked on the unit and kept only in the app's private files.

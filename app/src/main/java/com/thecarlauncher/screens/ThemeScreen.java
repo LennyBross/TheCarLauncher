@@ -799,6 +799,22 @@ public class ThemeScreen extends Screen {
             float k = com.thecarlauncher.util.ObdFuel.get(act).fillUp(litres);
             try { return new JSONObject().put("k", k).put("first", k < 0).toString(); } catch (Exception e) { return "{}"; }
         }
+        // ---- the owner's own car photo (stays in the app's files)
+        @JavascriptInterface
+        public void carPhotoPick() {
+            act.runOnUiThread(() -> act.pickImage(-1, uri -> {
+                boolean ok = com.thecarlauncher.util.OwnCarPhoto.take(act, uri);
+                if (web != null) web.evaluateJavascript("window.onCarPicked&&onCarPicked(" + ok + ")", null);
+            }));
+        }
+        @JavascriptInterface
+        public String carPhotoRaw() { return com.thecarlauncher.util.OwnCarPhoto.rawData(act); }
+        @JavascriptInterface
+        public String carPhotoData() { return com.thecarlauncher.util.OwnCarPhoto.cutData(act); }
+        @JavascriptInterface
+        public boolean carPhotoSave(String dataUrl) { return com.thecarlauncher.util.OwnCarPhoto.save(act, dataUrl); }
+        @JavascriptInterface
+        public void carPhotoClear() { com.thecarlauncher.util.OwnCarPhoto.clear(act); }
         @JavascriptInterface
         public String webRadioState() { return com.thecarlauncher.radio.WebRadio.get(act).state(); }
         @JavascriptInterface

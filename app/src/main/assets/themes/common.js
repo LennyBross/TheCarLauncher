@@ -268,3 +268,65 @@ function icon(name, cls) {
     if (!turn) turn = setInterval(function () { if (visible().length > 1) { at++; draw(); } }, 6000);
   });
 })();
+
+// ---- Home-screen picture of the car ----------------------------------------------------------------
+// 'front' = the real ¾ front photo, 'side' = a side view rendered from MYDS's own model (with the plate),
+// 'own' = the owner's own photo (kept only in the app's files; background cut out on the unit).
+function homeCarSrc() {
+  var m = store('myds.carimg') || 'front';
+  if (m === 'own') { var d = ''; try { d = call('carPhotoData') || ''; } catch (e) {} if (d) return { src: d, mode: 'own' }; m = 'front'; }
+  return { src: m === 'side' ? '3d/foto/side_l.webp' : '3d/foto/real_front.webp', mode: m };
+}
+// Cuts a plain-ish background away: flood fill from the picture's edges, soft edge, cropped to the car.
+// cb(dataUrl, share of the picture that stayed) — share near 0 or 1 means the cut didn't work.
+function carCutout(srcUrl, cb) {
+  var im = new Image();
+  im.onload = function () {
+    var w = im.naturalWidth, h = im.naturalHeight, cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    var g = cv.getContext('2d'); g.drawImage(im, 0, 0);
+    var id = g.getImageData(0, 0, w, h), p = id.data, n = w * h;
+    // background colour = mean of the outer frame
+    var r = 0, gg = 0, b = 0, c = 0, i, x, y;
+    function acc(q) { r += p[q * 4]; gg += p[q * 4 + 1]; b += p[q * 4 + 2]; c++; }
+    for (x = 0; x < w; x++) { acc(x); acc((h - 1) * w + x); }
+    for (y = 0; y < h; y++) { acc(y * w); acc(y * w + w - 1); }
+    r /= c; gg /= c; b /= c;
+    function d2(q, R, G, B) { var a = p[q * 4] - R, e = p[q * 4 + 1] - G, f = p[q * 4 + 2] - B; return a * a + e * e + f * f; }
+    var bg = new Uint8Array(n), st = new Int32Array(n), sp = 0;
+    var FAR = 70 * 70, STEP = 22 * 22, NEAR = 34 * 34;
+    function seed(q) { if (!bg[q] && d2(q, r, gg, b) < FAR) { bg[q] = 1; st[sp++] = q; } }
+    for (x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+    for (y = 0; y < h; y++) { seed(y * w); seed(y * w + w - 1); }
+    while (sp) {
+      var q = st[--sp], qx = q % w, R = p[q * 4], G = p[q * 4 + 1], B = p[q * 4 + 2];
+      var nb = [qx > 0 ? q - 1 : -1, qx < w - 1 ? q + 1 : -1, q - w, q + w];
+      for (var k = 0; k < 4; k++) {
+        var t = nb[k]; if (t < 0 || t >= n || bg[t]) continue;
+        var dm = d2(t, r, gg, b);
+        if (dm < NEAR || (d2(t, R, G, B) < STEP && dm < FAR)) { bg[t] = 1; st[sp++] = t; }
+      }
+    }
+    // soft edge: alpha from the share of background around each pixel; crop box
+    var kept = 0, x0 = w, y0 = h, x1 = 0, y1 = 0;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      i = y * w + x;
+      if (bg[i]) { p[i * 4 + 3] = 0; continue; }
+      var s = 0, m = 0;
+      for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
+        var xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue; m++; s += bg[yy * w + xx];
+      }
+      p[i * 4 + 3] = Math.round(255 * (1 - s / m * 0.6));
+      kept++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+    var share = kept / n;
+    if (share < 0.04 || share > 0.97) { cb(srcUrl, share); return; }   // nothing sensible to cut: keep the photo
+    g.putImageData(id, 0, 0);
+    var o = document.createElement('canvas'), pad = 8;
+    o.width = x1 - x0 + 1 + pad * 2; o.height = y1 - y0 + 1 + pad * 2;
+    o.getContext('2d').drawImage(cv, x0, y0, x1 - x0 + 1, y1 - y0 + 1, pad, pad, x1 - x0 + 1, y1 - y0 + 1);
+    cb(o.toDataURL('image/png'), share);
+  };
+  im.onerror = function () { cb('', 0); };
+  im.src = srcUrl;
+}

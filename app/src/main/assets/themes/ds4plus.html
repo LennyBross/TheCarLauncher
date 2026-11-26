@@ -174,12 +174,15 @@ st.addEventListener('pointerdown', function () { st.classList.add('down'); held 
 ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { st.addEventListener(ev, function () { st.classList.remove('down'); clearTimeout(ht); }); });
 st.onclick = function () { if (held) return; if (hasCp) { st.classList.toggle('on'); call('open', 'cpToggle'); } else call('open', 'engine'); };
 
-// The car: one studio photo in the high ¾ front view (no animation, the GPU stays free).
+// The car: one still picture, chosen on the vehicle page (no animation, the GPU stays free).
 (function () {
   var el = $('carSpin'), im = new Image();
   el.style.transition = 'opacity .6s ease'; el.style.opacity = '0';
+  var c = homeCarSrc();
+  // the side view and the owner's photo are wide: give them the card's full width, a little lower
+  if (c.mode !== 'front') el.style.cssText += ';left:5%;width:90%;top:6%;height:88%';
   im.onload = function () { el.src = im.src; el.style.opacity = '1'; };
-  im.src = '3d/foto/real_front.webp';
+  im.src = c.src;
 })();
 
 car.on(function (s) {
