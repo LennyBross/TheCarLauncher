@@ -271,6 +271,14 @@ public final class ObdHub implements Obd.Listener {
     public boolean connected() { return ok && System.currentTimeMillis() - rpmAt < 2000; }
 
     /** Engine rpm if it came from the ECU in the last 2 s, else -1 (never an old value as live). */
+    /** rpm now: the last answer moved on by how fast the revs were climbing (the answer is ~0.1 s old). */
+    public float rpmNow() {
+        float r = rpm();
+        if (r < 0) return r;
+        float age = Math.min(0.25f, (System.currentTimeMillis() - rpmAt) / 1000f + 0.08f);
+        return Math.max(0, r + rise * age);
+    }
+
     public float rpm() { return System.currentTimeMillis() - rpmAt < 2000 ? rpm : -1; }
 
     public long rpmAge() { return rpmAt == 0 ? -1 : System.currentTimeMillis() - rpmAt; }

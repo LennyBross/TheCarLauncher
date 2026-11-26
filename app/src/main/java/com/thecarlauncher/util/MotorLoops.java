@@ -103,11 +103,16 @@ final class MotorLoops {
             float lr0 = (float) Math.log(rpmPts[0]), lrN = (float) Math.log(rpmPts[PTS - 1]);
 
             int min = AudioTrack.getMinBufferSize(SR, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            at = new AudioTrack(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build(),
-                    new AudioFormat.Builder().setSampleRate(SR).setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build(),
-                    Math.max(min * 3, SR / 4 * 2), AudioTrack.MODE_STREAM, 0);
+            // low latency: ~50 ms of buffer (the voice is light, it never runs late), fast track when offered
+            int bytes = Math.max(min * 2, SR / 20 * 2);
+            AudioTrack.Builder tb = new AudioTrack.Builder()
+                    .setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
+                    .setAudioFormat(new AudioFormat.Builder().setSampleRate(SR).setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO).build())
+                    .setBufferSizeInBytes(bytes).setTransferMode(AudioTrack.MODE_STREAM);
+            if (android.os.Build.VERSION.SDK_INT >= 26) tb.setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY);
+            at = tb.build();
             at.play();
 
             float[] mix = new float[BLOCK];
@@ -129,7 +134,7 @@ final class MotorLoops {
                 if (follow) {
                     ObdHub h = ObdHub.get();
                     if (h != null) {
-                        carRpm = Math.max(0, h.rpm());
+                        carRpm = Math.max(0, h.rpmNow());
                         carThr = h.demand();
                     }
                     float f = Math.max(0, Math.min(1.02f, (carRpm - carIdle) / Math.max(500, carMax - carIdle)));
@@ -144,8 +149,8 @@ final class MotorLoops {
                     else testRpm = Math.max(top, testRpm - span * (pedalBrake > 0 ? 0.006f : 0.0032f));
                     targetRpm = testRpm; targetThr = pedalThr;
                 }
-                rpm += (targetRpm - rpm) * 0.12f;
-                thr += (targetThr - thr) * 0.15f;
+                rpm += (targetRpm - rpm) * (follow ? 0.3f : 0.12f);
+                thr += (targetThr - thr) * (follow ? 0.3f : 0.15f);
                 float vStart = vol; vol += (wantVol - vol) * 0.1f;
 
                 // where the rpm sits between the recorded points (log scale)

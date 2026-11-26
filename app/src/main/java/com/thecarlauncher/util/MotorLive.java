@@ -145,7 +145,7 @@ final class MotorLive {
             JSONObject o = new JSONObject();
             try {
                 ObdHub h = ObdHub.get();
-                float rpm = h != null ? h.rpm() : -1;
+                float rpm = h != null ? h.rpmNow() : -1;
                 o.put("rpm", rpm > 0 ? rpm : 0);
                 if (h != null) {
                     // a diesel's throttle valve says little; calculated load is the driver's demand
