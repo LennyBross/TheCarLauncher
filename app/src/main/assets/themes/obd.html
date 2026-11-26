@@ -308,7 +308,7 @@ car.on(function (s) {
 
   var rpm = v.rpm;
   $('vRpm').textContent = rpm !== undefined ? Math.round(rpm / 10) * 10 : '—';
-  set('gRpm', (rpm || 0) / 5000, rpm > 4400);
+  set('gRpm', (rpm || 0) / 7000, rpm > 4400);
   var boost = v.map !== undefined ? Math.max(0, (v.map - (v.baro || 101)) / 100) : NaN;
   $('vBoost').textContent = isNaN(boost) ? '—' : num(boost, 2);
   set('gBoost', boost / 1.6, boost > 1.45);

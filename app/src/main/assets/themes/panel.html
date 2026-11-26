@@ -211,7 +211,7 @@ car.on(function (s) {
   $('spdV').textContent = v === null ? '---' : pad(v, 3);
   cpOn = s.cp ? !!s.cpOn : null;
   $('k-engine').classList.toggle('on', !!s.cpOn);
-  if (s.rpm) { tach(s.rpm / 5000, true); $('rpmT').textContent = s.rpm + ' D/D' + (s.coolant !== undefined ? '  ·  ' + Math.round(s.coolant) + '°C' : ''); }
+  if (s.rpm) { tach(s.rpm / 7000, true); $('rpmT').textContent = s.rpm + ' D/D' + (s.coolant !== undefined ? '  ·  ' + Math.round(s.coolant) + '°C' : ''); }
   else if (s.obd && !!(s.obd.target || s.obd.mode === 'ble')) { tach(0, false); $('rpmT').textContent = '— D/D'; }
   else if (s.cpOn && s.cpRpm) { tach(s.cpRpm / (s.cpRed || 6500), true); $('rpmT').textContent = s.cpRpm + ' D/D' + (s.cpGear ? '  ·  ' + s.cpGear : ''); }
   else { tach(v === null ? 0 : v / 200, false); $('rpmT').textContent = ''; }

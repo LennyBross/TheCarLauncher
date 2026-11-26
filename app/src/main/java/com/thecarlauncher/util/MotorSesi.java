@@ -33,7 +33,7 @@ public final class MotorSesi {
     /** Saved settings as JSON (motor.html reads them to draw itself). */
     public String settings() {
         return p.getString("cfg", "{\"on\":false,\"mode\":\"live\",\"engine\":\"v8flat\",\"vehicle\":\"supercar\",\"follow\":true,"
-                + "\"carIdle\":800,\"carMax\":6000,\"volume\":0.8,\"interior\":true,\"pops\":0.6,\"lite\":true}");
+                + "\"carIdle\":800,\"carMax\":7000,\"sr\":16000,\"lat\":0.35,\"volume\":0.8,\"interior\":true,\"pops\":0.6,\"lite\":true}");
     }
 
     private JSONObject cfg() { try { return new JSONObject(settings()); } catch (Exception e) { return new JSONObject(); } }

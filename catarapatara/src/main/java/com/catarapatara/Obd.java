@@ -382,7 +382,7 @@ public final class Obd {
         l.onPid("multi", multi ? 1 : 0);
         PsaDids psa = new PsaDids();
         int n = 0, si = 0;
-        long voltAt = 0, dtcAt = 0;
+        long voltAt = 0, dtcAt = 0, retryAt = System.currentTimeMillis();
         String[] key = new String[1];
         while (run) {
             if (multi && pedalD) {
@@ -423,6 +423,13 @@ public final class Obd {
                 }
             }
             long now = System.currentTimeMillis();
+            // values that were silent (often: engine not running yet when we connected) get another chance each minute
+            if (now - retryAt > 60000) {
+                retryAt = now;
+                for (int k = 0; k < miss.length; k++) if (miss[k] >= 3) miss[k] = 0;
+                if (!pedalD) pedalD = true;
+                if (!multi) { String t = cmd(in, out, "010C491", 700); multi = data(t, 0x0C, 2) != null && after(t, 0x0C, 2, 0x49, 1) != null; }
+            }
             psa.poll(in, out, now);
             if (now - voltAt > 5000) {
                 voltAt = now;
@@ -652,7 +659,9 @@ public final class Obd {
         String q = rawReq;
         if (q == null) return;
         rawReq = null;
-        rawResp = cmd(in, out, q, 4000);
+        StringBuilder b = new StringBuilder();
+        for (String c : q.split(";")) { c = c.trim(); if (!c.isEmpty()) b.append(c).append(" → ").append(cmd(in, out, c, 4000).replace('\r', ' ').trim()).append('\n'); }
+        rawResp = b.toString();
     }
 
     private static String cmd(InputStream in, OutputStream out, String c, long timeoutMs) throws Exception {

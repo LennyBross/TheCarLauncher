@@ -181,7 +181,7 @@ function draw() {
   [].forEach.call($('view').children, function (b) { b.classList.toggle('on', (b.dataset.v === '1') === (C.interior !== false)); });
   $('pedals').classList.toggle('on', C.follow === false);
   var vals = { vol: Math.round((C.volume != null ? C.volume : .8) * 100), pop: Math.round((C.pops != null ? C.pops : .6) * 100),
-    rum: Math.round(C.tone.rumble * 100), bri: Math.round(C.tone.brightness * 100), pun: Math.round(C.tone.punch * 100), max: C.carMax || 6000 };
+    rum: Math.round(C.tone.rumble * 100), bri: Math.round(C.tone.brightness * 100), pun: Math.round(C.tone.punch * 100), max: C.carMax || 7000 };
   for (var k in vals) $(k).value = vals[k];
   $('vVol').textContent = vals.vol + '%'; $('vPop').textContent = vals.pop + '%'; $('vRum').textContent = vals.rum + '%';
   $('vBri').textContent = vals.bri + '%'; $('vPun').textContent = vals.pun + '%'; $('vMax').textContent = vals.max + ' d/dk';

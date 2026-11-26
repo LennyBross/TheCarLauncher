@@ -41,14 +41,14 @@ async function build() {
     var lite = S.lite !== false;
     globalThis.MYDS_LITE = lite;
     const rate = lite ? (+S.sr || 22050) : 0;
-    if (ctx && (ctxLite !== lite || (rate && ctx.sampleRate !== rate) || ctxLat !== (+S.lat || 0.15))) { try { if (sim) sim.dispose(); } catch (e) {} sim = null; try { ctx.close(); } catch (e) {} ctx = null; }
+    if (ctx && (ctxLite !== lite || (rate && ctx.sampleRate !== rate) || ctxLat !== (+S.lat || 0.35))) { try { if (sim) sim.dispose(); } catch (e) {} sim = null; try { ctx.close(); } catch (e) {} ctx = null; }
     if (!ctx) {
       var AC = window.AudioContext || window.webkitAudioContext;
       // a deeper output buffer rides out moments when the unit's CPU is busy elsewhere
-      const lat = +S.lat || 0.15;
+      const lat = +S.lat || 0.35;
       try { ctx = new AC(lite ? { latencyHint: lat, sampleRate: rate } : { latencyHint: lat }); }
       catch (e) { ctx = new AC({ latencyHint: 'playback' }); }
-      ctxLite = lite; ctxLat = +S.lat || 0.15;
+      ctxLite = lite; ctxLat = +S.lat || 0.35;
       tick = null;
     }
     // drive the engine model from the audio clock (≈30 Hz); timers are only a fallback

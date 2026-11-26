@@ -81,7 +81,7 @@ ol{margin:0;padding-left:3vh}ol li{font-size:2.1vh;line-height:1.6;color:var(--m
 <script>
 var TH = call('theme') || 8;
 document.body.classList.add(TH === 7 ? 't-ds4' : TH === 4 ? 't-panel' : 't-stock');
-$('back').onclick = function () { call('remoteSetup', false); call('open', 'obd'); };
+$('back').onclick = function () { call('open', 'obd'); };   // the console stays open (1 hour) when leaving this page
 $('open').onclick = $('open2').onclick = function () { call('remoteSetup', true); };
 $('save').onclick = function () { $('saveMsg').textContent = call('remoteToken', $('tok').value) || ''; };
 var r = {};

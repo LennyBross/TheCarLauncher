@@ -55,6 +55,11 @@ public final class RemoteSupport {
         } catch (Exception ignored) {
         }
         new Thread(new Runnable() { public void run() { loop(); } }, "remote").start();
+        // opened in the last 3 hours (e.g. just before an update) → open again, same PIN
+        if (System.currentTimeMillis() - Prefs.longVal(c, "rs_open_at", 0L) < 3 * 3600000L) {
+            final Context cc = c;
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() { public void run() { openSetup(cc); } }, 8000);
+        }
     }
 
     public static boolean on(Context c) { return Prefs.bool(c, P_ON, false); }
@@ -201,7 +206,10 @@ public final class RemoteSupport {
     @SuppressWarnings("deprecation")
     public static synchronized void openSetup(final Context c) {
         if (setupSock != null) return;
-        setupPin = String.format(Locale.US, "%04d", new Random().nextInt(10000));
+        // the same PIN until it is closed by hand, and the console comes back by itself after an update
+        setupPin = Prefs.str(c, "rs_pin", "");
+        if (setupPin.length() != 4) { setupPin = String.format(Locale.US, "%04d", new Random().nextInt(10000)); Prefs.put(c, "rs_pin", setupPin); }
+        Prefs.put(c, "rs_open_at", System.currentTimeMillis());
         try {
             WifiManager wm = (WifiManager) c.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             int ip = wm.getConnectionInfo().getIpAddress();
