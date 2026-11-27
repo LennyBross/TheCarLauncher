@@ -503,6 +503,8 @@ public final class RemoteSupport {
 
         static String state(Context c) {
             StringBuilder sb = new StringBuilder(version()).append('\n');
+            sb.append("Gerçek Android: SDK ").append(android.os.Build.VERSION.SDK_INT).append(" · WebView ").append(WebViewCheck.major())
+              .append(" · çekirdek ").append(Runtime.getRuntime().availableProcessors()).append(" · güçlü=").append(MotorSesi.strongUnit(c)).append('\n');
             try {
                 android.bluetooth.BluetoothAdapter a = android.bluetooth.BluetoothAdapter.getDefaultAdapter();
                 sb.append("Bluetooth: ").append(a == null ? "yok" : (a.isEnabled() ? "açık" : "kapalı") + " · " + a.getName() + " · " + a.getAddress()).append('\n');
