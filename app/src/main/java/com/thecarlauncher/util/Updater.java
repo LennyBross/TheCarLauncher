@@ -426,37 +426,67 @@ public final class Updater {
         }, "update-install").start();
     }
 
+    /**
+     * Downloads the APK, carrying on where it stopped when the connection drops (car Wi-Fi / phone
+     * hotspot: "Software caused connection abort"): up to 8 tries, each resuming with a Range request.
+     */
     private static void download(String url, File out) throws Exception {
-        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
-        con.setInstanceFollowRedirects(true);
-        con.setConnectTimeout(10000);
-        con.setReadTimeout(20000);
-        con.setRequestProperty("User-Agent", "TheCarLauncher-updater");
-        try {
-            if (con.getResponseCode() >= 400) throw new java.io.IOException("HTTP " + con.getResponseCode());
-            long total = con.getContentLength();
-            InputStream in = con.getInputStream();
-            OutputStream o = new FileOutputStream(out);
-            byte[] buf = new byte[16384];
-            long got = 0;
-            int r, lastPct = -1;
-            while ((r = in.read(buf)) > 0) {
-                o.write(buf, 0, r);
-                got += r;
-                if (cancelled) break;
-                int pct = total > 0 ? (int) (got * 100 / total) : -1;
-                if (pct != lastPct) {
-                    lastPct = pct;
-                    if (pct >= 0) step(0, pct);
-                    LoadingBanner.start("update", LoadingBanner.t("Preuzimanje ažuriranja… ", "Downloading the update… ")
-                            + (pct >= 0 ? pct + " %" : (got / 1024) + " KB"));
-                }
+        long got = 0, total = -1;
+        int lastPct = -1;
+        Exception last = null;
+        if (out.exists()) out.delete();
+        for (int attempt = 0; attempt < 8 && !cancelled; attempt++) {
+            if (attempt > 0) {
+                LoadingBanner.start("update", LoadingBanner.t("Veza prekinuta, nastavljam… ", "Connection dropped, resuming… ") + (total > 0 ? got * 100 / total + " %" : ""));
+                try { Thread.sleep(Math.min(8000, 1500L * attempt)); } catch (InterruptedException ie) { break; }
             }
-            o.close();
-            in.close();
-        } finally {
-            con.disconnect();
+            HttpURLConnection con = null;
+            try {
+                con = (HttpURLConnection) new URL(url).openConnection();
+                con.setInstanceFollowRedirects(true);
+                con.setConnectTimeout(15000);
+                con.setReadTimeout(30000);
+                con.setRequestProperty("User-Agent", "TheCarLauncher-updater");
+                if (got > 0) con.setRequestProperty("Range", "bytes=" + got + "-");
+                int code = con.getResponseCode();
+                if (code >= 400 && code != 416) throw new java.io.IOException("HTTP " + code);
+                if (code == 416 && total > 0 && got >= total) return;
+                boolean append = got > 0 && code == 206;
+                if (!append) got = 0;                       // server ignored the range: start over
+                long len = con.getContentLength();
+                if (total <= 0 && len > 0) total = got + len;
+                InputStream in = con.getInputStream();
+                OutputStream o = new FileOutputStream(out, append);
+                byte[] buf = new byte[32768];
+                int r;
+                try {
+                    while ((r = in.read(buf)) > 0) {
+                        o.write(buf, 0, r);
+                        got += r;
+                        if (cancelled) break;
+                        int pct = total > 0 ? (int) (got * 100 / total) : -1;
+                        if (pct != lastPct) {
+                            lastPct = pct;
+                            if (pct >= 0) step(0, Math.min(99, pct));
+                            LoadingBanner.start("update", LoadingBanner.t("Preuzimanje ažuriranja… ", "Downloading the update… ")
+                                    + (pct >= 0 ? pct + " %" : (got / 1024) + " KB"));
+                        }
+                    }
+                } finally {
+                    try { o.close(); } catch (Exception ignored) { }
+                    try { in.close(); } catch (Exception ignored) { }
+                }
+                if (cancelled) return;
+                if (total <= 0 || got >= total) return;      // complete
+                last = new java.io.IOException("incomplete " + got + "/" + total);
+            } catch (Exception e) {
+                last = e;
+            } finally {
+                if (con != null) con.disconnect();
+            }
         }
+        if (cancelled) return;
+        throw last != null ? last : new java.io.IOException("download failed");
     }
 
     /** The download must be this launcher, newer than the installed one. */
