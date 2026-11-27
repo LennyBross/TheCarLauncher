@@ -111,7 +111,7 @@ if (use3D() || store('myds.3d') === '3d' || location.hash === '#render')
 // ---- Vehicle info (kept on the unit) ----------------------------------------------------------
 var FIELDS = [['model', 'Model', 'Citroën DS4'], ['year', 'Model yılı', '2013'], ['plate', 'Plaka', '10 KE 424'],
   ['engine', 'Motor', '1.6 e-HDi'], ['fuel', 'Yakıt tipi', 'Dizel'], ['gear', 'Şanzıman', ''], ['color', 'Renk', ''],
-  ['vin', 'Şasi no', ''], ['insurance', 'Sigorta bitişi', ''], ['odo', 'Kilometre (gösterge)', '']];
+  ['vin', 'Şasi no', ''], ['insurance', 'Sigorta bitişi', ''], ['odo', 'Kilometre (gösterge)', ''], ['rng', 'Menzil (göstergede yazan)', '']];
 var info = {};
 try { info = JSON.parse(store('myds.car') || '{}') || {}; } catch (e) { info = {}; }
 function val(k) { for (var i = 0; i < FIELDS.length; i++) if (FIELDS[i][0] === k) return info[k] !== undefined && info[k] !== '' ? info[k] : FIELDS[i][2]; return ''; }
@@ -137,16 +137,18 @@ paintInfo();
 FIELDS.forEach(function (f) {
   var l = document.createElement('label'); l.textContent = f[1];
   var i = document.createElement('input'); i.id = 'f_' + f[0]; i.placeholder = f[2];
-  if (f[0] === 'odo' || f[0] === 'year') i.inputMode = 'numeric';
+  if (f[0] === 'odo' || f[0] === 'year' || f[0] === 'rng') i.inputMode = 'numeric';
   l.appendChild(i); $('form').appendChild(l);
 });
 $('edit').onclick = function () {
-  FIELDS.forEach(function (f) { $('f_' + f[0]).value = f[0] === 'odo' ? (live.odo !== undefined ? Math.round(live.odo) : '') : (info[f[0]] || ''); });
+  FIELDS.forEach(function (f) { $('f_' + f[0]).value = f[0] === 'odo' ? (live.odo !== undefined ? Math.round(live.odo) : '') : f[0] === 'rng' ? '' : (info[f[0]] || ''); });
   $('sheet').style.display = 'flex';
 };
 $('cancel').onclick = function () { $('sheet').style.display = 'none'; };
 $('save').onclick = function () {
-  FIELDS.forEach(function (f) { if (f[0] !== 'odo') info[f[0]] = $('f_' + f[0]).value.trim(); });
+  FIELDS.forEach(function (f) { if (f[0] !== 'odo' && f[0] !== 'rng') info[f[0]] = $('f_' + f[0]).value.trim(); });
+  var rg = parseFloat(($('f_rng').value || '').replace(/[.\s]/g, ''));
+  if (!isNaN(rg) && rg >= 0) call('setRange', rg);
   store('myds.car', JSON.stringify(info));
   var km = parseFloat(($('f_odo').value || '').replace(/[.\s]/g, '').replace(',', '.'));
   if (!isNaN(km) && km >= 0 && (live.odo === undefined || Math.round(live.odo) !== Math.round(km))) call('setOdometer', km);

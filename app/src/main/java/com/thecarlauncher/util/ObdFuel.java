@@ -162,4 +162,21 @@ public final class ObdFuel {
     }
 
     public synchronized void resetTrip() { tripKm = 0; tripL = 0; }
+
+    // ---- Range set from the car's own gauge ("320 km" on the cluster): OBD cannot read the BSI's range on
+    // this car, so the owner types it once; litres burnt since then (MAF estimate × k) count it down.
+    public synchronized void syncRange(double km) {
+        float a = avg(1000, 50); if (a <= 0) a = avg(100, 5); if (a <= 2 || a > 20) a = 5.6f;
+        p.edit().putFloat("syncL", (float) (km * a / 100.0)).putFloat("syncRaw", (float) rawSinceFill).putFloat("syncAvg", a)
+                .putLong("syncAt", System.currentTimeMillis()).apply();
+    }
+
+    /** Litres left counted down from the synced range, or -1. */
+    public synchronized double syncedFuelLeft() {
+        float l = p.getFloat("syncL", -1f), r0 = p.getFloat("syncRaw", 0f);
+        if (l < 0 || rawSinceFill + 0.01 < r0) return -1;   // a full fill-up since: the tank logic takes over
+        return Math.max(0, l - (rawSinceFill - r0) * k);
+    }
+
+    public synchronized float syncAvg() { return p.getFloat("syncAvg", 5.6f); }
 }

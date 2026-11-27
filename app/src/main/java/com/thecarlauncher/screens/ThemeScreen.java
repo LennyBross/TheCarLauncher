@@ -556,6 +556,14 @@ public class ThemeScreen extends Screen {
         }
         o.put("alerts", com.thecarlauncher.util.CarAlerts.get().list());
         o.put("aaOn", com.thecarlauncher.util.ZLinkWatch.connected());
+        // range typed in from the car's own gauge, counted down by the fuel burnt since
+        if (!o.has("canRange") && !"bsi".equals(o.optString("fuelSrc"))) {
+            double sl = com.thecarlauncher.util.ObdFuel.get(act).syncedFuelLeft();
+            if (sl >= 0) {
+                o.put("fuelLeft", sl); o.put("fuelSrc", "sync");
+                o.put("range", sl / com.thecarlauncher.util.ObdFuel.get(act).syncAvg() * 100.0); o.put("canRange", o.optDouble("range"));
+            }
+        }
         if (!o.has("canRange") && o.has("fuelLeft")) {
             double use = fuelObd.has("avg100") ? fuelObd.optDouble("avg100") : avg;
             if (use > 2) o.put("range", o.optDouble("fuelLeft") / use * 100.0);
@@ -938,6 +946,16 @@ public class ThemeScreen extends Screen {
             // Something else (Spotify…) playing goes quiet first, then the tuner takes the speakers.
             act.runOnUiThread(new Runnable() { public void run() { try { MediaHub.get(act).onRadioStarting(); } catch (Throwable ignored) { } } });
             com.thecarlauncher.radio.HcnRadio.start(act);
+        }
+
+        @JavascriptInterface
+        public void setRange(final double km) {
+            ui(new Runnable() {
+                public void run() {
+                    if (km >= 0 && km < 2000) com.thecarlauncher.util.ObdFuel.get(act).syncRange(km);
+                    push();
+                }
+            });
         }
 
         @JavascriptInterface
