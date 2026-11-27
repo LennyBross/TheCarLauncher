@@ -161,5 +161,8 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
-    </application>
+            <!-- the downloaded update, read-only, for the classic package installer (fallback) -->
+        <provider android:name=".util.ApkProvider" android:authorities="com.thecarlauncher.apk"
+            android:exported="false" android:grantUriPermissions="true" />
+</application>
 </manifest>

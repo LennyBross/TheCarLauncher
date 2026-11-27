@@ -331,6 +331,29 @@ public class UpdateScreen extends Screen implements Updater.Progress {
             list.addView(line);
         }
         if (failed && Updater.failMessage() != null) note(Updater.failMessage());
+        if (Updater.awaitingConfirm()) {
+            // Android's own "Yükle" window: on some units it opens behind the launcher or not at all
+            note(s("Android čeka potvrdu „Instaliraj“. Ako prozor nije vidljiv, otvori ga ovde.",
+                    "Android is waiting for its \"Install\" confirmation. If you can't see the window, open it here."));
+            LinearLayout keys = new LinearLayout(act);
+            keys.setPadding(Mib.px(act, 26), Mib.px(act, 10), Mib.px(act, 10), 0);
+            String[][] k = {{s("Otvori potvrdu", "Open confirmation"), "c"}, {s("Klasični instaler", "Classic installer"), "i"}};
+            for (final String[] x : k) {
+                TextView b = Mib.text(act, x[0], 26, Mib.semibold(act), Mib.WHITE);
+                b.setGravity(Gravity.CENTER);
+                b.setBackground(Mib.box(act));
+                Mib.pressText(b);
+                b.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        if (x[1].equals("c")) Updater.reopenConfirm(act); else Updater.classicInstall(act);
+                    }
+                });
+                LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(Mib.px(act, 330), Mib.px(act, 58));
+                bl.rightMargin = Mib.px(act, 16);
+                keys.addView(b, bl);
+            }
+            list.addView(keys);
+        }
         if (done) note(s("Launcher se pokreće u novoj verziji.", "The launcher restarts in the new version."));
 
         LinearLayout bottom = new LinearLayout(act);

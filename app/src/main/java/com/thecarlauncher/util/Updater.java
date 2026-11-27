@@ -89,6 +89,33 @@ public final class Updater {
 
     public static String failMessage() { return failMessage; }
 
+    // ---- waiting for Android's "Update this app?" window
+    private static volatile Intent confirm;
+    private static volatile long confirmAt;
+
+    /** Installed files are handed over and Android waits for the owner's "Yükle" (install step at 80 %). */
+    public static boolean awaitingConfirm() { return busy && progress[2] == 80; }
+
+    /** Shows Android's confirmation window again (it can end up behind the launcher on some units). */
+    public static void reopenConfirm(Context c) {
+        Intent i = confirm;
+        if (i == null) { classicInstall(c); return; }
+        try { c.startActivity(new Intent(i).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
+        catch (Exception e) { classicInstall(c); }
+    }
+
+    /** Fallback: the same downloaded file through Android's ordinary installer screen. */
+    public static void classicInstall(Context c) {
+        try {
+            Intent i = new Intent(Intent.ACTION_INSTALL_PACKAGE, ApkProvider.uri())
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    .putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true);
+            c.startActivity(i);
+        } catch (Exception e) {
+            LoadingBanner.flash("update-fail", "Yükleyici açılamadı: " + e.getMessage(), 4000);
+        }
+    }
+
     /** True while a download / install runs or after one ended (until the screen resets it). */
     public static boolean started() { return progress[0] >= 0; }
 
@@ -467,19 +494,22 @@ public final class Updater {
                 int status = i.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
                 if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
                     // Ordinary app: Android's own "Update this app?" dialog.
-                    Intent confirm = i.getParcelableExtra(Intent.EXTRA_INTENT);
-                    if (confirm != null) {
-                        confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    Intent cf = i.getParcelableExtra(Intent.EXTRA_INTENT);
+                    confirm = cf; confirmAt = System.currentTimeMillis();
+                    if (cf != null) {
+                        cf.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         try {
-                            ctx.startActivity(confirm);
-                        } catch (Exception ignored) {
+                            ctx.startActivity(cf);
+                        } catch (Exception e) {
+                            classicInstall(ctx);
                         }
-                    }
+                    } else classicInstall(ctx);
                     LoadingBanner.stop("update");
                     step(2, 80);
                     return;
                 }
                 busy = false;
+                confirm = null;
                 LoadingBanner.stop("update");
                 try {
                     ctx.unregisterReceiver(this);
