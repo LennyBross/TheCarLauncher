@@ -159,7 +159,7 @@ body.photo #spin,body.photo #glowF,body.photo #glowR,body.photo .blk{display:blo
     <button class="opt" data-r="music"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8"/><path d="M17 14v6l4-3z"/></svg>Şarkı listesi</button>
     <button class="opt" data-r="radio"><svg class="ic" viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="13" rx="2"/><path d="M6 8l12-5"/><circle cx="8" cy="14.5" r="2.5"/></svg>Radyo</button>
   </div>
-  <div class="row"><button class="opt" data-m="prev">⏮</button><button class="opt" data-m="play">⏯</button><button class="opt" data-m="next">⏭</button></div>
+  <div class="row"><button class="opt" data-m="prev">⏮</button><button class="opt" data-m="play">⏯</button><button class="opt" data-m="next">⏭</button><button class="opt" data-r2="music">☰ Liste</button></div>
 </div>
 
 <div class="card pop" id="engineP">
@@ -203,6 +203,7 @@ $('oNight').onclick = function () { call('setNight', true); };
 $('oDay').onclick = function () { call('setNight', false); };
 $('oPav').onclick = function () { closePops(); call('open', 'pavyon'); };
 [].forEach.call(document.querySelectorAll('#musicP [data-r]'), function (b) { b.onclick = function () { call('open', b.dataset.r); }; });
+$('musicP').querySelector('[data-r2]').onclick = function () { call('open', 'music'); };
 [].forEach.call(document.querySelectorAll('#musicP [data-m]'), function (b) { b.onclick = function () { call('media', b.dataset.m); }; });
 $('oOff').onclick = function () { closePops(); $('black').style.display = 'block'; };
 $('black').onclick = function () { $('black').style.display = 'none'; };

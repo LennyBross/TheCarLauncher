@@ -127,6 +127,7 @@ body.day svg.seg7 .on{filter:none}
       <button class="key" id="prev" aria-label="Önceki"><svg class="ic" viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M19 5 9 12l10 7z"/></svg></button>
       <button class="key" id="play" aria-label="Çal / duraklat"><svg class="ic" id="playI" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
       <button class="key" id="next" aria-label="Sonraki"><svg class="ic" viewBox="0 0 24 24"><path d="M18 5v14"/><path d="M5 5l10 7-10 7z"/></svg></button>
+      <button class="key" id="qList" aria-label="Şarkı listesi"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8"/><path d="M17 14v6l4-3z"/></svg></button>
     </div>
   </div>
 
@@ -230,6 +231,7 @@ $('lkBri').oninput = function () { setBri(+this.value); };
 $('nightBtn').onclick = function (e) { e.stopPropagation(); paintLook(); $('lookM').classList.toggle('on'); };
 document.addEventListener('click', function (e) { if (!$('lookM').contains(e.target) && !$('nightBtn').contains(e.target)) $('lookM').classList.remove('on'); });
 $('play').onclick = function () { call('media', 'play'); };
+$('qList').onclick = function () { call('open', 'music'); };
 $('prev').onclick = function () { call('media', 'prev'); };
 $('next').onclick = function () { call('media', 'next'); };
 function pad(v, n) { v = String(v); while (v.length < n) v = ' ' + v; return v; }

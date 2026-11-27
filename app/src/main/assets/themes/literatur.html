@@ -61,7 +61,7 @@ body.playing #media::after{animation:sweep 6s ease-in-out infinite}
 #src{font-size:var(--t2);color:var(--mut);font-weight:600}
 #ttl{font-size:var(--t1);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.6vh}
 #art{font-size:var(--t2);color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ctl{display:flex;gap:4vh;align-items:center}
+.ctl{display:flex;gap:3vh;align-items:center}
 .ctl button{width:15vh;height:15vh;border-radius:50%;background:var(--key);box-shadow:inset 0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center}
 .ctl button svg{width:7vh;height:7vh}
 .ctl button{background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
@@ -100,6 +100,7 @@ body.day .dock button{background:linear-gradient(180deg,#FFFFFF,#F1F1F1);box-sha
         <button id="prev" aria-label="Önceki"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2.2v14H6zM19 5v14L9.2 12z"/></svg></button>
         <button id="play" aria-label="Çal / duraklat"></button>
         <button id="next" aria-label="Sonraki"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.8 5H18v14h-2.2zM5 5v14l9.8-7z"/></svg></button>
+        <button id="qList" aria-label="Şarkı listesi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h12M4 12h12M4 18h8"/><path d="M17 14v6l4-3z"/></svg></button>
       </div>
     </div>
   </div>
@@ -131,6 +132,7 @@ $('tNight').onclick = function () { call('setNight', !nightNow); };
 $('prev').onclick = function () { call('media', 'prev'); };
 $('next').onclick = function () { call('media', 'next'); };
 $('play').onclick = function () { call('media', 'play'); };
+$('qList').onclick = function (e) { e.stopPropagation(); call('open', 'music'); };
 $('play').innerHTML = PLAY;
 function n0(v) { return v === undefined || v === null || isNaN(v) ? '—' : String(Math.round(v)); }
 function n1(v) { return v === undefined || v === null || isNaN(v) || v <= 0 ? '—' : Number(v).toFixed(1).replace('.', ','); }

@@ -81,8 +81,8 @@ button{background:none;border:none;padding:0;color:inherit}
 #barf{position:absolute;left:0;top:0;height:3px;border-radius:2px;width:0;background:#F4EBDB;box-shadow:0 0 8px rgba(255,240,215,.9)}
 #t1,#t2{top:224px;font-size:18px;color:#DCD7CE}
 #t1{left:100px}#t2{right:30px}
-#ctl{left:150px;top:236px;width:230px;height:70px;display:flex;align-items:center;justify-content:space-between}
-#ctl button{width:62px;height:62px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+#ctl{left:140px;top:236px;width:290px;height:70px;display:flex;align-items:center;justify-content:space-between}
+#ctl button{width:60px;height:60px;display:flex;align-items:center;justify-content:center;border-radius:50%}
 #ctl button svg{width:34px;height:34px}
 #play{box-shadow:0 0 0 2px #E2CFA8,0 0 14px rgba(226,207,168,.35),inset 0 0 12px rgba(226,207,168,.15)}
 #ctl button:active{background:rgba(var(--accR),.12)}
@@ -259,6 +259,7 @@ button{background:none;border:none;padding:0;color:inherit}
   <button id="prev"><svg class="ic" viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M19 5 9 12l10 7z"/></svg></button>
   <button id="play"><svg id="playI" class="ic" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
   <button id="next"><svg class="ic" viewBox="0 0 24 24"><path d="M18 5v14"/><path d="M5 5l10 7-10 7z"/></svg></button>
+  <button id="qList" aria-label="Şarkı listesi"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8"/><path d="M17 14v6l4-3z"/></svg></button>
  </div>
 </div>
 
@@ -384,9 +385,10 @@ $('eqB').onclick = function () { call('open', 'eq'); };
 $('prev').onclick = function () { call('media', 'prev'); };
 $('next').onclick = function () { call('media', 'next'); };
 $('play').onclick = function () { call('media', 'play'); };
+$('qList').onclick = function (e) { e.stopPropagation(); call('open', 'music'); };
 $('mt').onclick = $('cover').onclick = function (e) { e.stopPropagation(); $('srcM').classList.toggle('on'); };
 // Music source picker: tap = play in the background (stay in MYDS), ↗ = open the app itself
-var SRCS = [['USB · şarkı listesi', 'music', null, /usb|müzik|music/i], ['Spotify', 'spotify', 'spotifyApp', /spotify/i, 'hasSpotify'], ['YouTube Music', 'ytmusic', 'ytmusicApp', /youtube/i, 'hasYtMusic'],
+var SRCS = [['Şarkı listesi (USB / telefon)', 'music', null, /usb|müzik|music/i], ['Spotify', 'spotify', 'spotifyApp', /spotify/i, 'hasSpotify'], ['YouTube Music', 'ytmusic', 'ytmusicApp', /youtube/i, 'hasYtMusic'],
   ['Telefon (Bluetooth)', 'btMusic', null, /blue|bt|telefon/i], ['Radyo', 'radio', null, /radyo|radio|fm/i]];
 SRCS.forEach(function (x) {
   var row = document.createElement('div'); row.className = 'it2';

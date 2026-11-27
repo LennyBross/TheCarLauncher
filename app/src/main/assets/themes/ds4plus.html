@@ -136,6 +136,7 @@ body.day .db i svg{stroke:#0A0A0A !important;color:#0A0A0A}
 <button data-mm="prev" aria-label="Önceki"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 5L9 12l10 7z"/><rect x="5" y="5" width="2.2" height="14" rx="1"/></svg></button>
 <button data-mm="play" id="mpPlay" aria-label="Çal / duraklat"><svg viewBox="0 0 24 24" fill="currentColor" id="mpPlayIc"><path d="M7 4l13 8-13 8z"/></svg></button>
 <button data-mm="next" aria-label="Sonraki"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 5l10 7-10 7z"/><rect x="16.8" y="5" width="2.2" height="14" rx="1"/></svg></button>
+<button id="mpList" aria-label="Şarkı listesi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h12M4 12h12M4 18h8"/><path d="M17 14v6l4-3z"/></svg></button>
 </div>
 <span id="mpSrc"></span>
 </div>
@@ -217,6 +218,7 @@ $('carBox').onclick = function (e) {
 
 // ---- music player: cover, song, artist (with picture), album; tap = the Müzik page with the song list
 $('mp').onclick = function (e) { if (!e.target.closest('#mpCtl')) call('open', 'music'); };
+$('mpList').onclick = function (e) { e.stopPropagation(); call('open', 'music'); };
 [].forEach.call(document.querySelectorAll('#mpCtl [data-mm]'), function (b) { b.onclick = function (e) { e.stopPropagation(); call('media', b.dataset.mm); }; });
 var mpArt = null, mpArtist = null, mpPicTry = 0;
 function mmss(v) { v = Math.max(0, Math.round(v || 0)); return Math.floor(v / 60) + ':' + ('0' + v % 60).slice(-2); }
