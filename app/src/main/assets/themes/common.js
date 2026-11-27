@@ -299,6 +299,15 @@ function icon(name, cls) {
   });
 })();
 
+// ---- Live 3D DS4 on the home screen: on by default on strong units (8 cores, e.g. TS10 / UIS7862),
+// off on weak ones (AC8227L); the vehicle page's 3D key overrides it; the owner's own photo wins.
+function use3D() {
+  var p = store('myds.3d');
+  if (p === 'photo') return false;
+  if (store('myds.carimg') === 'own') return false;
+  if (p === '3d') return true;
+  return (navigator.hardwareConcurrency || 0) >= 6;
+}
 // ---- Home-screen picture of the car ----------------------------------------------------------------
 // 'front' = the real ¾ front photo; 'own' = the owner's own photo (from the USB stick: arac.jpg, or picked
 // in the gallery; kept only in the app's files). myds.carbg: 'cut' = background removed, 'keep' = as taken.
