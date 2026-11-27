@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Sade</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* SADE — as little as possible: the speed, the song, the range, five keys. Big type, thin lines,
+   one accent. Night: black and white; day: paper white and ink. */
+:root{--bg:#000;--fg:#F5F5F2;--mut:#8C8C88;--line:#262626;--key:#121212;--a:#E8C547;--aFg:#000}
+body.day{--bg:#F6F5F1;--fg:#111110;--mut:#6E6D68;--line:#DEDCD5;--key:#FFFFFF;--a:#B8860B;--aFg:#fff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;overflow:hidden;user-select:none;transition:background-color .4s,color .4s}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer;padding:0}
+.ic{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+#top{position:fixed;left:5vh;right:5vh;top:3.4vh;display:flex;align-items:center;gap:3vh;font-size:2.6vh;color:var(--mut)}
+#top b{color:var(--fg);font-weight:600;font-size:3vh;font-variant-numeric:tabular-nums}
+#top .sp{flex:1}
+#top button{display:flex;align-items:center;gap:1vh;height:5.6vh;padding:0 2vh;border-radius:2.8vh;border:1px solid var(--line);font-size:2.2vh;font-weight:500;color:var(--fg)}
+#top button svg{width:2.6vh;height:2.6vh}
+#top button.on{background:var(--a);border-color:var(--a);color:var(--aFg)}
+
+#mid{position:fixed;left:5vh;right:5vh;top:13vh;height:48vh;display:grid;grid-template-columns:1.15fr 1px 1fr;gap:5vh;align-items:center}
+#spdW{display:flex;flex-direction:column;justify-content:center}
+#spd{font-size:27vh;font-weight:200;letter-spacing:-.06em;line-height:.85;font-variant-numeric:tabular-nums}
+#spdU{display:flex;align-items:baseline;gap:2vh;margin-top:2vh;font-size:2.6vh;color:var(--mut)}
+#spdU b{font-size:4vh;font-weight:600;color:var(--a)}
+#vr{width:1px;height:70%;background:var(--line)}
+#info{display:flex;flex-direction:column;gap:3.4vh}
+.row{display:flex;align-items:baseline;gap:1.4vh}
+.row b{font-size:6.4vh;font-weight:300;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.row small{font-size:2.4vh;color:var(--mut)}
+.row span{font-size:2.2vh;color:var(--mut);width:13vh;letter-spacing:.06em;text-transform:uppercase}
+
+#song{position:fixed;left:5vh;right:5vh;top:64vh;height:11vh;display:flex;align-items:center;gap:2.4vh;border-top:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer}
+#cov{width:7.6vh;height:7.6vh;border-radius:1vh;background:var(--key);flex:none;overflow:hidden;display:grid;place-items:center;color:var(--mut)}
+#cov img{width:100%;height:100%;object-fit:cover}#cov svg{width:3.4vh;height:3.4vh}
+#st{min-width:0;flex:1}
+#ttl{font-size:3vh;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#art{font-size:2.3vh;color:var(--mut);margin-top:.5vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#song button{width:7vh;height:7vh;display:grid;place-items:center;border-radius:50%}
+#song button svg{width:3.4vh;height:3.4vh}
+#song #pp{background:var(--fg);color:var(--bg);width:8vh;height:8vh}
+#prog{position:absolute;left:0;bottom:-1px;height:2px;background:var(--a);width:0}
+
+#keys{position:fixed;left:5vh;right:5vh;bottom:3.4vh;height:13vh;display:grid;grid-template-columns:repeat(6,1fr);gap:1.6vh}
+#keys button{background:var(--key);border:1px solid var(--line);border-radius:2vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vh;font-size:2.2vh;font-weight:500}
+#keys button svg{width:3.8vh;height:3.8vh}
+</style>
+<script src="common.js"></script>
+</head>
+<body>
+<div id="top">
+  <b id="clock">--:--</b><span id="date"></span><span class="sp"></span>
+  <span id="temp">--°</span>
+  <button id="tMotor"><svg class="ic" viewBox="0 0 24 24"></svg>Motor</button>
+  <button id="tNight"><svg class="ic" viewBox="0 0 24 24" id="nI"></svg><span id="nT">Gündüz</span></button>
+</div>
+
+<div id="mid">
+  <div id="spdW"><div id="spd">0</div><div id="spdU">km/h<b id="gear"></b></div></div>
+  <div id="vr"></div>
+  <div id="info">
+    <div class="row"><span>Menzil</span><b id="rng">—</b><small>km</small></div>
+    <div class="row"><span>Ortalama</span><b id="avg">—</b><small>L/100</small></div>
+    <div class="row"><span>Hararet</span><b id="cool">—</b><small>°C</small></div>
+  </div>
+</div>
+
+<div id="song">
+  <div id="cov"></div>
+  <div id="st"><div id="ttl">Çalan bir şey yok</div><div id="art">Şarkı listesi için dokun</div></div>
+  <button id="prev" aria-label="Önceki"><svg class="ic" viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M19 5 9 12l10 7z"/></svg></button>
+  <button id="pp" aria-label="Çal / duraklat"><svg viewBox="0 0 24 24" fill="currentColor" id="ppI"></svg></button>
+  <button id="next" aria-label="Sonraki"><svg class="ic" viewBox="0 0 24 24"><path d="M18 5v14"/><path d="M5 5l10 7-10 7z"/></svg></button>
+  <i id="prog"></i>
+</div>
+
+<div id="keys"></div>
+
+<script>
+var NOTE = '<svg class="ic" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>';
+var PLAY = '<path d="M7 4.5v15l12.5-7.5z"/>', PAUSE = '<path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/>';
+var SUN = '<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    MOON = '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>';
+[['nav', 'Harita', 'split'], ['music', 'Müzik', 'music'], ['radio', 'Radyo', 'radio'], ['aa', 'Android Auto', 'aa'], ['car', 'Araç', 'vehicle'], ['settings', 'Ayarlar', 'settings']].forEach(function (k) {
+  var b = document.createElement('button'); b.innerHTML = icon(k[0]) + '<span>' + k[1] + '</span>';
+  b.onclick = function () { call('open', k[2]); }; $('keys').appendChild(b);
+});
+$('tMotor').firstChild.outerHTML = icon('engine');
+$('cov').innerHTML = NOTE; $('ppI').innerHTML = PLAY;
+$('prev').onclick = function (e) { e.stopPropagation(); call('media', 'prev'); };
+$('next').onclick = function (e) { e.stopPropagation(); call('media', 'next'); };
+$('pp').onclick = function (e) { e.stopPropagation(); call('media', 'play'); };
+$('song').onclick = function () { call('open', 'music'); };
+$('mid').onclick = function () { call('open', 'vehicle'); };
+var nightNow = true, cpHas = false, artId = null;
+$('tNight').onclick = function () { call('setNight', !nightNow); };
+$('tMotor').onclick = function () { call('open', cpHas ? 'cpToggle' : 'engine'); };
+function n0(v) { return v === undefined || v === null || isNaN(v) ? '—' : String(Math.round(v)); }
+function n1(v) { return v === undefined || v === null || isNaN(v) || v <= 0 ? '—' : Number(v).toFixed(1).replace('.', ','); }
+car.on(function (s) {
+  document.body.classList.toggle('day', s.night === false);
+  nightNow = s.night !== false; cpHas = !!s.cp;
+  $('clock').textContent = s.time || '--:--'; $('date').textContent = s.date || '';
+  $('temp').textContent = s.outdoor !== undefined ? Math.round(s.outdoor) + '° dış' : (s.temp !== undefined ? s.temp + '°' : '--°');
+  $('nI').innerHTML = nightNow ? SUN : MOON; $('nT').textContent = nightNow ? 'Gündüz' : 'Gece';
+  $('tMotor').classList.toggle('on', !!s.cpOn);
+  var ov = s.obd && s.obd.ok && s.obd.v ? s.obd.v : {};
+  $('spd').textContent = n0(ov.speed != null ? ov.speed : (s.speed || 0));
+  $('gear').textContent = s.gearObd ? (/^[1-9]$/.test(s.gearObd) ? 'D' + s.gearObd : s.gearObd) : '';
+  $('rng').textContent = n0(s.range);
+  $('avg').textContent = n1(s.avg100 || s.avgL100);
+  $('cool').textContent = ov.cool != null ? n0(ov.cool) : '—';
+  var has = !!s.title;
+  $('ttl').textContent = has ? s.title : 'Çalan bir şey yok';
+  $('art').textContent = has ? [s.artist, s.album].filter(Boolean).join(' · ') : 'Şarkı listesi için dokun';
+  $('ppI').innerHTML = s.playing ? PAUSE : PLAY;
+  $('prog').style.width = s.dur ? Math.min(100, (s.pos || 0) / s.dur * 100) + '%' : '0';
+  if (s.artId !== artId) { artId = s.artId; var u = s.artId ? call('mediaArt') : ''; $('cov').innerHTML = u ? '<img src="' + u + '" alt="">' : NOTE; }
+});
+</script>
+</body>
+</html>

@@ -457,15 +457,55 @@ function carPhotoPicker(onDone) {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(enter, 30); });
   else setTimeout(enter, 30);
+  // page change: fade the page out (0.14 s) before another screen opens; back here, it comes in again
+  var OUT = /^(music|vehicle|settings|engine|eq|radio|split|nav|phone|apps|minimal|gauge|aa|themehome|mediaNative|vehicleNative|screen)$/;
+  var realCall = window.call;
+  window.call = function (name, a) {
+    if (name === 'open' && OUT.test(String(a)) && !document.body.classList.contains('mydsOut')) {
+      var args = arguments;
+      document.body.classList.add('mydsOut');
+      setTimeout(function () { realCall.apply(null, args); }, 120);
+      setTimeout(function () { document.body.classList.remove('mydsOut'); }, 900);   // stayed on this page (pop-up, refused)
+      return undefined;
+    }
+    return realCall.apply(null, arguments);
+  };
+  function back() { if (document.body.classList.contains('mydsOut')) document.body.classList.remove('mydsOut'); }
+  addEventListener('pageshow', back); addEventListener('focus', function () { back(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { back(); enter(); } });
+  // touch ripple from the finger on larger buttons
+  document.addEventListener('pointerdown', function (e) {
+    var b = e.target.closest && e.target.closest('button,.key,[role=button]');
+    if (!b || b.offsetWidth < 44 || b.offsetHeight < 32 || b.dataset.noRip !== undefined) return;
+    var cs = getComputedStyle(b);
+    if (cs.position === 'static') b.style.position = 'relative';
+    if (cs.overflow !== 'hidden') b.style.overflow = 'hidden';
+    var r = b.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2, s = document.createElement('span');
+    s.className = 'mydsRip';
+    s.style.cssText = 'width:' + d + 'px;height:' + d + 'px;left:' + (e.clientX - r.left - d / 2) + 'px;top:' + (e.clientY - r.top - d / 2) + 'px';
+    b.appendChild(s); setTimeout(function () { s.remove(); }, 500);
+  }, { passive: true });
   // numbers: when the text of a big read-out changes, it ticks in (only short numeric texts, a few at a time)
   var last = new WeakMap(), sel2 = 'b,.n,.num,#spd,#rng,#cons,#avg,#trp,#inst,#range,#liters,#temp,#clock,.tv b';
   setInterval(function () {
     var n = 0;
     [].forEach.call(document.querySelectorAll(sel2), function (e) {
       if (n > 6 || e.offsetParent === null) return;
-      var t = e.textContent; if (t.length > 12 || !/\d/.test(t)) return;
+      var t = e.textContent;
+      // waiting for a value: breathe softly until it comes in
+      var w = /^\s*(—|--|---|--:--|-- ?°C?|—\s*\S{0,6})\s*$/.test(t);
+      if (w !== e.classList.contains('mydsWaitT')) e.classList.toggle('mydsWaitT', w);
+      if (t.length > 12 || !/\d/.test(t)) return;
       var p = last.get(e); last.set(e, t);
       if (p !== undefined && p !== t) { n++; e.classList.remove('mydsTick'); void e.offsetWidth; e.classList.add('mydsTick'); }
     });
   }, 500);
+  // "…bağlanıyor / aranıyor / yükleniyor" status texts pulse while they last
+  setInterval(function () {
+    [].forEach.call(document.querySelectorAll('span,small,div,p,b'), function (e) {
+      if (e.children.length || e.offsetParent === null) return;
+      var busy = /(…|\.\.\.)\s*$/.test(e.textContent) && e.textContent.length < 60;
+      if (busy !== e.classList.contains('mydsBusy')) e.classList.toggle('mydsBusy', busy);
+    });
+  }, 1000);
 })();

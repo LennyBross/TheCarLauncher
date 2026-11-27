@@ -596,6 +596,10 @@ public final class Obd {
         private long bsiAt, tyreAt;
         private int bi;
         private boolean tyresGone;
+        // PSA ECUs answer unpadded 4-byte requests (DLC 4, as DiagBox and nico1080's reader send them);
+        // some ignore the ELM's padded 8-byte frames. null = not known yet, true = send raw with CAF off.
+        private Boolean raw;
+        private boolean cafOff;
 
         void poll(InputStream in, OutputStream out, long now) throws Exception {
             if (now - bsiAt > 4000) {
@@ -613,6 +617,14 @@ public final class Obd {
             }
         }
 
+        /** One ReadDataByIdentifier: padded (ELM formatting) or a raw 4-byte frame "03 22 hi lo" with formatting off. */
+        private String ask(InputStream in, OutputStream out, int did, boolean padded) throws Exception {
+            if (padded && cafOff) { cmd(in, out, "ATCAF1", 400); cafOff = false; }
+            if (!padded && !cafOff) { cmd(in, out, "ATCAF0", 400); cafOff = true; }
+            String r = cmd(in, out, String.format(Locale.US, padded ? "22%04X" : "0322%04X", did), 300);
+            return r == null ? "" : r.replaceAll("[^0-9A-Fa-f]", "").toUpperCase(Locale.ROOT);
+        }
+
         private void read(InputStream in, OutputStream out, Object[][] list) throws Exception {
             int tx = -1;
             try {
@@ -626,10 +638,14 @@ public final class Obd {
                         cmd(in, out, String.format(Locale.US, "ATCRA%03X", (Integer) d[1]), 400);
                     }
                     int len = (Integer) d[3];
-                    String r = cmd(in, out, String.format(Locale.US, "22%04X", did), 300);
-                    String h = r == null ? "" : r.replaceAll("[^0-9A-Fa-f]", "").toUpperCase(Locale.ROOT);
                     String key = String.format(Locale.US, "62%04X", did);
+                    String h = ask(in, out, did, !Boolean.TRUE.equals(raw));
                     int i = h.indexOf(key);
+                    if (i < 0 && raw == null) {           // padded frame unanswered: try the unpadded one once
+                        h = ask(in, out, did, false);
+                        i = h.indexOf(key);
+                        if (i >= 0) raw = true;
+                    } else if (i >= 0 && raw == null) raw = false;
                     if (i < 0 || h.length() < i + 6 + len * 2) { miss.put(did, (m == null ? 0 : m) + 1); continue; }
                     miss.put(did, 0);
                     long raw = 0;
@@ -639,6 +655,7 @@ public final class Obd {
                     l.onPid((String) d[6], v);
                 }
             } finally {
+                if (cafOff) { cmd(in, out, "ATCAF1", 400); cafOff = false; }
                 if (tx >= 0) {
                     // back to the engine's OBD address for the next round
                     cmd(in, out, "ATSH7DF", 400);

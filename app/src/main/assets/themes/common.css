@@ -42,4 +42,19 @@ button,[role=button],.key{transition:transform .13s cubic-bezier(.3,.7,.4,1.5),f
 button:active,[role=button]:active{transform:scale(.96)}
 /* progress bars glide instead of jumping */
 #barf,#mpBar i,#bar i,#bar>div,.bar i,#fuelBar i{transition:width .9s linear}
+/* page change: the page settles back and fades before the next one opens (0.14 s) */
+@keyframes mydsOut{to{opacity:0;transform:scale(.985)}}
+body.mydsOut{animation:mydsOut .14s cubic-bezier(.4,0,1,1) forwards;pointer-events:none}
+/* touch ripple: a soft disc grows from the finger and fades (buttons only, 0.45 s) */
+.mydsRip{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.16;transform:scale(0);animation:mydsRip .45s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes mydsRip{to{transform:scale(1);opacity:0}}
+/* waiting: values not in yet breathe gently, "…bağlanıyor" texts pulse, pictures fade in */
+.mydsWaitT{animation:mydsBreath 1.6s ease-in-out infinite}
+.mydsBusy{animation:mydsBreath 1.1s ease-in-out infinite}
+img{animation:mydsFade .35s ease}
+/* small spinner for any "working" spot: <i class="mydsSpin"></i> */
+.mydsSpin{display:inline-block;width:1.1em;height:1.1em;border-radius:50%;border:.16em solid currentColor;border-right-color:transparent;opacity:.75;animation:mydsSpin .8s linear infinite;vertical-align:-.15em}
+@keyframes mydsSpin{to{transform:rotate(360deg)}}
+/* toggles change colour smoothly */
+.chip,.tog,.on,.opt,.seg button{transition:background-color .22s ease,color .22s ease,box-shadow .22s ease,transform .13s cubic-bezier(.3,.7,.4,1.5)}
 html.nomotion *{animation:none !important;transition:none !important}

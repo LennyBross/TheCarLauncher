@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Pano</title>
+<link rel="stylesheet" href="common.css">
+<style>
+/* PANO — a calm card home: a slim icon rail on the left, a status row on top, big rounded cards.
+   The music card takes its colour from the album cover. Day: light grey and white; night: graphite. */
+:root{--bg:#1C1D20;--rail:#16171A;--card:#2A2B2F;--card2:#323338;--fg:#F3F4F6;--mut:#A9ADB5;--line:#3B3D42;
+  --a:#E9B530;--aFg:#1C1D20;--tint:rgba(233,181,48,.16);--chip:#34363B;--r:3vh;--sh:none}
+body.day{--bg:#ECEEF2;--rail:#F7F8FA;--card:#FFFFFF;--card2:#F3F4F7;--fg:#16171A;--mut:#5D626B;--line:#E1E3E8;
+  --chip:#FFFFFF;--sh:0 .4vh 1.6vh rgba(20,25,40,.06)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;overflow:hidden;user-select:none}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer;padding:0}
+button{transition:transform .14s cubic-bezier(.3,.7,.4,1.4),background-color .2s,filter .14s}
+button:active{transform:scale(.93);filter:brightness(1.15)}
+.ic{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* left rail */
+#rail{position:fixed;left:0;top:0;bottom:0;width:11.5vh;background:var(--rail);display:flex;flex-direction:column;align-items:center;padding:2.2vh 0;gap:1.6vh;box-shadow:var(--sh)}
+#rail button{width:7.6vh;height:7.6vh;border-radius:2.2vh;display:grid;place-items:center;color:var(--mut)}
+#rail button svg{width:3.6vh;height:3.6vh}
+#rail button.on{background:var(--tint);color:var(--fg)}
+#rail .sp{flex:1}
+
+/* top row */
+#top{position:fixed;left:14vh;right:2.6vh;top:2vh;height:6.4vh;display:flex;align-items:center;gap:1.4vh}
+#clockS{font-size:3.4vh;font-weight:700;letter-spacing:-.02em}
+#dateS{font-size:2.3vh;color:var(--mut);margin-left:.4vh}
+#top .sp{flex:1}
+.chip{height:5.4vh;min-width:5.4vh;padding:0 1.8vh;border-radius:2.7vh;background:var(--chip);display:flex;align-items:center;gap:1vh;font-size:2.2vh;font-weight:600;color:var(--fg);box-shadow:var(--sh)}
+.chip svg{width:2.6vh;height:2.6vh}
+.chip.on{background:var(--a);color:var(--aFg)}
+.chip .dot{width:1.1vh;height:1.1vh;border-radius:50%;background:var(--mut)}
+.chip .dot.ok{background:#35C46A}
+
+/* cards */
+#grid{position:fixed;left:14vh;right:2.6vh;top:10.4vh;bottom:2.6vh;display:grid;grid-template-columns:1.62fr 1fr;grid-template-rows:1fr 1fr;gap:2.4vh}
+.card{background:var(--card);border-radius:var(--r);position:relative;overflow:hidden;box-shadow:var(--sh)}
+
+/* music */
+#mus{grid-row:1/3;padding:4vh 4vh 3.4vh;display:flex;flex-direction:column;background:linear-gradient(160deg,var(--tint),transparent 75%),var(--card)}
+#mtop{display:flex;gap:3.8vh;align-items:center}
+#cov{width:33vh;height:33vh;border-radius:2.4vh;flex:none;background:var(--card2);display:grid;place-items:center;overflow:hidden;color:var(--mut);box-shadow:0 1.2vh 3vh rgba(0,0,0,.25)}
+#cov img{width:100%;height:100%;object-fit:cover}
+#cov svg{width:8vh;height:8vh}
+#mtxt{min-width:0;flex:1}
+#src{display:inline-flex;align-items:center;gap:.8vh;height:3.6vh;padding:0 1.4vh;border-radius:1.8vh;background:var(--chip);font-size:1.8vh;font-weight:600;color:var(--mut);margin-bottom:1.6vh}
+#ttl{font-size:5.4vh;font-weight:700;line-height:1.12;letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ml{display:flex;align-items:center;gap:1vh;font-size:2.6vh;color:var(--mut);margin-top:1.2vh;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ml svg{width:2.4vh;height:2.4vh;flex:none}
+#apic{width:3.2vh;height:3.2vh;border-radius:50%;object-fit:cover;display:none;flex:none}
+#bar{margin-top:auto;height:.9vh;border-radius:.45vh;background:var(--line);position:relative}
+#bar i{position:absolute;left:0;top:0;bottom:0;border-radius:.45vh;background:var(--a);width:0}
+#bar b{position:absolute;top:50%;width:2.4vh;height:2.4vh;margin:-1.2vh 0 0 -1.2vh;border-radius:50%;background:var(--a);left:0}
+#tm{display:flex;justify-content:space-between;font-size:2vh;color:var(--mut);margin-top:1.4vh;font-variant-numeric:tabular-nums}
+#ctl{display:flex;align-items:center;justify-content:center;gap:7vh;margin-top:2vh}
+#ctl button{width:8vh;height:8vh;display:grid;place-items:center}
+#ctl button svg{width:4.4vh;height:4.4vh}
+#ctl #pp{width:13vh;height:13vh;border-radius:50%;background:var(--a);color:var(--aFg);box-shadow:0 1vh 2.6vh rgba(0,0,0,.22)}
+#ctl #pp svg{width:5.6vh;height:5.6vh}
+#ql{position:absolute;right:3vh;bottom:3vh;width:6.4vh;height:6.4vh;border-radius:50%;background:var(--chip);display:grid;place-items:center}
+#ql svg{width:3vh;height:3vh}
+
+/* clock */
+#clk{display:flex;flex-direction:column;align-items:center;justify-content:center}
+#clock{font-size:15vh;font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+#date{font-size:2.8vh;color:var(--mut);margin-top:1.4vh}
+#tmp{display:flex;align-items:center;gap:.8vh;font-size:2.8vh;font-weight:600;margin-top:1.2vh}
+#tmp svg{width:2.6vh;height:2.6vh}
+
+/* vehicle */
+#veh{padding:2.6vh 2.8vh;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:1.4vh}
+#veh h3{grid-column:1/3;margin:0;display:flex;align-items:center;gap:1vh;font-size:2.4vh;font-weight:700}
+#veh h3 svg{width:2.8vh;height:2.8vh}
+#veh h3 small{margin-left:auto;font-size:1.9vh;font-weight:500;color:var(--mut)}
+.t{background:var(--card2);border-radius:2vh;padding:1.4vh 1.8vh;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.t span{font-size:1.9vh;color:var(--mut);display:flex;align-items:center;gap:.7vh}
+.t span svg{width:2.1vh;height:2.1vh}
+.t b{font-size:4.2vh;font-weight:700;letter-spacing:-.02em;margin-top:.4vh;font-variant-numeric:tabular-nums;white-space:nowrap}
+.t b small{font-size:2vh;font-weight:600;color:var(--mut);margin-left:.5vh}
+.t.warn{background:rgba(233,150,30,.16)}
+</style>
+<script src="common.js"></script>
+</head>
+<body>
+<nav id="rail">
+  <button class="on" aria-label="Ana ekran" data-o="themehome"></button>
+  <button aria-label="Müzik" data-o="music"></button>
+  <button aria-label="Harita" data-o="split"></button>
+  <button aria-label="Telefon" data-o="phone"></button>
+  <button aria-label="Araç" data-o="vehicle"></button>
+  <button aria-label="Uygulamalar" data-o="apps"></button>
+  <span class="sp"></span>
+  <button aria-label="Hi-Fi" data-o="eq"></button>
+  <button aria-label="Ayarlar" data-o="settings"></button>
+</nav>
+
+<div id="top">
+  <span id="clockS">İyi akşamlar</span><span id="dateS"></span>
+  <span class="sp"></span>
+  <button class="chip" id="cObd"><i class="dot" id="obdDot"></i><span>OBD</span></button>
+  <button class="chip" id="cMotor"><svg class="ic" viewBox="0 0 24 24"></svg><span>Motor</span></button>
+  <button class="chip" id="cAa"><svg class="ic" viewBox="0 0 24 24"></svg><span>Android Auto</span></button>
+  <button class="chip" id="cNight"><svg class="ic" viewBox="0 0 24 24" id="nIc"></svg><span id="nT">Gündüz</span></button>
+</div>
+
+<div id="grid">
+  <section class="card" id="mus">
+    <div id="mtop">
+      <div id="cov"></div>
+      <div id="mtxt">
+        <div id="src">USB</div>
+        <div id="ttl">Çalan bir şey yok</div>
+        <div class="ml"><img id="apic" alt=""><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span id="art">Şarkı listesi için dokun</span></div>
+        <div class="ml" id="albR"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></svg><span id="alb"></span></div>
+      </div>
+    </div>
+    <div id="bar"><i></i><b></b></div>
+    <div id="tm"><span id="pos"></span><span id="dur"></span></div>
+    <div id="ctl">
+      <button id="prev" aria-label="Önceki"><svg class="ic" viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M19 5 9 12l10 7z"/></svg></button>
+      <button id="pp" aria-label="Çal / duraklat"><svg viewBox="0 0 24 24" fill="currentColor" id="ppI"></svg></button>
+      <button id="next" aria-label="Sonraki"><svg class="ic" viewBox="0 0 24 24"><path d="M18 5v14"/><path d="M5 5l10 7-10 7z"/></svg></button>
+    </div>
+    <button id="ql" aria-label="Şarkı listesi"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8"/><path d="M17 14v6l4-3z"/></svg></button>
+  </section>
+
+  <section class="card" id="clk">
+    <div id="clock">--:--</div>
+    <div id="date"></div>
+    <div id="tmp"><svg class="ic" viewBox="0 0 24 24"><path d="M10 14V5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0z"/></svg><span id="temp">--°C</span><span id="tempL" style="color:var(--mut);font-weight:500">dış</span></div>
+  </section>
+
+  <section class="card" id="veh">
+    <h3><svg class="ic" viewBox="0 0 24 24"></svg>Citroën DS4<small id="plate">10 KE 424</small></h3>
+    <div class="t" id="tR"><span><svg class="ic" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12"/><path d="M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg>Menzil</span><b id="rng">—<small>km</small></b></div>
+    <div class="t"><span><svg class="ic" viewBox="0 0 24 24"><path d="M4.2 18a9 9 0 1 1 15.6 0"/><path d="M12 13.5 16 9"/></svg>Hız · vites</span><b id="spd">0<small id="gear">km/h</small></b></div>
+    <div class="t"><span><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 16 16 8"/></svg>Ortalama</span><b id="avg">—<small>L/100</small></b></div>
+    <div class="t" id="tC"><span><svg class="ic" viewBox="0 0 24 24"><path d="M10 14V5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0z"/></svg>Hararet</span><b id="cool">—<small>°C</small></b></div>
+  </section>
+</div>
+
+<script>
+var RI = ['home', 'music', 'nav', 'phone', 'car', 'apps', null, 'eq', 'settings'];
+[].forEach.call(document.querySelectorAll('#rail button'), function (b, i) {
+  var n = b.dataset.o === 'themehome' ? 'home' : b.dataset.o === 'split' ? 'nav' : b.dataset.o === 'vehicle' ? 'car' : b.dataset.o;
+  b.innerHTML = icon(n);
+  b.onclick = function () { if (b.dataset.o !== 'themehome') call('open', b.dataset.o); };
+});
+$('cMotor').firstChild.outerHTML = icon('engine');
+$('cAa').firstChild.outerHTML = icon('aa');
+document.querySelector('#veh h3 svg').outerHTML = icon('car');
+var PLAY = '<path d="M7 4.5v15l12.5-7.5z"/>', PAUSE = '<path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/>';
+var SUN = '<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    MOON = '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>';
+var NOTE = '<svg class="ic" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>';
+$('cov').innerHTML = NOTE;
+$('ppI').innerHTML = PLAY;
+$('prev').onclick = function () { call('media', 'prev'); };
+$('next').onclick = function () { call('media', 'next'); };
+$('pp').onclick = function () { call('media', 'play'); };
+$('ql').onclick = $('mtop').onclick = function () { call('open', 'music'); };
+$('veh').onclick = function () { call('open', 'vehicle'); };
+$('clk').onclick = function () { call('open', 'settings'); };
+var nightNow = true, cpHas = false;
+$('cNight').onclick = function () { call('setNight', !nightNow); };
+$('cMotor').onclick = function () { call('open', cpHas ? 'cpToggle' : 'engine'); };
+$('cAa').onclick = function () { call('open', 'aa'); };
+$('cObd').onclick = function () { call('open', 'vehicle'); };
+
+// the music card takes the cover's colour (average of a small copy; same-origin covers only)
+function tintFrom(img) {
+  try {
+    var c = document.createElement('canvas'); c.width = c.height = 16;
+    var x = c.getContext('2d'); x.drawImage(img, 0, 0, 16, 16);
+    var d = x.getImageData(0, 0, 16, 16).data, r = 0, g = 0, b = 0, n = 0;
+    for (var i = 0; i < d.length; i += 4) { var mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]); if (mx - mn < 18) continue; r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+    if (!n) return null;
+    r = r / n | 0; g = g / n | 0; b = b / n | 0;
+    var m = Math.max(r, g, b) || 1, k = 225 / m; r = Math.min(255, r * k) | 0; g = Math.min(255, g * k) | 0; b = Math.min(255, b * k) | 0;
+    return [r, g, b];
+  } catch (e) { return null; }
+}
+function applyTint(rgb) {
+  var st = document.documentElement.style;
+  if (!rgb) { st.removeProperty('--a'); st.removeProperty('--tint'); st.removeProperty('--aFg'); return; }
+  var lum = (rgb[0] * .299 + rgb[1] * .587 + rgb[2] * .114);
+  st.setProperty('--a', 'rgb(' + rgb + ')');
+  st.setProperty('--aFg', lum > 150 ? '#16171A' : '#FFFFFF');
+  st.setProperty('--tint', 'rgba(' + rgb + ',' + (document.body.classList.contains('day') ? .22 : .2) + ')');
+}
+function mmss(s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
+function n0(v) { return v === undefined || v === null || isNaN(v) ? '—' : String(Math.round(v)); }
+function n1(v) { return v === undefined || v === null || isNaN(v) || v <= 0 ? '—' : Number(v).toFixed(1).replace('.', ','); }
+var artId = null, artist = null, picTry = 0;
+function artistPic() {
+  var u = call('mediaArtistPic') || '';
+  $('apic').style.display = u ? 'block' : 'none'; if (u) $('apic').src = u;
+  if (!u && ++picTry < 6) setTimeout(artistPic, 3000);
+}
+try { var inf = JSON.parse(store('myds.car') || '{}'); if (inf.plate) $('plate').textContent = inf.plate; } catch (e) {}
+
+car.on(function (s) {
+  document.body.classList.toggle('day', s.night === false);
+  nightNow = s.night !== false; cpHas = !!s.cp;
+  $('clock').textContent = s.time || '--:--';
+  $('date').textContent = s.date || '';
+  var h = +(String(s.time || '12').split(':')[0]);
+  $('clockS').textContent = h >= 5 && h < 12 ? 'Günaydın' : h >= 12 && h < 18 ? 'İyi günler' : h >= 18 && h < 22 ? 'İyi akşamlar' : 'İyi geceler';
+  var out = s.outdoor !== undefined;
+  $('temp').textContent = out ? Math.round(s.outdoor) + '°C' : (s.temp !== undefined ? s.temp + '°C' : '--°C');
+  $('tempL').textContent = out ? 'dış' : 'hava';
+  $('nIc').innerHTML = nightNow ? SUN : MOON; $('nT').textContent = nightNow ? 'Gündüz' : 'Gece';
+  $('cMotor').classList.toggle('on', !!s.cpOn);
+  $('cAa').classList.toggle('on', !!s.aaOn);
+  var ok = !!(s.obd && s.obd.ok); $('obdDot').classList.toggle('ok', ok);
+  // music
+  var has = !!s.title;
+  $('ttl').textContent = has ? s.title : 'Çalan bir şey yok';
+  $('art').textContent = has ? (s.artist || 'Bilinmeyen sanatçı') : 'Şarkı listesi için dokun';
+  $('alb').textContent = has && s.album ? s.album : ''; $('albR').style.display = has && s.album ? '' : 'none';
+  $('src').textContent = (s.srcLabel || 'Medya');
+  var p = s.dur ? Math.min(100, (s.pos || 0) / s.dur * 100) : 0;
+  $('bar').firstChild.style.width = p + '%'; $('bar').lastChild.style.left = p + '%';
+  $('pos').textContent = s.dur ? mmss(s.pos) : ''; $('dur').textContent = s.dur ? mmss(s.dur) : '';
+  $('ppI').innerHTML = s.playing ? PAUSE : PLAY;
+  if (s.artId !== artId) {
+    artId = s.artId; var u = s.artId ? call('mediaArt') : '';
+    if (u) {
+      var im = new Image(); im.onload = function () { applyTint(tintFrom(im)); }; im.src = u;
+      $('cov').innerHTML = ''; $('cov').appendChild(im);
+    } else { $('cov').innerHTML = NOTE; applyTint(null); }
+  }
+  if (has && s.artist !== artist) { artist = s.artist; picTry = 0; $('apic').style.display = 'none'; artistPic(); }
+  if (!has) { artist = null; $('apic').style.display = 'none'; }
+  // vehicle
+  $('rng').firstChild.nodeValue = n0(s.range);
+  $('tR').classList.toggle('warn', s.range !== undefined && s.range < 60);
+  var ov = s.obd && s.obd.ok && s.obd.v ? s.obd.v : {};
+  $('spd').firstChild.nodeValue = n0(ov.speed != null ? ov.speed : (s.speed || 0));
+  $('gear').textContent = s.gearObd ? 'km/h · ' + (/^[1-9]$/.test(s.gearObd) ? 'D' + s.gearObd : s.gearObd) : 'km/h';
+  $('avg').firstChild.nodeValue = n1(s.avg100 || s.avgL100);
+  $('cool').firstChild.nodeValue = ov.cool != null ? n0(ov.cool) : '—';
+  $('tC').classList.toggle('warn', ov.cool != null && ov.cool > 108);
+});
+</script>
+</body>
+</html>

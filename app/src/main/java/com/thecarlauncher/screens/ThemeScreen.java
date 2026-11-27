@@ -39,12 +39,12 @@ import java.util.Locale;
  */
 public class ThemeScreen extends Screen {
     public static final String P_THEME = "home_theme", P_PREV = "home_theme_prev";
-    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7, STOCK = 8, LIVE = 9, DENON = 10, LITERATUR = 11;
+    public static final int CLASSIC = 0, MODERN = 1, RETRO = 2, PILOT = 3, PANEL = 4, KOKPIT = 5, DRIVE = 6, DS4PLUS = 7, STOCK = 8, LIVE = 9, DENON = 10, LITERATUR = 11, PANO = 12, SADE = 13;
     /** The themes offered in Settings (ids into NAMES). */
-    public static final int[] OFFERED = {LITERATUR, LIVE, STOCK, DS4PLUS, PANEL};   // Denon is now the Hi-Fi page of every theme
+    public static final int[] OFFERED = {LITERATUR, LIVE, STOCK, DS4PLUS, PANEL, PANO, SADE};   // Denon is now the Hi-Fi page of every theme
     public static final String[][] NAMES = {
             {"Klasična", "Classic"}, {"Moderna", "Modern"}, {"Retro", "Retro"}, {"Pilot", "Pilot"}, {"Panel", "Panel"},
-            {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}, {"Stock", "Stock"}, {"DS Live", "DS Live"}, {"Denon", "Denon"}, {"Literatür (sürüş için)", "Literatür (for driving)"}};
+            {"Kokpit", "Cockpit"}, {"Vožnja", "Driving mode"}, {"DS4+", "DS4+"}, {"Stock", "Stock"}, {"DS Live", "DS Live"}, {"Denon", "Denon"}, {"Literatür (sürüş için)", "Literatür (for driving)"}, {"Pano", "Pano"}, {"Sade", "Sade"}};
     public static final String PKG_MAPS = "com.google.android.apps.maps", PKG_SPOTIFY = "com.spotify.music",
             PKG_YTMUSIC = "com.google.android.apps.youtube.music", PKG_YOUTUBE = "com.google.android.youtube";
     private static final Locale TR = new Locale("tr", "TR");
@@ -113,7 +113,7 @@ public class ThemeScreen extends Screen {
     public static int current(Context c) {
         int t = Prefs.integer(c, P_THEME, -1);
         // Only DS4+, Panel and Stock are offered now; anything else moves to Stock.
-        if (t != DS4PLUS && t != PANEL && t != STOCK && t != LIVE && t != LITERATUR) {
+        if (t != DS4PLUS && t != PANEL && t != STOCK && t != LIVE && t != LITERATUR && t != PANO && t != SADE) {
             t = STOCK;
             Prefs.put(c, P_THEME, t);
             Prefs.put(c, ModernScreen.P_MODERN, false);
@@ -129,7 +129,7 @@ public class ThemeScreen extends Screen {
     public static Screen create(LauncherActivity act) {
         int t = current(act);
         if (t == MODERN) return new ModernScreen(act);
-        if (t >= RETRO && t <= LITERATUR) return new ThemeScreen(act, t);
+        if (t >= RETRO && t <= SADE) return new ThemeScreen(act, t);
         return new MenuScreen(act);
     }
 
@@ -143,6 +143,8 @@ public class ThemeScreen extends Screen {
             case LIVE: return "live.html";
             case DENON: return "denon.html";
             case LITERATUR: return "literatur.html";
+            case PANO: return "pano.html";
+            case SADE: return "sade.html";
             case STOCK: return "stock.html";
             default: return "panel.html";
         }
