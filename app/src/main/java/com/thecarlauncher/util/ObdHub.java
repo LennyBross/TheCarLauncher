@@ -27,6 +27,7 @@ public final class ObdHub implements Obd.Listener {
 
     public static synchronized void start(Context c) {
         if (sInstance == null) sInstance = new ObdHub(c.getApplicationContext());
+        try { BtGuard.start(c); } catch (Throwable ignored) { }
         sInstance.apply();
     }
 
