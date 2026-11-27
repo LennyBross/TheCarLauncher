@@ -171,6 +171,10 @@ button{background:none;border:none;padding:0;color:inherit}
 #car,#dots{display:none !important}
 #dspd{left:calc(470px + var(--dx));top:178px;width:340px;height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
 #dspd.hide{display:none}
+/* the DS4's own instrument LCD: slate-blue backlight, slanted segment digits with the unlit segments faintly visible */
+#lcd{left:calc(486px + var(--dx));top:224px;width:308px;height:168px;pointer-events:none}
+#lcd svg{display:block;overflow:visible}
+#app.lcdOn #dspd,#app.lcdOn #mediaC,#app.lcdOn #radioC,#app.lcdOn .dsTxt{display:none !important}
 #dsN{font-size:132px;font-weight:600;font-style:italic;letter-spacing:-4px;line-height:.9;color:#F7F3EC;text-shadow:0 0 24px rgba(var(--accR),.35);font-variant-numeric:tabular-nums}
 #dsU{font-size:20px;font-style:italic;letter-spacing:3px;color:var(--mut);margin-top:4px}
 #dsG{margin-top:12px;font-size:22px;font-style:italic;font-weight:600;letter-spacing:2px;color:var(--acc)}
@@ -279,8 +283,8 @@ button{background:none;border:none;padding:0;color:inherit}
  <circle cx="230" cy="230" r="166" fill="none" stroke="url(#rim)" stroke-width="3"/>
  <circle cx="230" cy="230" r="160" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
  <ellipse cx="230" cy="352" rx="120" ry="16" fill="rgba(255,255,255,.04)"/>
- <text x="230" y="118" text-anchor="middle" font-family="Montserrat" font-style="italic" font-weight="500" font-size="25" letter-spacing="5" fill="#E9E5DC">MY DS</text>
- <text x="230" y="380" text-anchor="middle" font-family="Montserrat" font-style="italic" font-weight="600" font-size="38" letter-spacing="2" fill="#F2EEE6">DS4</text>
+ <text x="230" y="118" text-anchor="middle" font-family="Montserrat" font-style="italic" font-weight="500" font-size="25" letter-spacing="5" fill="#E9E5DC" class="dsTxt">MY DS</text>
+ <text x="230" y="380" text-anchor="middle" font-family="Montserrat" font-style="italic" font-weight="600" font-size="38" letter-spacing="2" fill="#F2EEE6" class="dsTxt">DS4</text>
  <text id="rpmD" x="230" y="148" text-anchor="middle" font-family="Montserrat" font-style="italic" font-weight="600" font-size="20" letter-spacing="1" fill="#E8D5B0"></text>
  <text id="kmh" x="0" y="0" font-family="Montserrat" font-size="13" fill="#D8D3CA" text-anchor="middle">km/h</text>
  <g id="needle"><path d="M227.5 6 L232.5 6 L231.5 62 L228.5 62 Z" fill="url(#nd)"/><path d="M228.3 8 L231.7 8 L231 50 L229 50 Z" fill="#ff8b7e" opacity=".7"/></g>
@@ -290,6 +294,7 @@ button{background:none;border:none;padding:0;color:inherit}
 <div id="load" class="ab">3D YÜKLENİYOR</div>
 <div id="mediaC" class="ab"><img id="mcArt" alt=""><div id="mcNo"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#E8D5B0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div><div id="mcT"></div><div id="mcA"></div></div>
 <div id="dspd" class="ab"><div id="dsN">0</div><div id="dsU">KM/H</div><div id="dsG"></div></div>
+<div id="lcd" class="ab"><svg id="lcdS" viewBox="0 0 308 168" width="308" height="168"></svg></div>
 <div id="radioC" class="ab"><img id="rcL" alt=""><div id="rcF"></div><div id="rcN"></div><div id="rcT"></div></div>
 <div id="dots" class="ab"><button data-v="0" class="on"></button><button data-v="1"></button><button data-v="2"></button></div>
 
@@ -457,6 +462,60 @@ function setLight(l, user) {
   }
   applyLight();
 }
+
+// ---- DS4 instrument LCD (centre of the dial) -------------------------------------------------
+var LCD = (function () {
+  var NS = 'http://www.w3.org/2000/svg', svg = $('lcdS');
+  function el(n, a, par) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); (par || svg).appendChild(e); return e; }
+  // seven segments a..g of a slanted digit, w×h, stroke t (DS4 style: narrow, slightly italic, cut corners)
+  var SEG = { 0: 'abcdef', 1: 'bc', 2: 'abged', 3: 'abgcd', 4: 'fgbc', 5: 'afgcd', 6: 'afgedc', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg', '-': 'g', ' ': '' };
+  function digit(x, y, w, h, t) {
+    var g = el('g', { transform: 'translate(' + x + ' ' + y + ') skewX(-9)' }), m = h / 2, q = t / 2, s = {};
+    function hz(yy) { return [[q + 1, yy], [t + 1, yy - q], [w - t - 1, yy - q], [w - q - 1, yy], [w - t - 1, yy + q], [t + 1, yy + q]]; }
+    function vt(xx, y0, y1) { return [[xx, y0 + q + 1], [xx + q, y0 + t + 1], [xx + q, y1 - t - 1], [xx, y1 - q - 1], [xx - q, y1 - t - 1], [xx - q, y0 + t + 1]]; }
+    var P = { a: hz(q), g: hz(m), d: hz(h - q), f: vt(q, 0, m), b: vt(w - q, 0, m), e: vt(q, m, h), c: vt(w - q, m, h) };
+    for (var k in P) s[k] = el('polygon', { points: P[k].map(function (p) { return p.join(','); }).join(' ') }, g);
+    return { set: function (ch, on) { var l = SEG[ch] || ''; for (var k in s) s[k].setAttribute('class', on && l.indexOf(k) >= 0 ? 'on' : 'off'); } };
+  }
+  el('defs', {}).innerHTML = '<linearGradient id="lcdBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b5266"/><stop offset=".5" stop-color="#2a3d4e"/><stop offset="1" stop-color="#1e2d3b"/></linearGradient>'
+    + '<filter id="lcdGl" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.1" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+    + '<style>#lcdS .on{fill:#F4F8FB;filter:url(#lcdGl)}#lcdS .off{fill:rgba(255,255,255,.055)}#lcdS text{font-family:Montserrat,sans-serif;fill:#F4F8FB}#lcdS .gh{fill:rgba(255,255,255,.07)}</style>';
+  el('rect', { x: 0, y: 0, width: 308, height: 168, rx: 7, fill: 'url(#lcdBg)' });
+  el('rect', { x: 0, y: 0, width: 308, height: 168, rx: 7, fill: 'none', stroke: 'rgba(255,255,255,.18)', 'stroke-width': 1 });
+  // top row: cruise / limiter state as the cluster shows it, set speed on the right
+  var tP = el('text', { x: 12, y: 21, 'font-size': 12.5, 'font-weight': 600, 'letter-spacing': '.3' }); tP.textContent = 'PAUSE';
+  el('path', { d: 'M54 12 l6 6 m0 -5 v5 h-5', fill: 'none', stroke: '#F4F8FB', 'stroke-width': 1.4 });
+  el('circle', { cx: 70, cy: 26, r: 6, fill: 'none', stroke: '#F4F8FB', 'stroke-width': 1.4 });
+  el('path', { d: 'M70 26 l3 -3', stroke: '#F4F8FB', 'stroke-width': 1.4 });
+  var tC = el('text', { x: 81, y: 31, 'font-size': 13.5, 'font-weight': 600 }); tC.textContent = 'CRUISE';
+  var tl = el('text', { x: 12, y: 33, 'font-size': 7.5, 'font-weight': 700, class: 'gh' }); tl.textContent = 'MEM  ON';
+  var setD = [digit(196, 9, 17, 26, 4), digit(218, 9, 17, 26, 4), digit(240, 9, 17, 26, 4)];
+  var u1 = el('text', { x: 266, y: 33, 'font-size': 10, 'font-weight': 600 }); u1.textContent = 'km/h';
+  el('rect', { x: 8, y: 43, width: 292, height: 1.6, fill: '#F4F8FB', opacity: .85 });
+  // middle: the big speed, three slanted digits, unlit segments faintly visible
+  var big = [digit(64, 52, 50, 76, 9), digit(124, 52, 50, 76, 9), digit(184, 52, 50, 76, 9)];
+  var u2 = el('text', { x: 252, y: 112, 'font-size': 11, 'font-weight': 600 }); u2.textContent = 'km/h';
+  // faint pictograms on the left like the unlit LCD icons (oil OK / service)
+  var ic = el('text', { x: 14, y: 84, 'font-size': 9, 'font-weight': 700, class: 'gh' }); ic.textContent = 'OIL';
+  var ic2 = el('text', { x: 16, y: 96, 'font-size': 9, 'font-weight': 700, class: 'gh' }); ic2.textContent = 'OK';
+  el('rect', { x: 8, y: 133, width: 292, height: 1.6, fill: '#F4F8FB', opacity: .85 });
+  // bottom row: odometer and trip
+  var odo = []; for (var k = 0; k < 6; k++) odo.push(digit(14 + k * 14.5, 140, 11, 21, 2.2));
+  var u3 = el('text', { x: 103, y: 160, 'font-size': 9.5, 'font-weight': 600 }); u3.textContent = 'km';
+  var trip = []; for (k = 0; k < 4; k++) trip.push(digit(196 + k * 14.5 + (k === 3 ? 6 : 0), 140, 11, 21, 2.2));
+  var dot = el('circle', { cx: 238.5, cy: 159.5, r: 1.5, class: 'on' });
+  var u4 = el('text', { x: 268, y: 160, 'font-size': 9.5, 'font-weight': 600 }); u4.textContent = 'km';
+  function put(ds, str, ghostAll) { for (var i = 0; i < ds.length; i++) { var ch = str.charAt(i) || ' '; ds[i].set(ch, ch !== ' '); } }
+  function pad(n, len) { var s = String(n); while (s.length < len) s = ' ' + s; return s.slice(-len); }
+  put(setD, ' --'); put(big, '  0'); put(odo, '      '); put(trip, '    ');
+  return {
+    speed: function (v) { put(big, pad(Math.max(0, Math.min(999, Math.round(v))), 3)); },
+    odo: function (km) { put(odo, km > 0 ? pad(Math.floor(km) % 1000000, 6) : '------'); },
+    trip: function (km) { var t = Math.max(0, Math.round((km || 0) * 10)) % 10000; put(trip, pad(t, 4).replace(/ (?=\d$)/, '0')); },
+    cruise: function (on, set) { tP.style.opacity = on ? 1 : .28; tC.style.opacity = on ? 1 : .28; put(setD, set ? pad(Math.round(set), 3) : ' --'); }
+  };
+})();
+$('app').classList.add('lcdOn');
 car.on(function (s) { if (s.night !== undefined && autoNight !== !!s.night) { autoNight = !!s.night; applyLight(); } });
 applyLight();
 // ---- Driving facts that take turns: consumption (now / 100 km / 1000 km), and speed / trip / fuel
@@ -516,6 +575,7 @@ car.on(function (s) {
   var v = ov != null ? ov : s.gps === 'ok' || s.speed != null ? (s.speed || 0) : 0;
   setSpeed(v);
   $('dsN').textContent = Math.round(v);
+  LCD.speed(v); if (s.odo !== undefined) LCD.odo(s.odo); LCD.trip(s.tripKm); LCD.cruise(!!s.cruiseOn, s.cruiseSet);
   $('dsG').textContent = s.gearObd ? (/^[1-9]$/.test(s.gearObd) ? 'D' + s.gearObd : s.gearObd) : '';
   if (lastTrip !== null && s.tripKm !== undefined && s.tripKm < lastTrip - 0.5) avgS = { n: 0, sum: 0 };   // new trip
   if (s.tripKm !== undefined) lastTrip = s.tripKm;
@@ -713,7 +773,7 @@ function init3D() {
           if (Array.isArray(o.material)) o.material[k] = pm; else o.material = pm;
         }
         if (m.name === 'window_black') { m.envMapIntensity = 0.3; m.roughness = 0.16; }   // tinted-black glass: nothing of the cabin shows
-        if (m.transparent) { m.depthWrite = false; o.castShadow = false; o.renderOrder = 2; }
+        if (m.transparent) { m.depthWrite = false; o.castShadow = false; o.renderOrder = 2; } else if (m.name !== 'body') m.side = THREE.DoubleSide;
       });
     });
     scene.add(model);

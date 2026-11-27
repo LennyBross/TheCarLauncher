@@ -272,7 +272,7 @@ function loadModel() {
             bodyMats.push(pm);
           }
           if (m.name === 'window_black') { m.envMapIntensity = 0.3; m.roughness = 0.16; }   // tinted-black glass: nothing of the cabin shows
-          if (m.transparent) { m.depthWrite = false; o.castShadow = false; o.renderOrder = 2; }
+          if (m.transparent) { m.depthWrite = false; o.castShadow = false; o.renderOrder = 2; } else if (m.name !== 'body') m.side = THREE.DoubleSide;
         });
       });
       scene.add(model);

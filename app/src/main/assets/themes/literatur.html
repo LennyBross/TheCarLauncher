@@ -53,7 +53,7 @@ body.playing #media::after{animation:sweep 6s ease-in-out infinite}
 #spdC{display:flex;flex-direction:column;justify-content:center;padding:2.4vh 3.2vh;text-align:left}
 #spd{font-size:21vh;line-height:.95;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.6vh}
 .unit{font-size:var(--t2);color:var(--mut);font-weight:600}
-.facts{display:flex;gap:4vh;margin-top:2vh}
+.facts{display:flex;gap:4vh;margin-top:2vh;position:relative;z-index:1}
 .fact b{display:block;font-size:var(--t1);font-weight:700;font-variant-numeric:tabular-nums}
 .fact span{font-size:var(--t2);color:var(--mut)}
 /* now playing + the three media keys */
@@ -89,6 +89,7 @@ body.day .dock button{background:linear-gradient(180deg,#FFFFFF,#F1F1F1);box-sha
   <div class="mid">
     <button class="card glass" id="spdC" aria-label="Aracım">
       <div><span id="spd">0</span> <span class="unit">km/h</span><span id="gearT"></span></div>
+      <div id="car3d" style="position:absolute;right:0;bottom:1%;width:36%;height:38%;pointer-events:none"></div>
       <div class="facts">
         <div class="fact"><b id="rng">—</b><span>menzil km</span></div>
         <div class="fact"><b id="avg">—</b><span>L/100 km</span></div>
@@ -107,6 +108,7 @@ body.day .dock button{background:linear-gradient(180deg,#FFFFFF,#F1F1F1);box-sha
   <div class="dock" id="dock"></div>
 </div>
 <script src="common.js"></script>
+<script src="3d/mini.js"></script>
 <script>
 var PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12.5-7.5z"/></svg>',
     PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg>';
@@ -159,6 +161,9 @@ car.on(function (s) {
   // phone connected to Android Auto: a green dot on its button
   var aa = document.querySelector('.dock button[data-k="aa"]'); if (aa) aa.classList.toggle('on', !!s.aaOn);
 });
+
+// 3D DS4 in the speed card (strong units / switched on)
+if (use3D()) mountDS4($('car3d'), { az: 300, spin: 3, zoom: 1.1, lift: .22, onFail: function () {} });
 </script>
 </body>
 </html>

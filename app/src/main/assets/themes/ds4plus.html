@@ -183,6 +183,7 @@ body.day .db i svg{stroke:#0A0A0A !important;color:#0A0A0A}
 <div class="dock" id="dock"></div>
 </div>
 <script src="common.js"></script>
+<script src="3d/mini.js"></script>
 <script>
 var IC = {
   home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
@@ -281,9 +282,20 @@ st.onclick = function () { if (held) return; if (hasCp) { st.classList.toggle('o
     im.onload = function () { el.src = im.src; el.style.opacity = '1'; };
     im.src = c.src;
   }
-  show(); window.showCar = show;
-  ownCarPending(show);   // a new arac.jpg from the stick
-  window.addEventListener('focus', function () { ownCarPending(show); });
+  var c3 = null;
+  function decide() {
+    if (use3D()) {
+      if (c3) return;
+      el.style.display = 'none';
+      var holder = document.createElement('div');
+      holder.style.cssText = 'position:absolute;left:-4%;top:8%;width:108%;height:100%;pointer-events:auto';
+      $('carBox').insertBefore(holder, el);
+      c3 = mountDS4(holder, { az: 40, spin: 3, zoom: .78, lift: .3, onFail: function () { holder.remove(); c3 = null; el.style.display = ''; show(); } });
+    } else show();
+  }
+  decide(); window.showCar = function () { if (!use3D()) { if (c3) { c3.stop(); c3.canvas.parentNode.remove(); c3 = null; el.style.display = ''; } show(); } };
+  ownCarPending(window.showCar);   // a new arac.jpg from the stick
+  window.addEventListener('focus', function () { ownCarPending(window.showCar); });
 })();
 
 car.on(function (s) {

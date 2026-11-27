@@ -336,7 +336,7 @@ function init3D() {
           // Tinted windows (black film): the greenhouse glass goes nearly opaque and dark
           if (m.transparent && /lights_lod0 \[env/.test(nm)) { m.color.setHex(0x05070a); m.opacity = .9; m.roughness = .05; m.metalness = .6; }
           if (m.name === 'window_black') { m.envMapIntensity = 0.3; m.roughness = 0.16; }   // tinted-black glass: nothing of the cabin shows
-          if (m.transparent) { m.depthWrite = false; o.renderOrder = 2; }
+          if (m.transparent) { m.depthWrite = false; o.renderOrder = 2; } else if (m.name !== 'body') m.side = THREE.DoubleSide;
         });
       });
       S.add(model); window.__shown3d = true;
