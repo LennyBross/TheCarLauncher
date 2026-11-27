@@ -301,6 +301,11 @@ function icon(name, cls) {
 
 // ---- Live 3D DS4 on the home screen: on by default on strong units (8 cores, e.g. TS10 / UIS7862),
 // off on weak ones (AC8227L); the vehicle page's 3D key overrides it; the owner's own photo wins.
+// Render scale for canvases: strong units draw the 3D car above screen resolution (sharper edges).
+function sharpRatio() {
+  var d = window.devicePixelRatio || 1;
+  return (navigator.hardwareConcurrency || 0) >= 6 ? Math.min(2.25, Math.max(1.5, d * 1.5)) : Math.min(d, 1.25);
+}
 function use3D() {
   var p = store('myds.3d');
   if (p === 'photo') return false;

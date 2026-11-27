@@ -208,7 +208,7 @@ function init3D() {
 var stage = $('stage'), canvas = $('c');
 var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !RENDER_MODE ? true : true, preserveDrawingBuffer: RENDER_MODE, alpha: true });
 if (!RENDER_MODE && renderer.capabilities.precision !== 'highp') throw new Error('lowp');
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+renderer.setPixelRatio(sharpRatio());
 renderer.physicallyCorrectLights = true;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -235,7 +235,7 @@ controls.autoRotate = false; controls.autoRotateSpeed = 0.5;   // one turn ≈ 2
 
 var key = new THREE.DirectionalLight(0xffffff, 2.0);
 key.position.set(4, 7, 3); key.castShadow = true;
-key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0005;
+var SM = (navigator.hardwareConcurrency || 0) >= 6 ? 2048 : 1024; key.shadow.mapSize.set(SM, SM); key.shadow.bias = -0.0005;
 key.shadow.camera.left = -3.5; key.shadow.camera.right = 3.5; key.shadow.camera.top = 3.5; key.shadow.camera.bottom = -3.5;
 scene.add(key);
 scene.add(new THREE.HemisphereLight(0xcfdcff, 0x202020, 0.45));

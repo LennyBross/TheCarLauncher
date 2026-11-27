@@ -34,7 +34,7 @@ public final class MotorSesi {
     }
 
     /** A unit that can run the live simulation without breaking up. */
-    static boolean strongUnit(Context c) {
+    public static boolean strongUnit(Context c) {
         try {
             android.app.ActivityManager am = (android.app.ActivityManager) c.getSystemService(Context.ACTIVITY_SERVICE);
             android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();

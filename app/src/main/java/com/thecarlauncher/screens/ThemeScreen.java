@@ -189,6 +189,14 @@ public class ThemeScreen extends Screen {
         s.setAllowFileAccess(true);
         s.setMediaPlaybackRequiresUserGesture(true);
         s.setTextZoom(100);
+        // strong units (TS10 / UIS7862): keep the page drawn off-screen too, so switching and
+        // scrolling never shows unpainted tiles; the render process gets high priority
+        if (com.thecarlauncher.util.MotorSesi.strongUnit(act)) {
+            if (android.os.Build.VERSION.SDK_INT >= 23) s.setOffscreenPreRaster(true);
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                try { web.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, false); } catch (Throwable ignored) { }
+            }
+        }
         web.setWebChromeClient(new WebChromeClient());
         web.setWebViewClient(new WebViewClient() {
             @Override

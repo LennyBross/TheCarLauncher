@@ -254,7 +254,7 @@ var three = null;
 function init3D() {
   var canvas = $('c');
   var R = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-  R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
+  R.setPixelRatio(sharpRatio());
   R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05;
   R.setClearColor(0, 0);
   var S = new THREE.Scene();

@@ -660,7 +660,7 @@ function init3D() {
   var canvas = $('c'), W = 506, H = 297;
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, preserveDrawingBuffer: /render/.test(location.hash) });
   if (renderer.capabilities.precision !== 'highp') throw new Error('lowp');
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setPixelRatio(sharpRatio());
   renderer.setSize(W, H, false);
   renderer.physicallyCorrectLights = true;
   renderer.outputEncoding = THREE.sRGBEncoding;
@@ -673,7 +673,7 @@ function init3D() {
   var camera = new THREE.PerspectiveCamera(28, W / H, 0.05, 100);
   var TARGET = new THREE.Vector3(0, 0.55, 0), DIST = 8.7;
   var key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 7, 4); key.castShadow = true;
-  key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -0.0005;
+  var SM = (navigator.hardwareConcurrency || 0) >= 6 ? 2048 : 1024; key.shadow.mapSize.set(SM, SM); key.shadow.bias = -0.0005;
   key.shadow.camera.left = -3.5; key.shadow.camera.right = 3.5; key.shadow.camera.top = 3.5; key.shadow.camera.bottom = -3.5;
   scene.add(key);
   scene.add(new THREE.HemisphereLight(0xfff4e2, 0x101010, 0.5));
