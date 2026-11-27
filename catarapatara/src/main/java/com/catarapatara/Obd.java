@@ -325,8 +325,20 @@ public final class Obd {
                 l.onStatus("OBD: " + name(dev) + " (BLE) bağlanıyor…", false);
                 BleSerial b = new BleSerial();
                 socket = b;
-                b.connect(ctx, dev);
-                io = new Object[]{b.in, b.out};
+                try {
+                    b.connect(ctx, dev);
+                    io = new Object[]{b.in, b.out};
+                } catch (Exception e) {
+                    last = e;
+                    try { b.close(); } catch (Throwable ignored) { }
+                    socket = null;
+                    // a dual-mode adapter chosen as BLE: BLE failed, so try its classic serial side too
+                    if (forceLe && dev.getType() != BluetoothDevice.DEVICE_TYPE_LE) {
+                        l.onStatus("OBD: " + name(dev) + " BLE olmadı, klasik bağlantı deneniyor…", false);
+                        io = classic(dev);
+                    }
+                    if (io == null) throw e;
+                }
             }
             if (io == null) throw new Exception("adaptöre bağlanılamadı (başka bir uygulama bağlı olabilir)" + (last == null || last.getMessage() == null ? "" : ": " + last.getMessage()));
             in = (InputStream) io[0];
