@@ -55,7 +55,7 @@ final class MotorLoops {
     /** Start, stop or switch engine to match the saved settings (mode "loop"). */
     synchronized void sync() {
         JSONObject c = cfg();
-        boolean want = c.optBoolean("on");
+        boolean want = c.optBoolean("on") && !"live".equals(c.optString("mode", "loop"));
         String eng = c.optString("engine", "v8flat");
         if (!want) { if (thread != null) stopVoice(); return; }
         if (thread == null || !eng.equals(playing)) { stopVoice(); playing = eng; startVoice(); }

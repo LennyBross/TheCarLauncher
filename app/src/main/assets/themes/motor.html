@@ -91,11 +91,11 @@ body.loop .liveOnly{display:none !important}
       <div id="err"></div>
       <div id="diag"></div>
     </div>
-    <div class="seg" id="kind" style="display:none"><button data-k="loop">Kayıtlı</button></div>
+    <div class="seg" id="kind"><button data-k="live">Canlı simülasyon (en gerçekçi)</button><button data-k="loop">Kayıtlı (en hafif)</button></div>
     <div class="seg" id="mode"><button data-f="1">Arabamı takip et (OBD)</button><button data-f="0">Deneme (pedal)</button></div>
     <div id="pedals"><button id="brk">FREN</button><button id="gas">GAZ</button></div>
     <div class="card" style="display:flex;flex-direction:column;gap:1.2vh;overflow:auto">
-      <div class="seg liveOnly" id="qual"><button data-q="1">Ünite ayarı</button><button data-q="0">Tam (telefon gibi · bu ünitede kesilir)</button></div>
+      <div class="seg liveOnly" id="qual"><button data-q="1">Ünite ayarı</button><button data-q="0">Tam kalite</button></div>
       <div class="seg liveOnly" id="view"><button data-v="1">Kabinden</button><button data-v="0">Dışarıdan</button></div>
       <div class="sl"><label>Ses seviyesi <b id="vVol"></b></label><input type="range" id="vol" min="0" max="100" step="5"></div>
       <div class="sl"><label>Egzoz patlamaları (gazdan çekince) <b id="vPop"></b></label><input type="range" id="pop" min="0" max="100" step="5"></div>
@@ -174,7 +174,7 @@ function draw() {
   $('power').classList.toggle('on', !!C.on); $('power').textContent = C.on ? 'AÇIK' : 'AÇ';
   [].forEach.call($('eng').children, function (b) { b.classList.toggle('on', b.dataset.id === C.engine); });
   [].forEach.call($('veh').children, function (b) { b.classList.toggle('on', b.dataset.id === C.vehicle); });
-  var kind = 'loop'; document.body.classList.add('loop');   // the live simulation was removed: recorded voice only
+  var kind = C.mode === 'live' ? 'live' : 'loop'; document.body.classList.toggle('loop', kind === 'loop');
   [].forEach.call($('kind').children, function (b) { b.classList.toggle('on', b.dataset.k === kind); });
   [].forEach.call($('mode').children, function (b) { b.classList.toggle('on', (b.dataset.f === '1') === (C.follow !== false)); });
   [].forEach.call($('qual').children, function (b) { b.classList.toggle('on', (b.dataset.q === '1') === (C.lite !== false)); });
