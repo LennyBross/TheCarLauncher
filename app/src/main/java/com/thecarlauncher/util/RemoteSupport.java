@@ -285,6 +285,19 @@ public final class RemoteSupport {
             fi.close(); o.flush();
             return;
         }
+        // GET /rapor?pin=1234 → one text file with everything a remote look needs (device, OBD, PSA ECUs,
+        // Topway radio / reverse internals) to download on the phone and attach in the chat — no laptop needed
+        if (path.startsWith("/rapor")) {
+            String pin = "";
+            int q = path.indexOf('?');
+            if (q >= 0) for (String kv : path.substring(q + 1).split("&")) { String[] p = kv.split("=", 2); if (p[0].equals("pin") && p.length > 1) pin = URLDecoder.decode(p[1], "UTF-8").trim(); }
+            OutputStream o = s.getOutputStream();
+            byte[] b = (pin.equals(setupPin) ? report(c) : "PIN yanlış.").getBytes(StandardCharsets.UTF_8);
+            String fn = "myds-rapor-" + new java.text.SimpleDateFormat("MMdd-HHmm", Locale.US).format(new java.util.Date()) + ".txt";
+            o.write(("HTTP/1.1 200 OK\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Disposition: attachment; filename=\"" + fn + "\"\r\nContent-Length: " + b.length + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+            o.write(b); o.flush();
+            return;
+        }
         if (path.startsWith("/k?") || path.startsWith("/konsol")) {
             String pin = "", cmd = "";
             int q = path.indexOf('?');
@@ -420,6 +433,34 @@ public final class RemoteSupport {
         return b.toString();
     }
 
+    /** Everything for a remote diagnosis in one text: each part with its own time limit, errors written in. */
+    static String report(Context c) {
+        String[][] parts = {
+                {"CİHAZ", "durum"},
+                {"OBD", "obd"},
+                {"ŞANZIMAN (6A9/689) · padded", "elm ATH1;ATSH6A9;ATCRA689;22D500;22D501;1003;22D500"},
+                {"ŞANZIMAN · raw 4 bayt", "elm ATCAF0;0322D500;0322D501;ATCAF1"},
+                {"BSI (752/652) · padded", "elm ATSH752;ATCRA652;22D8E1;22D8C3;22D4D2;1003;22D8E1"},
+                {"BSI · raw 4 bayt", "elm ATCAF0;0322D8E1;0322D8C3;0210C0;0322D8E1;ATCAF1"},
+                {"GÖSTERGE (75F/65F)", "elm ATSH75F;ATCRA65F;1003;22D8E1;ATCAF0;0322D8E1;ATCAF1"},
+                {"OBD geri dönüş", "elm ATAR;ATSH7DF;ATH0;0100"},
+                {"TOPWAY özellikler", "sh getprop | grep -i -E 'tw\\.|reverse|backcar|radio|fm|tuner' | head -80"},
+                {"TOPWAY paketler", "sh pm path com.tw.radio; pm path com.tw.reverse; pm path com.tw.service; pm path com.tw.car; pm path com.tw.core"},
+                {"TWUtil", "sinif android.tw.john.TWUtil"},
+                {"RADYO dex (TWUtil çağrıları)", "sh P=$(pm path com.tw.radio | head -1 | cut -d: -f2); dexdump -d \"$P\" 2>/dev/null | grep -E 'const(/16|/high16|/4)? v[0-9]+, #|TWUtil;\\.(write|open|addHandler)|^  Class descriptor|name *:' | grep -B4 -A1 'TWUtil;' | head -400"},
+                {"GERİ VİTES dex (TWUtil çağrıları)", "sh P=$(pm path com.tw.reverse | head -1 | cut -d: -f2); dexdump -d \"$P\" 2>/dev/null | grep -E 'const(/16|/high16|/4)? v[0-9]+, #|TWUtil;\\.(write|open|addHandler)' | grep -B4 -A1 'TWUtil;' | head -250"},
+                {"RADYO dex (sabitler)", "sh P=$(pm path com.tw.radio | head -1 | cut -d: -f2); dexdump \"$P\" 2>/dev/null | grep -E 'Class descriptor|static final' -A0 | head -150"},
+                {"OBD izi", "obdiz"},
+        };
+        StringBuilder sb = new StringBuilder("MyDS uzaktan teşhis raporu · " + new java.util.Date() + "\n");
+        for (String[] p : parts) {
+            sb.append("\n===== ").append(p[0]).append(" =====\n");
+            try { sb.append(Commands.run(c, p[1])).append('\n'); }
+            catch (Throwable t) { sb.append("HATA: ").append(t).append('\n'); }
+        }
+        return sb.toString();
+    }
+
     // ---- Commands
 
     static final class Commands {
@@ -430,6 +471,7 @@ public final class RemoteSupport {
                 case "yardim": case "help":
                     return "durum · obd · obdiz · sinif <sınıf> · fmtest · elm <komut> · motor [ac|kapat|{json}] · ara · bagla <MAC> [le] · pin <PIN> · log [satır] [süzgeç] · sh <komut> · guncelle · yeniden";
                 case "durum": return state(c);
+                case "rapor": return report(c);
                 case "obd": { ObdHub h = ObdHub.get(); return h == null ? "ObdHub yok" : h.json().toString(2); }
                 case "ara": {
                     ObdHub h = ObdHub.get();
