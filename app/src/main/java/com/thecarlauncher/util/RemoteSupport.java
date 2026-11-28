@@ -515,6 +515,7 @@ public final class RemoteSupport {
                 case "sinif": return classDump(a.trim());
                 case "dex": return dexStrings(c, a.trim());
                 case "dinle": return listen(c, a.trim());
+                case "aidl": return aidlDump(c, a.trim());
                 case "fmtest": return fmProbe(c);
                 case "elm": { String r = com.catarapatara.Obd.raw(a.trim().toUpperCase(Locale.ROOT)); return r == null ? "yanıt yok (OBD bağlı mı?)" : r; }
                 case "motor": {
@@ -652,5 +653,38 @@ public final class RemoteSupport {
         try { c.getApplicationContext().unregisterReceiver(br); } catch (Throwable ignored) { }
         ht.quitSafely();
         synchronized (r) { return r.length() == 0 ? "(yayın yok)" : r.toString(); }
+    }
+
+    /** "aidl <pkg>": every IInterface/Binder class in an app, with its methods and TRANSACTION codes. */
+    @SuppressWarnings("deprecation")
+    static String aidlDump(Context c, String pkg) {
+        StringBuilder b = new StringBuilder();
+        try {
+            Context pc = c.createPackageContext(pkg, Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY);
+            ClassLoader cl = pc.getClassLoader();
+            String apk = c.getPackageManager().getApplicationInfo(pkg, 0).sourceDir;
+            java.io.File odex = new java.io.File(c.getCacheDir(), "aidl.dex");
+            dalvik.system.DexFile df = dalvik.system.DexFile.loadDex(apk, odex.getPath(), 0);
+            java.util.Enumeration<String> en = df.entries();
+            while (en.hasMoreElements()) {
+                String n = en.nextElement();
+                if (n.startsWith("android.") || n.startsWith("androidx.")) continue;
+                Class<?> k;
+                try { k = Class.forName(n, false, cl); } catch (Throwable t) { continue; }
+                boolean ii = android.os.IInterface.class.isAssignableFrom(k), bi = android.os.Binder.class.isAssignableFrom(k);
+                if (!ii && !bi) continue;
+                b.append(k.isInterface() ? "interface " : "class ").append(n);
+                if (k.getSuperclass() != null) b.append(" : ").append(k.getSuperclass().getName());
+                for (Class<?> in : k.getInterfaces()) b.append(" +").append(in.getName());
+                b.append('\n');
+                for (java.lang.reflect.Method m : k.getDeclaredMethods()) b.append("   ").append(m.toString().replace("java.lang.", "")).append('\n');
+                for (java.lang.reflect.Field f : k.getDeclaredFields()) {
+                    if (!java.lang.reflect.Modifier.isStatic(f.getModifiers())) continue;
+                    try { f.setAccessible(true); b.append("   .").append(f.getName()).append(" = ").append(f.get(null)).append('\n'); } catch (Throwable ignored) { }
+                }
+                if (b.length() > 60000) break;
+            }
+        } catch (Throwable t) { b.append("hata: ").append(t); }
+        return b.length() == 0 ? "(bulunamadı)" : b.toString();
     }
 }
