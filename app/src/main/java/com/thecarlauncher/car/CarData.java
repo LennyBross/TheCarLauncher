@@ -208,6 +208,24 @@ public final class CarData {
 
     public void setWinterTyres(boolean on) { Prefs.put(c, P_WINTER, on); }
 
+    /**
+     * The owner's figures, fixed once (28.11.2026): odometer 166 789 km, last service at 153 737 km on
+     * 22.10.2026 (engine oil, oil filter, pollen filter…), next service at 173 737 km or 22.10.2027,
+     * range 300 km on the cluster. Later edits on the vehicle page win; this runs only once.
+     */
+    public static void seedOwnerFigures(Context c) {
+        android.content.SharedPreferences p = c.getSharedPreferences("seed", 0);
+        if (p.getBoolean("ds4_20261128", false)) return;
+        CarData d = get(c);
+        d.setOdometer(166789);
+        d.setOilDueKm(173737);
+        Calendar cal = Calendar.getInstance(); cal.clear(); cal.set(2027, Calendar.OCTOBER, 22, 9, 0);
+        d.setOilDueDate(cal.getTimeInMillis());
+        Prefs.put(c, "svc_last", "153737|22.10.2026|Motor yağı, yağ filtresi, polen filtresi");
+        try { com.thecarlauncher.util.ObdFuel.get(c).syncRange(300); } catch (Throwable ignored) { }
+        p.edit().putBoolean("ds4_20261128", true).apply();
+    }
+
     /** Oil service: logs it as done now and sets the next one 15 000 km / one year away. */
     public void oilServiceDone() {
         double odo = currentKm();

@@ -60,9 +60,7 @@ button{background:none;border:none;padding:0;color:inherit}
 .row span.diag{display:block}
 .row+.row::before{content:'';position:absolute;left:-10px;right:-60px;top:-6px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.16) 25%,rgba(255,255,255,.04))}
 #consL{max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#r1{top:72px}#r2{top:140px}#r3{display:none !important}
-#pl .row{height:62px}#pl .row b{font-size:36px}#pl .row svg{width:36px;height:36px}
-#car3d{position:absolute;left:8px;top:198px;width:280px;height:116px}
+#r1{top:82px}#r2{top:162px}#r3{top:242px}
 
 /* media */
 #cover{left:100px;top:86px;width:100px;height:100px;border-radius:6px;object-fit:cover;background:linear-gradient(135deg,#2a2b2f,#121316);
@@ -246,7 +244,6 @@ button{background:none;border:none;padding:0;color:inherit}
  <div class="ph">Sürüş Bilgileri</div>
  <div id="r1" class="row"><svg class="ic" viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12"/><path d="M6.5 7h5v4h-5z"/><path d="M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg><div><b id="range">--<small>km</small></b><span></span></div></div>
  <div id="r2" class="row"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><path d="M4 20 20 4"/></svg><div><b id="cons">--<small>L/100 km</small></b><span id="consL"></span></div></div>
- <div id="car3d"></div>
  <div id="r3" class="row"><svg class="ic" viewBox="0 0 24 24"><path d="M3.5 17a9 9 0 1 1 17 0"/><path d="m12 13 4-4"/><circle cx="12" cy="13.5" r="1.2"/><path d="M6.5 13.5h1M12 7.5v1M16.5 13.5h1"/></svg><div><b id="avg">--<small>km/h</small></b><span></span></div></div>
 </div>
 
@@ -306,7 +303,6 @@ button{background:none;border:none;padding:0;color:inherit}
 </div>
 
 <script src="common.js"></script>
-<script src="3d/mini.js"></script>
 <script>
 // Fit the 1280×720 design to any panel (1024×600, 800×480, 1280×720…).
 // Fill any panel edge to edge: scale to the height, then widen the layout (side panels grow,
@@ -821,8 +817,6 @@ function init3D() {
 }
 try { $('pl').style.cursor = 'pointer'; $('pl').addEventListener('click', function () { call('open', 'obd'); }); } catch (e) {}
 
-// the live 3D DS4 in the driving-info panel
-mountDS4($('car3d'), { az: 300, spin: 3, zoom: 1.35, lift: .22, onFail: function () {} });
 </script>
 </body>
 </html>

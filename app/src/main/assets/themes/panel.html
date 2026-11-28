@@ -108,7 +108,6 @@ body.day svg.seg7 .on{filter:none}
     <div class="num glow" id="cons">--.-<small>L/100</small></div>
     <div class="lbl" style="margin-top:1vh"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20 9 4M20 20 15 4M12 6v2M12 11v2M12 16v3"/></svg></div>
     <div class="num glow" id="trip">---.-<small>km</small></div>
-    <div id="car3d" style="position:relative;flex:1;min-height:12vh;margin:0 -1vh -1vh"></div>
   </div>
 
   <div class="box" id="mid">
@@ -141,7 +140,6 @@ body.day svg.seg7 .on{filter:none}
 </div>
 <div id="veil" style="position:fixed;top:0;right:0;bottom:0;left:0;background:#000;pointer-events:none;opacity:0;z-index:25"></div>
 <script src="common.js"></script>
-<script src="3d/mini.js"></script>
 <script>
 // Tell-tale style pictograms for the key row (no words)
 var K = [
@@ -274,8 +272,6 @@ car.on(function (s) {
 });
 $('left').style.cursor = 'pointer'; $('left').addEventListener('click', function () { call('open', 'obd'); });
 
-// 3D DS4 as a glowing VFD outline (strong units / switched on)
-if (use3D()) mountDS4($('car3d'), { az: 60, spin: 5, wire: true, wireColor: 0x56F2FF, zoom: 1.1, lift: .25, onFail: function () {} });
 </script>
 </body>
 </html>

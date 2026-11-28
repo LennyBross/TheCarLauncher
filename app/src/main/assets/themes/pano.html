@@ -66,10 +66,9 @@ button:active{transform:scale(.93);filter:brightness(1.15)}
 #ql svg{width:3vh;height:3vh}
 
 /* clock */
-#clk{display:grid;grid-template-columns:1fr 1.15fr;align-items:center;padding:0 2.4vh 0 3.4vh}
-#clkT{display:flex;flex-direction:column;align-items:flex-start}
-#car3d{position:relative;height:100%;margin-right:-2vh}
-#clock{font-size:12vh;font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+#clk{display:flex;flex-direction:column;align-items:center;justify-content:center}
+#clkT{display:flex;flex-direction:column;align-items:center}
+#clock{font-size:15vh;font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
 #date{font-size:2.8vh;color:var(--mut);margin-top:1.4vh}
 #tmp{display:flex;align-items:center;gap:.8vh;font-size:2.8vh;font-weight:600;margin-top:1.2vh}
 #tmp svg{width:2.6vh;height:2.6vh}
@@ -87,7 +86,6 @@ button:active{transform:scale(.93);filter:brightness(1.15)}
 .t.warn{background:rgba(233,150,30,.16)}
 </style>
 <script src="common.js"></script>
-<script src="3d/mini.js"></script>
 </head>
 <body>
 <nav id="rail">
@@ -138,7 +136,6 @@ button:active{transform:scale(.93);filter:brightness(1.15)}
     <div id="date"></div>
     <div id="tmp"><svg class="ic" viewBox="0 0 24 24"><path d="M10 14V5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0z"/></svg><span id="temp">--°C</span><span id="tempL" style="color:var(--mut);font-weight:500">dış</span></div>
     </div>
-    <div id="car3d"></div>
   </section>
 
   <section class="card" id="veh">
@@ -254,8 +251,6 @@ car.on(function (s) {
   $('tC').classList.toggle('warn', ov.cool != null && ov.cool > 108);
 });
 
-// the live 3D DS4 beside the clock
-mountDS4($('car3d'), { az: 320, spin: 4, zoom: 1.35, lift: .26, onFail: function () {} });
 </script>
 </body>
 </html>

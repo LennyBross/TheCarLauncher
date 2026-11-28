@@ -119,6 +119,7 @@ public class LauncherActivity extends Activity implements LocationTracker.Listen
         com.thecarlauncher.util.CrashLog.install(this);
         com.thecarlauncher.util.StartupConnect.onLauncherStart(this);
         com.thecarlauncher.util.WebViewCheck.maybeAsk(this);
+        try { com.thecarlauncher.car.CarData.seedOwnerFigures(this); } catch (Throwable ignored) { }
         com.thecarlauncher.media.Tone.get(this).init();
         com.thecarlauncher.util.BringBack.launcherTask = getTaskId();
         hadAllFiles = Storage.hasAllFiles();
