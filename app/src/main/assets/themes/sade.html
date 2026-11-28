@@ -22,9 +22,10 @@ button{font-family:inherit;color:inherit;border:none;background:none;cursor:poin
 #top button svg{width:2.6vh;height:2.6vh}
 #top button.on{background:var(--a);border-color:var(--a);color:var(--aFg)}
 
-#mid{position:fixed;left:5vh;right:5vh;top:13vh;height:48vh;display:grid;grid-template-columns:1.15fr 1px 1fr;gap:5vh;align-items:center}
+#mid{position:fixed;left:5vh;right:5vh;top:13vh;height:48vh;display:grid;grid-template-columns:.95fr 1.1fr 1px .85fr;gap:3.4vh;align-items:center}
+#car3d{position:relative;height:100%}
 #spdW{display:flex;flex-direction:column;justify-content:center}
-#spd{font-size:27vh;font-weight:200;letter-spacing:-.06em;line-height:.85;font-variant-numeric:tabular-nums}
+#spd{font-size:24vh;font-weight:200;letter-spacing:-.06em;line-height:.85;font-variant-numeric:tabular-nums}
 #spdU{display:flex;align-items:baseline;gap:2vh;margin-top:2vh;font-size:2.6vh;color:var(--mut)}
 #spdU b{font-size:4vh;font-weight:600;color:var(--a)}
 #vr{width:1px;height:70%;background:var(--line)}
@@ -50,6 +51,7 @@ button{font-family:inherit;color:inherit;border:none;background:none;cursor:poin
 #keys button svg{width:3.8vh;height:3.8vh}
 </style>
 <script src="common.js"></script>
+<script src="3d/mini.js"></script>
 </head>
 <body>
 <div id="top">
@@ -61,6 +63,7 @@ button{font-family:inherit;color:inherit;border:none;background:none;cursor:poin
 
 <div id="mid">
   <div id="spdW"><div id="spd">0</div><div id="spdU">km/h<b id="gear"></b></div></div>
+  <div id="car3d"></div>
   <div id="vr"></div>
   <div id="info">
     <div class="row"><span>Menzil</span><b id="rng">—</b><small>km</small></div>
@@ -121,6 +124,9 @@ car.on(function (s) {
   $('prog').style.width = s.dur ? Math.min(100, (s.pos || 0) / s.dur * 100) + '%' : '0';
   if (s.artId !== artId) { artId = s.artId; var u = s.artId ? call('mediaArt') : ''; $('cov').innerHTML = u ? '<img src="' + u + '" alt="">' : NOTE; }
 });
+
+// the live 3D DS4 between the speed and the figures
+mountDS4($('car3d'), { az: 310, spin: 3, zoom: 1.0, lift: .24, onFail: function () {} });
 </script>
 </body>
 </html>

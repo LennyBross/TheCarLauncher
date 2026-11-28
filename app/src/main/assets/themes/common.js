@@ -306,13 +306,7 @@ function sharpRatio() {
   var d = window.devicePixelRatio || 1;
   return (navigator.hardwareConcurrency || 0) >= 6 ? Math.min(2.25, Math.max(1.5, d * 1.5)) : Math.min(d, 1.25);
 }
-function use3D() {
-  var p = store('myds.3d');
-  if (p === 'photo') return false;
-  if (store('myds.carimg') === 'own') return false;
-  if (p === '3d') return true;
-  return (navigator.hardwareConcurrency || 0) >= 6;
-}
+function use3D() { return true; }   // every theme shows the live 3D DS4; a photo only where WebGL fails
 // ---- Home-screen picture of the car ----------------------------------------------------------------
 // 'front' = the real ¾ front photo; 'own' = the owner's own photo (from the USB stick: arac.jpg, or picked
 // in the gallery; kept only in the app's files). myds.carbg: 'cut' = background removed, 'keep' = as taken.

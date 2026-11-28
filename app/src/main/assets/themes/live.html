@@ -117,7 +117,7 @@ body.photo #spin,body.photo #glowF,body.photo #glowR,body.photo .blk{display:blo
 </div>
 
 <div id="alerts"></div>
-<button class="key" id="carPhotoBtn" aria-label="Araç fotoğrafını değiştir" style="position:fixed;right:3vh;top:26vh;z-index:5;height:6.4vh;padding:0 2vh;border:none;border-radius:3.2vh;display:flex;align-items:center;gap:1vh;font-family:inherit;font-size:2.1vh;font-weight:600;color:var(--fg);background:rgba(255,255,255,.10);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)"><svg viewBox="0 0 24 24" style="width:3vh;height:3vh" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>Fotoğraf</button>
+<button class="key" id="carPhotoBtn" aria-label="Araç fotoğrafını değiştir" style="display:none !important;position:fixed;right:3vh;top:26vh;z-index:5;height:6.4vh;padding:0 2vh;border:none;border-radius:3.2vh;display:flex;align-items:center;gap:1vh;font-family:inherit;font-size:2.1vh;font-weight:600;color:var(--fg);background:rgba(255,255,255,.10);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)"><svg viewBox="0 0 24 24" style="width:3vh;height:3vh" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>Fotoğraf</button>
 
 <div id="trip">
   <div class="card st"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20 9 4M20 20 15 4M12 6v2M12 11v2M12 16v3"/></svg><div><div class="lab">MENZİL</div><b class="n" id="rng">--</b><small>km</small></div></div>
@@ -452,7 +452,7 @@ var fpsN = 0, fpsT = 0, slow = 0;
 function fpsTick(now) {
   if (!window.__shown3d) return;
   fpsN++; if (!fpsT) fpsT = now;
-  if (now - fpsT > 1000) { var fps = fpsN * 1000 / (now - fpsT); fpsN = 0; fpsT = now; slow = fps < 10 ? slow + 1 : 0; if (slow >= 4) toPhoto('fps'); }
+  if (now - fpsT > 1000) { var fps = fpsN * 1000 / (now - fpsT); fpsN = 0; fpsT = now; slow = 0; }   // 3D stays: no switching to photos on a busy moment
 }
 (function () {
   var ce = console.error;
@@ -466,7 +466,7 @@ if (!use3D()) toPhoto('pref');
 else {
   var ls = function (l, done) { if (!l.length) return done(); var e = document.createElement('script'); e.src = l[0]; e.onload = function () { ls(l.slice(1), done); }; e.onerror = function () { toPhoto('nofile'); }; document.body.appendChild(e); };
   ls(['3d/three.min.js', '3d/GLTFLoader.js'], function () { try { init3D(); } catch (e) { toPhoto('error'); } });
-  setTimeout(function () { if (!window.__shown3d) toPhoto('slow'); }, 15000);
+  setTimeout(function () { if (!window.__shown3d) toPhoto('slow'); }, 45000);   // only if the model never appears
 }
 window.__sleep = function (v) { window.__asleep = v; };
 

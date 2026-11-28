@@ -108,6 +108,36 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;strok
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:3vh;border-top:1px solid var(--line);padding-top:3vh}
 .stats span{display:block;font-size:1.7vh;letter-spacing:.24em;text-transform:uppercase;color:var(--mut)}
 .stats b{display:block;margin-top:1vh;font-family:'Jost';font-weight:300;font-size:3.6vh}
+
+/* ---- Hi-Fi in each home theme's own look (html.t<id>, set below), night and day ---- */
+html.t8 body{--bg:#0B0A08;--fg:#F2EEE6;--mut:#9C9384;--card:#15130F;--card2:#1D1A15;--line:rgba(201,168,106,.16);--line2:rgba(201,168,106,.28);--a:#C9A86A;--on:#0B0A08}
+html.t8 body.day{--bg:#EFEBE3;--fg:#1B1814;--mut:#6F675A;--card:#FBF9F5;--card2:#F2EEE6;--line:rgba(120,95,50,.16);--line2:rgba(120,95,50,.3);--a:#9A7A3C;--on:#fff}
+html.t7 body{--bg:#060606;--fg:#F4F4F4;--mut:#8E8E8E;--card:rgba(255,255,255,.05);--card2:rgba(255,255,255,.09);--line:rgba(255,255,255,.10);--line2:rgba(255,255,255,.18);--a:#FFFFFF;--on:#060606;
+  background:radial-gradient(70vw 70vh at 80% 0%,rgba(255,255,255,.06),transparent 70%),#060606}
+html.t7 body.day{--bg:#E9E9E7;--fg:#111;--mut:#5E5E5E;--card:rgba(255,255,255,.72);--card2:#fff;--line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.16);--a:#111;--on:#fff;background:#E9E9E7}
+html.t7 .pre2,html.t7 .knob,html.t7 .mood,html.t7 .cd{-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+html.t11 body{--bg:#000;--fg:#fff;--mut:#BDBDBD;--card:#141414;--card2:#1F1F1F;--line:#3A3A3A;--line2:#555;--a:#FFB000;--on:#000}
+html.t11 body.day{--bg:#ECECEC;--fg:#000;--mut:#3F3F3F;--card:#fff;--card2:#F4F4F4;--line:#C9C9C9;--line2:#9a9a9a;--a:#8A5A00;--on:#fff}
+html.t11 .mood,html.t11 .seg button,html.t11 .pre2 small,html.t11 .svc small{font-size:2.5vh !important}
+html.t9 body{--bg:#05070C;--fg:#F3F6FA;--mut:#93A0B3;--card:rgba(255,255,255,.06);--card2:rgba(255,255,255,.1);--line:rgba(255,255,255,.1);--line2:rgba(255,255,255,.18);--a:#4DA3FF;--on:#04121F;
+  background:radial-gradient(60vw 60vh at 10% 20%,rgba(255,150,0,.16),transparent 70%),radial-gradient(60vw 70vh at 90% 40%,rgba(40,140,255,.2),transparent 70%),#05070C}
+html.t9 body.day{--bg:#EEF2F7;--fg:#0E1520;--mut:#4F5B6B;--card:rgba(255,255,255,.75);--card2:#fff;--line:rgba(0,0,0,.08);--line2:rgba(0,0,0,.16);--a:#1565C0;--on:#fff;
+  background:radial-gradient(60vw 60vh at 10% 20%,rgba(255,170,60,.18),transparent 70%),radial-gradient(60vw 70vh at 90% 40%,rgba(60,140,255,.18),transparent 70%),#EEF2F7}
+html.t4 body{--bg:#020607;--fg:#56F2FF;--mut:#2C8A93;--card:#06111300;--card2:#0A1A1D;--line:rgba(86,242,255,.18);--line2:rgba(86,242,255,.35);--a:#56F2FF;--on:#021013;font-family:'Share Tech Mono',monospace}
+html.t4 body .J,html.t4 body h1,html.t4 body b{font-family:'Share Tech Mono',monospace !important;text-shadow:0 0 .8vh rgba(86,242,255,.45)}
+html.t4 body.day{--bg:#E4ECEC;--fg:#0B5560;--mut:#4C7F86;--card:#F4F8F8;--card2:#fff;--line:rgba(11,85,96,.18);--line2:rgba(11,85,96,.35);--a:#0B7F8F;--on:#fff}
+html.t4 body.day .J,html.t4 body.day h1,html.t4 body.day b{text-shadow:none}
+html.t12 body{--bg:#1C1D20;--fg:#F3F4F6;--mut:#A9ADB5;--card:#2A2B2F;--card2:#323338;--line:transparent;--line2:#45474D;--a:#E9B530;--on:#1C1D20;font-family:'Inter',sans-serif}
+html.t12 body.day{--bg:#ECEEF2;--fg:#16171A;--mut:#5D626B;--card:#fff;--card2:#F3F4F7;--line:transparent;--line2:#D9DCE2;--a:#C8961B;--on:#fff}
+html.t12 body .J,html.t12 body h1{font-family:'Inter',sans-serif !important;font-weight:700 !important;letter-spacing:-.01em !important;text-transform:none !important}
+html.t12 .pre2,html.t12 .knob,html.t12 .mood,html.t12 .cd{border-radius:2.6vh !important;box-shadow:0 .4vh 1.6vh rgba(20,25,40,.06)}
+html.t13 body{--bg:#000;--fg:#F5F5F2;--mut:#8C8C88;--card:#0B0B0B;--card2:#121212;--line:#262626;--line2:#3A3A3A;--a:#E8C547;--on:#000;font-family:'Inter',sans-serif}
+html.t13 body.day{--bg:#F6F5F1;--fg:#111110;--mut:#6E6D68;--card:#fff;--card2:#F0EFEA;--line:#DEDCD5;--line2:#C9C7BF;--a:#B8860B;--on:#fff}
+html.t13 body .J,html.t13 body h1{font-family:'Inter',sans-serif !important;font-weight:200 !important}
+html[class*=" t"] body,html[class^="t"] body{background-color:var(--bg)}
+html.t8 .mood.on,html.t7 .mood.on,html.t11 .mood.on,html.t9 .mood.on,html.t4 .mood.on,html.t12 .mood.on,html.t13 .mood.on{background:var(--a) !important;color:var(--on) !important;border-color:var(--a) !important}
+html.t8 .seg button.on,html.t7 .seg button.on,html.t11 .seg button.on,html.t9 .seg button.on,html.t4 .seg button.on,html.t12 .seg button.on,html.t13 .seg button.on{background:var(--a) !important;color:var(--on) !important}
+body{transition:background-color .4s,color .4s}
 </style>
 </head>
 <body class="noanim">
@@ -190,6 +220,7 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;strok
   </div>
 </div>
 <script src="common.js"></script>
+<script>try { document.documentElement.classList.add('t' + (window.Car && Car.theme ? Car.theme() : 7)); } catch (e) {}</script>
 <script>
 var VIEWS = [['MYDS', '01'], ['DENON', '02'], ['DRIVE', '03']], cur = 0;
 var THEME = window.Car && Car.theme ? Car.theme() : 10;
