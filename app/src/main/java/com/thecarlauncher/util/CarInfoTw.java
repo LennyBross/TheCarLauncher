@@ -32,6 +32,7 @@ public final class CarInfoTw {
     /** Latest value per callback code, e.g. 42 → "300.0 km". */
     public static final Map<Integer, String> last = new TreeMap<>();
     public static volatile long at;
+    static final java.util.ArrayDeque<String> hist = new java.util.ArrayDeque<>();
     public static volatile String status = "";
     private static IBinder svc;
     private static ServiceConnection conn;
@@ -57,7 +58,7 @@ public final class CarInfoTw {
                     }
                     v = b.toString();
                 }
-                synchronized (last) { last.put(code, v); }
+                synchronized (last) { last.put(code, v); hist.addLast(String.format(Locale.ROOT, "%tT %d=%s", System.currentTimeMillis(), code, v)); while (hist.size() > 300) hist.removeFirst(); }
                 at = System.currentTimeMillis();
                 onValue(code, v);
             } catch (Throwable t) { status = "cb " + code + " " + t; }
@@ -104,7 +105,8 @@ public final class CarInfoTw {
 
     public static String dump() {
         StringBuilder b = new StringBuilder(status).append('\n');
-        synchronized (last) { for (Map.Entry<Integer, String> e : last.entrySet()) b.append(String.format(Locale.ROOT, "%2d: %s%n", e.getKey(), e.getValue())); }
+        synchronized (last) { for (Map.Entry<Integer, String> e : last.entrySet()) b.append(String.format(Locale.ROOT, "%2d: %s%n", e.getKey(), e.getValue()));
+            b.append("-- geçmiş --\n"); for (String h : hist) if (!h.contains(" 1=") && !h.contains(" 3=")) b.append(h).append('\n'); }
         return b.toString();
     }
 
