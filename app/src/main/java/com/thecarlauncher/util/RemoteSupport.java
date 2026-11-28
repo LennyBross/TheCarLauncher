@@ -525,6 +525,11 @@ public final class RemoteSupport {
                 case "uartlog": return UartTw.dump(a);
                 case "uarttur": return UartTw.kinds();
                 case "uartsil": UartTw.clear(); return "temizlendi";
+                case "twdinle": return TwSniff.start(a.trim());
+                case "twlog": return TwSniff.dump(a);
+                case "twtur": return TwSniff.kinds();
+                case "twsil": TwSniff.clear(); return "temizlendi";
+                case "twkapat": return TwSniff.stop();
                 case "carbirak": CarInfoTw.stop(c); return "bırakıldı";
                 case "fmtest": return fmProbe(c);
                 case "elm": { String r = com.catarapatara.Obd.raw(a.trim().toUpperCase(Locale.ROOT)); return r == null ? "yanıt yok (OBD bağlı mı?)" : r; }
