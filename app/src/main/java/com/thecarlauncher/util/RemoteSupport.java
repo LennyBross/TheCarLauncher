@@ -518,6 +518,10 @@ public final class RemoteSupport {
                 case "aidl": return aidlDump(c, a.trim());
                 case "kod": return proxyCodes(c, a.trim());
                 case "carbind": return carBind(c, a.trim());
+                case "stubdene": { String[] q = a.trim().split("\\s+"); return CarInfoTw.probe(c, q[0], q.length > 1 ? Integer.parseInt(q[1]) : 20); }
+                case "carkayit": return CarInfoTw.start(c, Integer.parseInt(a.trim()));
+                case "cardeger": return CarInfoTw.dump();
+                case "carbirak": CarInfoTw.stop(c); return "bırakıldı";
                 case "fmtest": return fmProbe(c);
                 case "elm": { String r = com.catarapatara.Obd.raw(a.trim().toUpperCase(Locale.ROOT)); return r == null ? "yanıt yok (OBD bağlı mı?)" : r; }
                 case "motor": {
