@@ -34,8 +34,9 @@ public final class TwSniff {
 
     public static synchronized String start(String spec) {
         if (tw != null) return "zaten açık · " + status;
-        int from = 0x0001, to = 0x7FFF;
+        int from = 0x0100, to = 0x011F;
         try { if (spec.contains("-")) { String[] p = spec.split("-"); from = Integer.decode(p[0].trim()); to = Integer.decode(p[1].trim()); } } catch (Throwable ignored) { }
+        if (to - from > 63) return "en fazla 64 kanal (çökme riski)";
         short[] ids = new short[to - from + 1];
         for (int k = 0; k < ids.length; k++) ids[k] = (short) (from + k);
         try {
