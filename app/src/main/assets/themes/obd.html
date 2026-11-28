@@ -24,7 +24,7 @@ body.t-panel .n{font-weight:400;text-shadow:0 0 1vh currentColor}
 .card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line)}
 body.t-stock .card{background:linear-gradient(180deg,rgba(32,33,36,.9),rgba(12,12,14,.9));box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 1px 0 rgba(255,255,255,.15)}
 body.day.t-stock .card{background:#fff}
-.w{position:fixed;inset:0;display:grid;grid-template-columns:1fr 1fr 30%;grid-template-rows:8vh 1fr 22vh;gap:2vh;padding:2.4vh}
+.w{position:fixed;top:0;right:0;bottom:0;left:0;display:grid;grid-template-columns:1fr 1fr 30%;grid-template-rows:8vh 1fr 22vh;gap:2vh;padding:2.4vh}
 .top{grid-column:1/4;display:flex;align-items:center;gap:1.6vh}
 .rb{width:7vh;height:7vh;border-radius:50%;border:none;background:var(--chip);color:var(--fg);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--line);flex-shrink:0}
 .rb svg{width:3.6vh;height:3.6vh}
@@ -57,14 +57,14 @@ body.day.t-stock .card{background:#fff}
 .t b small{font-size:2vh;color:var(--mut);margin-left:.6vh;font-weight:500;font-style:normal}
 .t.hide{display:none}
 /* no adapter */
-#none{position:fixed;inset:12vh 2.4vh 2.4vh;display:none;flex-direction:column;align-items:center;justify-content:center;gap:2.4vh;text-align:center}
+#none{position:fixed;top:12vh;right:2.4vh;bottom:2.4vh;left:2.4vh;display:none;flex-direction:column;align-items:center;justify-content:center;gap:2.4vh;text-align:center}
 #none.on{display:flex}
 #none svg.big{width:16vh;height:16vh;color:var(--a)}
 #none b{font-size:3.6vh}
 #none p{font-size:2.2vh;color:var(--mut);max-width:70vh;line-height:1.5}
 #none button{height:7vh;padding:0 4vh;border-radius:3.5vh;border:none;background:var(--a);color:#111;font-size:2.4vh;font-family:inherit;font-weight:600}
 /* codes */
-#sheet{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;padding:2.4vh 3vh;gap:1.6vh;z-index:5}
+#sheet{position:fixed;top:0;right:0;bottom:0;left:0;background:var(--bg);display:none;flex-direction:column;padding:2.4vh 3vh;gap:1.6vh;z-index:5}
 #sheet.on{display:flex}
 #codes{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1.4vh}
 .code{display:flex;align-items:center;gap:2vh;padding:2vh 2.4vh}
@@ -108,7 +108,7 @@ body.day.t-stock .card{background:#fff}
   <button class="key" id="setupA">Adaptörü ara</button>
 </div>
 
-<div id="adpM" style="position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;padding:2.4vh 3vh;gap:1.6vh;z-index:7">
+<div id="adpM" style="position:fixed;top:0;right:0;bottom:0;left:0;background:var(--bg);display:none;flex-direction:column;padding:2.4vh 3vh;gap:1.6vh;z-index:7">
   <div style="display:flex;align-items:center;gap:1.6vh">
     <button class="key rb" id="adpX" aria-label="Kapat"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <span class="n" style="font-size:3vh;flex:1">OBD adaptörü</span>
@@ -120,7 +120,7 @@ body.day.t-stock .card{background:#fff}
   <div id="adpL" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1.2vh"></div>
 </div>
 
-<div id="fillM" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+<div id="fillM" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:50;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
   <div class="card" style="width:min(92vw,110vh);padding:3vh 3.4vh;display:flex;flex-direction:column;gap:2.4vh">
     <div style="display:flex;align-items:center;gap:1.6vh"><span class="n" style="font-size:3.4vh;flex:1">Depoyu doldurdum</span><button class="key rb" id="fillX" aria-label="Kapat"><svg class="ic" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div style="font-size:2.3vh;color:var(--muted);line-height:1.45">Depoyu ağzına kadar doldurduğunda pompanın gösterdiği litreyi gir. MYDS bunu önceki dolumdan beri tahmin ettiği yakıtla karşılaştırır ve tüketim hesabını aracına göre düzeltir.</div>

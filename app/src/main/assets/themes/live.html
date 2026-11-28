@@ -21,7 +21,7 @@ body.day{background:radial-gradient(70% 70% at 50% 45%,#ffffff 0%,var(--bg) 70%)
 svg.ic{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .n{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-variant-numeric:tabular-nums}
 .card{background:var(--card);border-radius:var(--r);box-shadow:inset 0 0 0 1px var(--line);backdrop-filter:blur(6px)}
-#stage{position:fixed;inset:0}
+#stage{position:fixed;top:0;right:0;bottom:0;left:0}
 #c{position:absolute;left:0;top:7vh;width:100%;height:65vh}
 #spin{position:absolute;left:24%;top:12vh;width:52%;height:56vh;object-fit:contain;display:none;filter:drop-shadow(0 3vh 3vh rgba(0,0,0,.6))}
 #glowF,#glowR{position:absolute;top:38vh;width:30vh;height:18vh;border-radius:50%;opacity:0;transition:opacity .3s;pointer-events:none;display:none}
@@ -77,8 +77,8 @@ body.photo #spin,body.photo #glowF,body.photo #glowR,body.photo .blk{display:blo
 .opt{flex:1;min-height:9vh;border:none;border-radius:1.8vh;background:var(--chip);color:var(--fg);font-family:inherit;font-size:1.9vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6vh;padding:1vh}
 .opt svg{width:3.6vh;height:3.6vh;color:var(--a)}
 .opt.on{background:var(--a);color:#06121a}.opt.on svg{color:#06121a}
-#black{position:fixed;inset:0;background:#000;z-index:50;display:none}
-#learn{position:fixed;inset:0;background:var(--bg);z-index:20;display:none;flex-direction:column;padding:3vh;gap:1.6vh}
+#black{position:fixed;top:0;right:0;bottom:0;left:0;background:#000;z-index:50;display:none}
+#learn{position:fixed;top:0;right:0;bottom:0;left:0;background:var(--bg);z-index:20;display:none;flex-direction:column;padding:3vh;gap:1.6vh}
 #learn.on{display:flex}
 /* ---- layout v2 (owner's notes): trip facts in a row of boxes on top, no rpm bar,
    speed big + gear small on the left, the car on the right, bigger keys and type */
@@ -415,7 +415,7 @@ function liveOwn() {
   [].forEach.call(ph.children, function (im) { if (im.id !== 'ownCar') im.style.visibility = c.mode === 'front' ? '' : 'hidden'; });
   if (c.mode === 'front') { if (o) o.remove(); return; }
   if (!o) { o = document.createElement('img'); o.id = 'ownCar'; o.alt = ''; ph.appendChild(o); }
-  o.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:' + (c.mode === 'keep' ? 'cover;border-radius:3vh' : 'contain');
+  o.style.cssText = 'position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:' + (c.mode === 'keep' ? 'cover;border-radius:3vh' : 'contain');
   o.src = c.src;
 }
 $('carPhotoBtn').onclick = function (e) { e.stopPropagation(); carPhotoPicker(liveOwn); };
@@ -427,7 +427,7 @@ function toPhoto(why) {
   var holder = $('spin'), ph = document.createElement('div');
   ph.id = 'spin'; ph.style.cssText = holder.style.cssText; holder.parentNode.replaceChild(ph, holder);
   var cp = carPhoto(ph, { realOnly: true });
-  [].forEach.call(ph.children, function (im) { im.style.cssText += ';position:absolute;inset:0;width:100%;height:100%;object-fit:contain'; });
+  [].forEach.call(ph.children, function (im) { im.style.cssText += ';position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:contain'; });
   cp.show(phAz, true);
   liveOwn();
   var drag = null;

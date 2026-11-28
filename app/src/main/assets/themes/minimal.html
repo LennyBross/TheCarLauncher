@@ -15,7 +15,7 @@ body.t-ds4{--a:#5CC8B0;font-family:'Inter',sans-serif}
 body.t-panel{--a:var(--pv,#56F2FF);--fg:var(--pv,#56F2FF);--mut:var(--pv2,#2a8f98);font-family:'Share Tech Mono',monospace}
 body.day{--bg:#F4F2EE;--fg:#16171A;--mut:#6c6860;--chip:rgba(0,0,0,.06);--line:rgba(0,0,0,.12)}
 body.day.t-ds4{--a:#1F8F78}body.day.t-panel{--a:#007f8c;--fg:#007f8c}
-.c{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh}
+.c{position:fixed;top:0;right:0;bottom:0;left:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh}
 #clock{font-size:30vh;font-weight:600;line-height:.9;letter-spacing:-1vh;font-variant-numeric:tabular-nums}
 body.t-stock #clock,body.t-stock .big{font-style:italic}
 body.t-ds4 #clock,body.t-ds4 .big{font-family:'Space Grotesk','Inter',sans-serif;font-weight:700}
@@ -36,7 +36,7 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;strok
 #lvl{display:flex;gap:.7vh;align-items:flex-end;padding:0 1vh}
 #lvl i{display:block;width:1.2vh;border-radius:.6vh;background:var(--line)}
 #lvl i.on{background:var(--a)}
-#dim{position:fixed;inset:0;background:#000;pointer-events:none;opacity:0;transition:opacity .4s}
+#dim{position:fixed;top:0;right:0;bottom:0;left:0;background:#000;pointer-events:none;opacity:0;transition:opacity .4s}
 </style>
 </head>
 <body>

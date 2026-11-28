@@ -19,7 +19,7 @@ button{font-family:inherit;color:inherit;cursor:pointer}
 .J{font-family:'Jost',sans-serif}
 .cap{font-size:1.85vh;letter-spacing:.3em;text-transform:uppercase;color:var(--mut)}
 svg.ic{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-#app{position:fixed;inset:0;display:flex}
+#app{position:fixed;top:0;right:0;bottom:0;left:0;display:flex}
 /* rail */
 #rail{width:11.7vh;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5vh 0 4.4vh}
 #back{width:6.7vh;height:6.7vh;border-radius:50%;border:1px solid var(--line2);background:none;display:flex;align-items:center;justify-content:center}
@@ -29,7 +29,7 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;strok
 #num i{width:1px;height:7.8vh;background:var(--line2)}
 /* views */
 #views{flex:1;position:relative;overflow:hidden}
-.v{position:absolute;inset:0;padding:4.4vh 6.6vh 4vh 7.4vh;display:flex;flex-direction:column;transition:transform .45s cubic-bezier(.2,.7,.2,1),opacity .35s}
+.v{position:absolute;top:0;right:0;bottom:0;left:0;padding:4.4vh 6.6vh 4vh 7.4vh;display:flex;flex-direction:column;transition:transform .45s cubic-bezier(.2,.7,.2,1),opacity .35s}
 .noanim .v{transition:none !important}
 .v.off{opacity:0;pointer-events:none;visibility:hidden;transition:transform .45s,opacity .35s,visibility 0s .35s}
 /* home */
@@ -97,7 +97,7 @@ svg.ic{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;strok
 .gw{flex:1;display:flex;align-items:center;justify-content:center;gap:5.6vh}
 .dial{position:relative;border-radius:50%;padding:.6vh;background:var(--metal)}
 .dial>div{width:100%;height:100%;border-radius:50%;background:var(--bg);position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.dial svg{position:absolute;inset:0;width:100%;height:100%}
+.dial svg{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%}
 #spd{font-family:'Jost';font-weight:200;font-size:17vh;line-height:.9}
 .unit{font-size:1.9vh;letter-spacing:.3em;color:var(--mut);margin-top:1.4vh}
 #gear{font-size:1.9vh;letter-spacing:.3em;color:var(--mut);margin-bottom:1vh}
@@ -264,7 +264,7 @@ function setBl(b) { document.body.classList.toggle('blue', b === 'blue'); store(
 var SPK = [[44, 96, 14], [186, 96, 14], [8, 196, 22], [222, 196, 22], [8, 286, 18], [222, 286, 18], [18, 258, 10], [212, 258, 10], [182, 362, 34]];
 (function car() {
   var c = $('car'), u = function (v) { return (v / 400 * 55.6) + 'vh'; };
-  var h = '<div style="position:absolute;inset:0;border:1.5px solid var(--line2);border-color:rgba(127,127,127,.45);border-radius:' + u(96) + ' ' + u(96) + ' ' + u(54) + ' ' + u(54) + '"></div>'
+  var h = '<div style="position:absolute;top:0;right:0;bottom:0;left:0;border:1.5px solid var(--line2);border-color:rgba(127,127,127,.45);border-radius:' + u(96) + ' ' + u(96) + ' ' + u(54) + ' ' + u(54) + '"></div>'
     + '<div style="position:absolute;left:' + u(30) + ';top:' + u(88) + ';width:' + u(170) + ';height:' + u(56) + ';border:1px solid var(--line2);border-radius:' + u(30) + ' ' + u(30) + ' ' + u(6) + ' ' + u(6) + '"></div>'
     + '<div style="position:absolute;left:' + u(30) + ';top:' + u(170) + ';width:' + u(74) + ';height:' + u(70) + ';border-radius:' + u(10) + ';background:var(--card2)"></div>'
     + '<div style="position:absolute;left:' + u(126) + ';top:' + u(170) + ';width:' + u(74) + ';height:' + u(70) + ';border-radius:' + u(10) + ';background:var(--card2)"></div>'

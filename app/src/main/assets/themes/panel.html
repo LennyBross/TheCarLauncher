@@ -14,10 +14,10 @@ body.day{--bg:#d9dde0;--bez:#eef1f3;--vfd:#007f8c;--vfd2:#5f9aa0;--off:rgba(0,90
 body{background:var(--bg);color:var(--vfd);font-family:'Share Tech Mono',monospace;overflow:hidden;user-select:none}
 .glow{text-shadow:0 0 .9vh currentColor}
 body.day .glow{text-shadow:none}
-.d{position:fixed;inset:2.2vh;display:grid;grid-template-columns:30% 1fr 30%;grid-template-rows:9vh 1fr 14vh;gap:2vh}
+.d{position:fixed;top:2.2vh;right:2.2vh;bottom:2.2vh;left:2.2vh;display:grid;grid-template-columns:30% 1fr 30%;grid-template-rows:9vh 1fr 14vh;gap:2vh}
 .box{background:var(--bez);border-radius:1.4vh;box-shadow:inset 0 0 0 1px var(--edge),inset 0 0 4vh rgba(0,0,0,.6);position:relative;overflow:hidden}
 body.day .box{box-shadow:inset 0 0 0 1px var(--edge),0 .6vh 1.6vh rgba(0,0,0,.12)}
-.box::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);opacity:.5}
+.box::after{content:'';position:absolute;top:0;right:0;bottom:0;left:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);opacity:.5}
 body.day .box::after{opacity:.12}
 svg.ic{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 /* top strip */
@@ -139,7 +139,7 @@ body.day svg.seg7 .on{filter:none}
   <div class="lr"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg><input type="range" min="0" max="100" step="5" id="lkBri" aria-label="Ekran ışığı"><b id="lkBriT"></b></div>
   <div class="lr" style="justify-content:space-between" id="lkCol"></div>
 </div>
-<div id="veil" style="position:fixed;inset:0;background:#000;pointer-events:none;opacity:0;z-index:25"></div>
+<div id="veil" style="position:fixed;top:0;right:0;bottom:0;left:0;background:#000;pointer-events:none;opacity:0;z-index:25"></div>
 <script src="common.js"></script>
 <script src="3d/mini.js"></script>
 <script>

@@ -14,7 +14,7 @@ body{background:var(--bg);color:var(--fg);font-family:'Montserrat',sans-serif;ov
 body.day{--bg:#EEF1F4;--fg:#11161D;--card:#FFFFFF;--chip:#E9ECF0;--mut:#5d6672;--a:#8A6A3A;--line:rgba(0,0,0,.08);--on:#fff}
 body.t-ds4{font-family:'Inter',sans-serif}
 svg.ic{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.w{position:fixed;inset:0;padding:2.2vh 3vh;display:flex;flex-direction:column;gap:1.8vh}
+.w{position:fixed;top:0;right:0;bottom:0;left:0;padding:2.2vh 3vh;display:flex;flex-direction:column;gap:1.8vh}
 .top{display:flex;align-items:center;gap:1.6vh}
 .rb{width:7vh;height:7vh;border-radius:50%;border:none;background:var(--chip);color:var(--fg);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px var(--line)}
 .rb svg{width:3.6vh;height:3.6vh}
@@ -32,7 +32,7 @@ h1{font-size:3.4vh;font-weight:600;margin:0}
 .trk::before{content:'';position:absolute;left:1vh;right:1vh;top:50%;height:1px;background:var(--line)}
 .fill{position:absolute;left:2.6vh;width:1.2vh;border-radius:.6vh;background:var(--a);opacity:.55}
 .knob{position:absolute;left:.6vh;width:5.2vh;height:3.4vh;border-radius:1.7vh;background:var(--a);box-shadow:0 .6vh 1.4vh rgba(0,0,0,.35)}
-#curve{position:absolute;inset:0;pointer-events:none}
+#curve{position:absolute;top:0;right:0;bottom:0;left:0;pointer-events:none}
 .fx{display:grid;grid-template-columns:repeat(3,1fr);gap:2.4vh}
 .fx label{display:flex;justify-content:space-between;font-size:2vh;color:var(--mut);margin-bottom:.8vh}
 .fx label b{color:var(--fg);font-weight:600}

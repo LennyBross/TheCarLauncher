@@ -21,10 +21,10 @@ input[type=range]::-webkit-slider-runnable-track{height:1.67vh;border-radius:.83
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:5vh;height:5vh;margin-top:-1.67vh;border-radius:50%;background:#fff;box-shadow:0 .28vh 1.11vh rgba(0,0,0,.4)}
 /* Engine-sound control: a quiet glass disc with a thin live rpm ring (no red racing button) */
 #start{position:relative;width:min(30vh,26vw);height:min(30vh,26vw);border:none;border-radius:50%;padding:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent}
-#start svg.rg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(135deg)}
+#start svg.rg{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;transform:rotate(135deg)}
 #start .trk{fill:none;stroke:var(--track);stroke-width:2.2;stroke-linecap:round}
 #start .arc{fill:none;stroke:var(--a);stroke-width:2.6;stroke-linecap:round;transition:stroke-dasharray .12s linear;filter:drop-shadow(0 0 .8vh var(--a))}
-#start .cap{position:absolute;inset:16%;border-radius:50%;background:radial-gradient(circle at 50% 28%,rgba(255,255,255,.14),rgba(255,255,255,.02) 60%),var(--card);
+#start .cap{position:absolute;top:16%;right:16%;bottom:16%;left:16%;border-radius:50%;background:radial-gradient(circle at 50% 28%,rgba(255,255,255,.14),rgba(255,255,255,.02) 60%),var(--card);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.10),0 1.4vh 3vh rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6vh;color:var(--muted);transition:transform .08s,color .3s,box-shadow .3s}
 #start .cap svg{width:38%;height:38%}
 #start .cap b{font-family:'Space Grotesk',sans-serif;font-size:2.4vh;color:var(--fg);font-variant-numeric:tabular-nums;min-height:2.6vh}
@@ -48,7 +48,7 @@ body{background:
   repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 7px),
   var(--bg) !important}
 body.day{background:radial-gradient(60vw 60vh at 78% 30%,#FFFFFF,transparent 70%),#F6F6F6 !important}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.16;mix-blend-mode:overlay;
+body::after{content:'';position:fixed;top:0;right:0;bottom:0;left:0;pointer-events:none;z-index:999;opacity:.16;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E")}
 .c,.dock,#carBox{background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 45%,rgba(255,255,255,.035)) ,var(--card) !important;
   -webkit-backdrop-filter:blur(18px) saturate(120%);backdrop-filter:blur(18px) saturate(120%);

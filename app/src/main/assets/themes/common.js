@@ -387,7 +387,7 @@ function carCutout(srcUrl, cb) {
 function carPhotoPicker(onDone) {
   var old = document.getElementById('cpPick'); if (old) old.remove();
   var M = document.createElement('div'); M.id = 'cpPick';
-  M.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.66);display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif';
+  M.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:9000;background:rgba(0,0,0,.66);display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif';
   M.innerHTML = '<div class="cpIn" style="width:min(94vw,150vh);background:#17191d;color:#fff;border-radius:3vh;padding:3vh 3.4vh;display:flex;flex-direction:column;gap:2.2vh;box-shadow:0 2vh 6vh rgba(0,0,0,.6)">' +
     '<div style="display:flex;align-items:center;gap:1.6vh"><b style="font-size:3.4vh;flex:1">Ana ekrandaki araç fotoğrafı</b><button id="cpX" style="width:7vh;height:7vh;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:3.4vh">✕</button></div>' +
     '<div id="cpOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:2vh"></div>' +
@@ -502,4 +502,42 @@ function carPhotoPicker(onDone) {
       if (busy !== e.classList.contains('mydsBusy')) e.classList.toggle('mydsBusy', busy);
     });
   }, 1000);
+})();
+
+// ---- Old WebView (Chrome < 84, e.g. the TS10's WebView 80): flexbox ignores "gap". Detect it and give the
+// children margins instead, so cards and keys keep their spacing. New elements are handled as they appear.
+(function () {
+  function supported() {
+    var f = document.createElement('div'); f.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden';
+    f.appendChild(document.createElement('div')); f.appendChild(document.createElement('div'));
+    document.body.appendChild(f); var ok = f.scrollHeight === 1; f.remove(); return ok;
+  }
+  function fix(root) {
+    var all = (root || document.body).querySelectorAll('*'), n = 0;
+    for (var i = 0; i < all.length && n < 4000; i++) {
+      var e = all[i], cs = getComputedStyle(e);
+      if (cs.display !== 'flex' && cs.display !== 'inline-flex') continue;
+      var cg = parseFloat(cs.columnGap) || 0, rg = parseFloat(cs.rowGap) || 0;
+      if (!cg && !rg) continue;
+      var col = cs.flexDirection.indexOf('column') === 0, rev = cs.flexDirection.indexOf('reverse') > 0, g = col ? rg : cg;
+      if (!g || e.__gapFix === g) continue;
+      e.__gapFix = g; n++;
+      var kids = [].filter.call(e.children, function (k) { var p = getComputedStyle(k).position; return p !== 'absolute' && p !== 'fixed' && getComputedStyle(k).display !== 'none'; });
+      kids.forEach(function (k, j) {
+        if (j === 0) return;
+        var side = col ? (rev ? 'marginBottom' : 'marginTop') : (rev ? 'marginRight' : 'marginLeft');
+        if (!parseFloat(k.style[side])) k.style[side] = g + 'px';
+      });
+    }
+  }
+  function start() {
+    if (supported() && !window.__twinOldWebView) return;
+    document.documentElement.classList.add('nogap');
+    fix();
+    var t = null;
+    new MutationObserver(function () { if (t) return; t = setTimeout(function () { t = null; fix(); }, 250); })
+      .observe(document.body, { childList: true, subtree: true });
+    addEventListener('resize', function () { [].forEach.call(document.querySelectorAll('*'), function (e) { e.__gapFix = 0; }); fix(); });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

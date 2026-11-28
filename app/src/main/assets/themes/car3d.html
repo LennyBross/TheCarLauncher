@@ -13,14 +13,14 @@ body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif}
 #stage{flex:1;min-width:0;border-radius:3.33vh;overflow:hidden;position:relative;background:#000}
 body.day{--bg:#EEF1F4;--fg:#11161D;--card:#FFFFFF;--muted:#56606C;--sep:#E3E8EE;--chip:#EEF1F4;--a:#1F8F78}
 body.day #stage{background:#FFFFFF;box-shadow:inset 0 0 0 1px #E3E8EE}
-#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#c{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;display:block;touch-action:none}
 .chip{border:none;border-radius:1.67vh;background:var(--chip);color:var(--fg);height:6.67vh;padding:0 2.22vh;font-size:2.22vh;font-weight:600;white-space:nowrap}
 .chip.on{background:var(--a);color:#0B0E13}
 #views{position:absolute;left:2.22vh;right:2.22vh;bottom:2.22vh;display:flex;gap:1.11vh;justify-content:center;flex-wrap:wrap}
 #top{position:absolute;left:2.22vh;right:2.22vh;top:2.22vh;display:flex;align-items:center;gap:1.67vh}
 .sw{width:4.72vh;height:4.72vh;border-radius:50%;border:.33vh solid rgba(255,255,255,.18);padding:0}
 .sw.on{border-color:#fff}
-#load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:2.5vh}
+#load{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:2.5vh}
 #side{width:min(66.67vh,38vw);flex-shrink:0;display:flex;flex-direction:column;gap:2.22vh;min-height:0}
 .card{border-radius:3.33vh;background:var(--card);padding:2.78vh 3.06vh}
 .row{display:flex;align-items:baseline;justify-content:space-between;gap:1.67vh;padding:1.25vh 0;border-bottom:1px solid var(--sep)}
@@ -46,7 +46,7 @@ body.t-panel #stage{background:#020405;box-shadow:inset 0 0 0 1px rgba(var(--pvr
 body.t-panel .card,body.t-panel .tile,body.t-panel .chip{background:transparent;box-shadow:inset 0 0 0 1px rgba(var(--pvr,86,242,255),.25);color:var(--fg)}
 body.t-panel .chip.on{background:rgba(var(--pvr,86,242,255),.14);color:var(--fg);box-shadow:inset 0 0 0 1px var(--a),0 0 1.6vh rgba(var(--pvr,86,242,255),.3)}
 body.t-panel .sg,body.t-panel .tile b{font-family:'Share Tech Mono',monospace;font-weight:400;text-shadow:0 0 1vh rgba(var(--pvr,86,242,255),.6)}
-#sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:5}
+#sheet{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:5}
 #sheet .box{width:min(110vh,92vw);max-height:92vh;overflow:auto;border-radius:3.33vh;background:var(--card);padding:3.33vh}
 #sheet label{display:flex;flex-direction:column;gap:.83vh;font-size:1.94vh;color:var(--muted)}
 #sheet input{height:6.67vh;border-radius:1.67vh;border:1px solid #2E3744;background:#0F141B;color:var(--fg);font-size:2.5vh;padding:0 1.94vh;font-family:inherit}
@@ -66,7 +66,7 @@ body.t-panel .sg,body.t-panel .tile b{font-family:'Share Tech Mono',monospace;fo
 <button class="key chip ik on" id="spin" aria-label="360° dönüş"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button>
 </div>
 <div id="views"></div>
-<div id="picM" style="display:none;position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.66);align-items:center;justify-content:center">
+<div id="picM" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:60;background:rgba(0,0,0,.66);align-items:center;justify-content:center">
   <div style="width:min(94vw,170vh);background:#17191d;box-shadow:0 2vh 6vh rgba(0,0,0,.6);border-radius:3vh;padding:3vh 3.4vh;display:flex;flex-direction:column;gap:2.4vh;color:var(--text,#fff)">
     <div style="display:flex;align-items:center;gap:1.6vh"><span style="font-size:3.4vh;font-weight:600;flex:1">Ana ekrandaki araç görseli</span><button class="key chip ik" id="picX" aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div id="picOpts" style="display:grid;grid-template-columns:repeat(2,1fr);gap:2vh"></div>
@@ -203,7 +203,7 @@ if (!RENDER_MODE && (!(use3D() || store('myds.3d') === '3d') || !webglOK())) fal
 else {
   try { init3D(); } catch (e) { fallback('error'); }
   // Still nothing on screen after 15 s (slow GPU / old WebView): use the photo spin.
-  if (!RENDER_MODE) setTimeout(function () { if (!window.__shown3d) fallback('slow'); }, 15000);
+  if (!RENDER_MODE) setTimeout(function () { if (!window.__shown3d) fallback('slow'); }, 45000);
 }
 
 function init3D() {
@@ -366,7 +366,7 @@ function loop(now) {
   if (stopped) return;
   if (window.__shown3d && !RENDER_MODE && lastT) {
     var fps = 1000 / Math.max(1, now - lastT);
-    if (fps < 8) { if (!slowSince) slowSince = now; else if (now - slowSince > 4000) { fallback('fps'); return; } } else slowSince = 0;
+    slowSince = 0;   // 3D stays: no switching to photos on a busy moment
   }
   lastT = now;
   if (now - lastR < 32) { requestAnimationFrame(loop); return; }   // 30 fps cap
@@ -396,10 +396,10 @@ window.__render = function (az, el, d, w, h) {
 function startSprites() {
   // Studio photos: 8 angles + top, crossfading. Swipe = next/previous angle; the round arrow walks round slowly.
   var stage = $('stage'), box = document.createElement('div');
-  box.style.cssText = 'position:absolute;inset:0;touch-action:none';
+  box.style.cssText = 'position:absolute;top:0;right:0;bottom:0;left:0;touch-action:none';
   stage.insertBefore(box, $('load'));
   var cp = carPhoto(box);
-  [].forEach.call(box.children, function (im) { im.style.cssText += ';position:absolute;inset:0;width:100%;height:100%;object-fit:contain'; });
+  [].forEach.call(box.children, function (im) { im.style.cssText += ';position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;object-fit:contain'; });
   $('load').style.display = 'none';
   var cr = document.createElement('div');
   cr.style.cssText = 'position:absolute;right:2vh;bottom:11vh;font-size:1.4vh;opacity:.45;pointer-events:none';
