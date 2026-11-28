@@ -32,37 +32,58 @@ public final class TwSniff {
         return o.getClass().getSimpleName() + ":" + o;
     }
 
+    /** Lets this process see the vendor's hidden framework API (Android 10: meta-reflection on VMRuntime). */
+    static String exempt() {
+        try {
+            java.lang.reflect.Method forName = Class.class.getDeclaredMethod("forName", String.class);
+            java.lang.reflect.Method gdm = Class.class.getDeclaredMethod("getDeclaredMethod", String.class, Class[].class);
+            Class<?> vm = (Class<?>) forName.invoke(null, "dalvik.system.VMRuntime");
+            java.lang.reflect.Method rt = (java.lang.reflect.Method) gdm.invoke(vm, "getRuntime", null);
+            java.lang.reflect.Method ex = (java.lang.reflect.Method) gdm.invoke(vm, "setHiddenApiExemptions", new Object[]{new Class[]{String[].class}});
+            ex.invoke(rt.invoke(null), new Object[]{new String[]{"L"}});
+            return "gizli API açık";
+        } catch (Throwable t) { return "gizli API: " + (t.getCause() != null ? t.getCause() : t); }
+    }
+
+    /** Default: the channels the TS10 car app itself reads (canbox frames, car setup, reverse, power, engine, battery). */
+    static final String DEFAULT = "0x501,0x10B,0x20B,0x9F1C,0x202,0x50B,0x50C";
+
     public static synchronized String start(String spec) {
         if (tw != null) return "zaten açık · " + status;
-        int from = 0x0100, to = 0x011F;
-        try { if (spec.contains("-")) { String[] p = spec.split("-"); from = Integer.decode(p[0].trim()); to = Integer.decode(p[1].trim()); } } catch (Throwable ignored) { }
-        if (to - from > 63) return "en fazla 64 kanal (çökme riski)";
-        short[] ids = new short[to - from + 1];
-        for (int k = 0; k < ids.length; k++) ids[k] = (short) (from + k);
+        if (spec == null || spec.trim().length() == 0 || spec.equals("null")) spec = DEFAULT;
+        String[] parts = spec.split(",");
+        if (parts.length > 64) return "en fazla 64 kanal";
+        short[] ids = new short[parts.length];
+        for (int k = 0; k < parts.length; k++) ids[k] = (short) (int) Integer.decode(parts[k].trim());
+        String ex = exempt();
         try {
             Class<?> k = Class.forName("android.tw.john.TWUtil");
             Object o = k.getConstructor().newInstance();
             int rc = (Integer) k.getMethod("open", short[].class).invoke(o, (Object) ids);
+            if (rc != 0) { status = ex + " · open rc=" + rc + " (izin yok)"; return status; }
+            k.getMethod("start").invoke(o);
             ht = new HandlerThread("twsniff"); ht.start();
             Handler h = new Handler(ht.getLooper()) {
                 @Override public void handleMessage(Message m) {
-                    String v = String.format(Locale.ROOT, "%d %d %s", m.arg1, m.arg2, fmt(m.obj));
-                    String line = String.format(Locale.ROOT, "%6.2f %04X %s", (System.currentTimeMillis() - t0) / 1000.0, m.what & 0xFFFF, v);
-                    synchronized (log) {
-                        log.addLast(line); while (log.size() > 1500) log.removeFirst();
-                        String[] kv = kinds.get(m.what);
-                        if (kv == null) kinds.put(m.what, new String[]{"1", v, "1"});
-                        else { kv[0] = String.valueOf(Integer.parseInt(kv[0]) + 1); if (!kv[1].equals(v)) kv[2] = String.valueOf(Integer.parseInt(kv[2]) + 1); kv[1] = v; }
-                    }
+                    try {
+                        String v = String.format(Locale.ROOT, "%d %d %s", m.arg1, m.arg2, fmt(m.obj));
+                        String line = String.format(Locale.ROOT, "%6.2f %04X %s", (System.currentTimeMillis() - t0) / 1000.0, m.what & 0xFFFF, v);
+                        int key = (m.what & 0xFFFF) == 0x501 ? (0x501 << 16) | (m.arg1 & 0xFFFF) : (m.what & 0xFFFF);
+                        synchronized (log) {
+                            log.addLast(line); while (log.size() > 3000) log.removeFirst();
+                            String[] kv = kinds.get(key);
+                            if (kv == null) kinds.put(key, new String[]{"1", v, "1"});
+                            else { kv[0] = String.valueOf(Integer.parseInt(kv[0]) + 1); if (!kv[1].equals(v)) kv[2] = String.valueOf(Integer.parseInt(kv[2]) + 1); kv[1] = v; }
+                        }
+                    } catch (Throwable ignored) { }
                 }
             };
             k.getMethod("addHandler", String.class, Handler.class).invoke(o, "myds", h);
-            k.getMethod("start").invoke(o);
             tw = o; t0 = System.currentTimeMillis();
-            status = String.format(Locale.ROOT, "açık rc=%d id %04X-%04X", rc, from, to);
+            status = ex + " · açık " + spec;
         } catch (Throwable t) {
             Throwable c = t.getCause() != null ? t.getCause() : t;
-            status = "hata " + c;
+            status = ex + " · hata " + c;
         }
         return status;
     }
@@ -93,7 +114,8 @@ public final class TwSniff {
         StringBuilder b = new StringBuilder(status).append('\n');
         synchronized (log) {
             for (java.util.Map.Entry<Integer, String[]> e : kinds.entrySet())
-                b.append(String.format(Locale.ROOT, "%04X ×%s değişim %s  %s%n", e.getKey() & 0xFFFF, e.getValue()[0], e.getValue()[2], e.getValue()[1]));
+                b.append(e.getKey() > 0xFFFF ? String.format(Locale.ROOT, "0501/%d", e.getKey() & 0xFFFF) : String.format(Locale.ROOT, "%04X", e.getKey()))
+                 .append(String.format(Locale.ROOT, " ×%s değişim %s  %s%n", e.getValue()[0], e.getValue()[2], e.getValue()[1]));
         }
         return b.toString();
     }
