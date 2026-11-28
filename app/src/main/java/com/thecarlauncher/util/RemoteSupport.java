@@ -382,7 +382,13 @@ public final class RemoteSupport {
     static String classDump(String name) {
         StringBuilder b = new StringBuilder();
         try {
-            Class<?> k = Class.forName(name);
+            Class<?> k;
+            int cut = name.indexOf(':');
+            if (cut > 0) {
+                Context pc = com.thecarlauncher.LauncherActivity.live.createPackageContext(name.substring(0, cut),
+                        Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY);
+                k = Class.forName(name.substring(cut + 1), false, pc.getClassLoader());
+            } else k = Class.forName(name);
             b.append(k).append(" extends ").append(k.getSuperclass()).append('\n');
             for (java.lang.reflect.Constructor<?> m : k.getDeclaredConstructors()) b.append("  new ").append(m).append('\n');
             for (java.lang.reflect.Method m : k.getDeclaredMethods()) b.append("  ").append(m.toString().replace("java.lang.", "")).append('\n');
