@@ -516,6 +516,8 @@ public final class RemoteSupport {
                 case "dex": return dexStrings(c, a.trim());
                 case "dinle": return listen(c, a.trim());
                 case "aidl": return aidlDump(c, a.trim());
+                case "kod": return proxyCodes(c, a.trim());
+                case "carbind": return carBind(c, a.trim());
                 case "fmtest": return fmProbe(c);
                 case "elm": { String r = com.catarapatara.Obd.raw(a.trim().toUpperCase(Locale.ROOT)); return r == null ? "yanıt yok (OBD bağlı mı?)" : r; }
                 case "motor": {
@@ -686,5 +688,78 @@ public final class RemoteSupport {
             }
         } catch (Throwable t) { b.append("hata: ").append(t); }
         return b.length() == 0 ? "(bulunamadı)" : b.toString();
+    }
+
+    /** Records what a proxy would send: transaction code + interface token, without reaching any real service. */
+    static final class Rec extends android.os.Binder {
+        final StringBuilder log = new StringBuilder();
+        @Override protected boolean onTransact(int code, android.os.Parcel d, android.os.Parcel r, int f) {
+            log.append(" code=").append(code).append(" token=").append(token(d));
+            if (r != null) { r.writeInt(0); }
+            return true;
+        }
+    }
+
+    static String token(android.os.Parcel d) {
+        try {
+            d.setDataPosition(0);
+            for (int skip = 0; skip < 4; skip++) {
+                d.setDataPosition(skip * 4);
+                int len = d.readInt();
+                if (len > 3 && len < 120) {
+                    d.setDataPosition(skip * 4);
+                    String t = d.readString();
+                    if (t != null && t.matches("[A-Za-z0-9_.$]+")) return t;
+                }
+            }
+        } catch (Throwable ignored) { }
+        return "?";
+    }
+
+    /** "kod <pkg> <proxyClass>": calls each proxy method against a recorder binder, prints method → code. */
+    static String proxyCodes(Context c, String arg) {
+        StringBuilder b = new StringBuilder();
+        try {
+            String[] p = arg.split("\\s+");
+            Context pc = c.createPackageContext(p[0], Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY);
+            Class<?> k = Class.forName(p[1], false, pc.getClassLoader());
+            java.lang.reflect.Constructor<?> ctor = k.getDeclaredConstructor(android.os.IBinder.class);
+            ctor.setAccessible(true);
+            for (java.lang.reflect.Method m : k.getDeclaredMethods()) {
+                if (m.getName().equals("asBinder") || java.lang.reflect.Modifier.isStatic(m.getModifiers())) continue;
+                Rec rec = new Rec();
+                Object px = ctor.newInstance(rec);
+                Class<?>[] ts = m.getParameterTypes();
+                Object[] args = new Object[ts.length];
+                for (int j = 0; j < ts.length; j++) {
+                    Class<?> t = ts[j];
+                    args[j] = t == int.class ? (Object) 0 : t == float.class ? (Object) 0f : t == boolean.class ? (Object) false
+                            : t == long.class ? (Object) 0L : t == double.class ? (Object) 0d : t == String.class ? "" : null;
+                }
+                try { m.setAccessible(true); m.invoke(px, args); } catch (Throwable t) { rec.log.append(" (").append(t.getClass().getSimpleName()).append(')'); }
+                b.append(m.getName()).append(java.util.Arrays.toString(ts).replace("class ", "").replace("java.lang.", "")).append(rec.log).append('\n');
+            }
+        } catch (Throwable t) { b.append("hata: ").append(t); }
+        return b.toString();
+    }
+
+    /** "carbind [action]": binds com.tw.carinfoservice and reports the binder's interface descriptor. */
+    static String carBind(Context c, String action) {
+        final String[] res = {"bağlanamadı"};
+        final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        android.content.ServiceConnection sc = new android.content.ServiceConnection() {
+            public void onServiceConnected(android.content.ComponentName n, android.os.IBinder b) {
+                try { res[0] = n.flattenToShortString() + " → " + b.getInterfaceDescriptor(); } catch (Throwable t) { res[0] = "hata " + t; }
+                done.countDown();
+            }
+            public void onServiceDisconnected(android.content.ComponentName n) { }
+        };
+        Intent i = new Intent(action.length() > 0 ? action : "com.tw.carinfoservice.CarService.Bind");
+        i.setPackage("com.tw.carinfoservice");
+        boolean ok;
+        try { ok = c.getApplicationContext().bindService(i, sc, Context.BIND_AUTO_CREATE); } catch (Throwable t) { return "bind hata: " + t; }
+        try { done.await(5, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException ignored) { }
+        try { c.getApplicationContext().unbindService(sc); } catch (Throwable ignored) { }
+        return "bind=" + ok + " " + res[0];
     }
 }
