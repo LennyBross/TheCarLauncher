@@ -592,6 +592,14 @@ public final class Obd {
                 {0x6AF, 0x68F, 0xD60E, 1, 1000000, -50, "tyreTFL"}, {0x6AF, 0x68F, 0xD60D, 1, 1000000, -50, "tyreTFR"},
                 {0x6AF, 0x68F, 0xD60C, 1, 1000000, -50, "tyreTRL"}, {0x6AF, 0x68F, 0xD60B, 1, 1000000, -50, "tyreTRR"},
         };
+        // automatic gearbox (AM6/AT6, UDS at 6A9/689 per PSA-RE): lever position shown on the cluster (P R N D…)
+        // and the gear engaged — the only way to see R and P from the OBD socket
+        private final Object[][] GEAR = {
+                {0x6A9, 0x689, 0xD500, 1, 1000000, 0, "psaLever"},
+                {0x6A9, 0x689, 0xD501, 1, 1000000, 0, "psaGear"},
+        };
+        private boolean gearGone;
+        private long gearAt;
         private final java.util.HashMap<Integer, Integer> miss = new java.util.HashMap<>();
         private long bsiAt, tyreAt;
         private int bi;
@@ -602,6 +610,13 @@ public final class Obd {
         private boolean cafOff;
 
         void poll(InputStream in, OutputStream out, long now) throws Exception {
+            if (!gearGone && now - gearAt > 1500) {
+                gearAt = now;
+                read(in, out, GEAR);
+                Integer a = miss.get(0xD500), b = miss.get(0xD501);
+                if (a != null && a >= 3 && b != null && b >= 3) gearGone = true;   // no UDS gearbox ECU here
+                return;
+            }
             if (now - bsiAt > 4000) {
                 bsiAt = now;
                 Object[][] g = new Object[3][];

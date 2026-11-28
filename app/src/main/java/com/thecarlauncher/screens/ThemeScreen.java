@@ -456,7 +456,16 @@ public class ThemeScreen extends Screen {
         // The ECU's own gear (PID A4) wins when it gives one. Standing still: the ratio says nothing, so "D" if we
         // drove a moment ago (automatic left in drive), else "–" — never a made-up "N".
         float gA4 = obh0 != null ? obh0.value("gearA4") : Float.NaN;
-        if (!Float.isNaN(gA4) && gA4 >= 1 && gA4 <= 9) { o.put("gearObd", String.valueOf((int) gA4)); lastDriveAt = System.currentTimeMillis(); }
+        // the gearbox ECU itself (lever P/R/N/D + gear engaged) beats everything
+        float lev = obh0 != null ? obh0.value("psaLever") : Float.NaN, eng = obh0 != null ? obh0.value("psaGear") : Float.NaN;
+        String[] LEV = {"P", "R", "N", "D", "4", "3", "2", "1", "P", "N", "", "", "6"};
+        if (!Float.isNaN(lev) && lev >= 0 && lev < LEV.length && !LEV[(int) lev].isEmpty()) {
+            String L = LEV[(int) lev];
+            if ("D".equals(L) && !Float.isNaN(eng) && eng >= 1 && eng <= 8) L = String.valueOf((int) eng);
+            o.put("gearObd", L); o.put("reverse", "R".equals(L));
+            if (!"P".equals(L) && !"N".equals(L)) lastDriveAt = System.currentTimeMillis();
+        }
+        else if (!Float.isNaN(gA4) && gA4 >= 1 && gA4 <= 9) { o.put("gearObd", String.valueOf((int) gA4)); lastDriveAt = System.currentTimeMillis(); }
         else if (o.has("rpm") && o.has("speed")) {
             double r = o.optDouble("rpm"), v = o.optDouble("speed");
             if (v <= 4 && r > 300) o.put("gearObd", System.currentTimeMillis() - lastDriveAt < 20 * 60000L ? "D" : "–");
