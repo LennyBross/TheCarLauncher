@@ -61,8 +61,8 @@ body.t-panel .sg,body.t-panel .tile b{font-family:'Share Tech Mono',monospace;fo
 <button class="key chip ik" id="back" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
 <div style="flex:1"></div>
 <div id="colors" style="display:flex;gap:1.11vh"></div>
-<button class="key chip" id="mode3d" style="height:7.2vh;padding:0 2.2vh;font-weight:600;letter-spacing:.12em" aria-label="Canlı 3D">3D</button>
-<button class="key chip ik" id="homePic" aria-label="Ana ekran görseli"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg></button>
+<button class="key chip" id="mode3d" style="display:none !important;height:7.2vh;padding:0 2.2vh;font-weight:600;letter-spacing:.12em" aria-label="Canlı 3D">3D</button>
+<button class="key chip ik" id="homePic" style="display:none !important" aria-label="Ana ekran görseli"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg></button>
 <button class="key chip ik on" id="spin" aria-label="360° dönüş"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button>
 </div>
 <div id="views"></div>
@@ -104,7 +104,7 @@ body.t-panel .sg,body.t-panel .tile b{font-family:'Share Tech Mono',monospace;fo
 <script src="common.js"></script>
 <script>
 // Live 3D on strong units / when switched on; studio photos otherwise (or for the offline photo render).
-if (use3D() || store('myds.3d') === '3d' || location.hash === '#render')
+if (true)
   document.write('<script src="3d/three.min.js"><\/script><script src="3d/OrbitControls.js"><\/script><script src="3d/GLTFLoader.js"><\/script><script src="3d/RoomEnvironment.js"><\/script>');
 </script>
 <script>
@@ -195,11 +195,11 @@ function fallback(why) {
   startSprites();
 }
 (function () {
-  var live = use3D() || store('myds.3d') === '3d', b = $('mode3d');
+  var live = true, b = $('mode3d'); store('myds.3d', '3d');
   b.classList.toggle('on', live);
   b.onclick = function () { store('myds.3d', live ? 'photo' : '3d'); location.reload(); };
 })();
-if (!RENDER_MODE && (!(use3D() || store('myds.3d') === '3d') || !webglOK())) fallback('nogl');
+if (!RENDER_MODE && !webglOK()) fallback('nogl');
 else {
   try { init3D(); } catch (e) { fallback('error'); }
   // Still nothing on screen after 15 s (slow GPU / old WebView): use the photo spin.
