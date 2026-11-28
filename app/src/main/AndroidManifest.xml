@@ -140,6 +140,7 @@
         </activity>
 
         <!-- keeps the launcher process alive behind Android Auto / music (see util/KeepAlive) -->
+        <service android:name=".util.TwSniffService" android:process=":twsniff" android:exported="false" />
         <service
             android:name=".util.KeepAlive"
             android:exported="false"
