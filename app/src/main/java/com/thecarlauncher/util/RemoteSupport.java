@@ -507,6 +507,8 @@ public final class RemoteSupport {
                 case "sh": return sh(a, 25000);
                 case "obdiz": return com.catarapatara.Obd.trace();
                 case "sinif": return classDump(a.trim());
+                case "dex": return dexStrings(c, a.trim());
+                case "dinle": return listen(c, a.trim());
                 case "fmtest": return fmProbe(c);
                 case "elm": { String r = com.catarapatara.Obd.raw(a.trim().toUpperCase(Locale.ROOT)); return r == null ? "yanıt yok (OBD bağlı mı?)" : r; }
                 case "motor": {
@@ -589,5 +591,60 @@ public final class RemoteSupport {
             p.destroy();
             return sb.length() == 0 ? "(çıktı yok)" : sb.toString();
         }
+    }
+
+    /** "dex <pkg> [regex]": printable strings from an installed app's dex files (read-only). */
+    static String dexStrings(Context c, String arg) {
+        String[] p = arg.split("\\s+", 2);
+        java.util.regex.Pattern re = java.util.regex.Pattern.compile(p.length > 1 ? p[1] : "(?i)(action|content://|range|mileage|fuel|oil|door|carinfo|broadcast)");
+        java.util.TreeSet<String> out = new java.util.TreeSet<>();
+        try {
+            String apk = c.getPackageManager().getApplicationInfo(p[0], 0).sourceDir;
+            try (java.util.zip.ZipFile z = new java.util.zip.ZipFile(apk)) {
+                java.util.Enumeration<? extends java.util.zip.ZipEntry> en = z.entries();
+                while (en.hasMoreElements()) {
+                    java.util.zip.ZipEntry e = en.nextElement();
+                    if (!e.getName().matches("classes\\d*\\.dex")) continue;
+                    java.io.InputStream in = new java.io.BufferedInputStream(z.getInputStream(e));
+                    StringBuilder b = new StringBuilder(); int ch;
+                    while ((ch = in.read()) != -1) {
+                        if (ch >= 32 && ch < 127) { b.append((char) ch); continue; }
+                        if (b.length() >= 5 && b.length() < 200) { String t = b.toString(); if (re.matcher(t).find()) out.add(t); }
+                        b.setLength(0);
+                        if (out.size() > 400) break;
+                    }
+                    in.close();
+                }
+            }
+        } catch (Throwable t) { return "hata: " + t; }
+        StringBuilder r = new StringBuilder(out.size() + " satır\n");
+        for (String t : out) r.append(t).append('\n');
+        return r.toString();
+    }
+
+    /** "dinle act1,act2 [saniye]": listens to the given broadcasts (max 20 s) and dumps their extras. */
+    static String listen(Context c, String arg) {
+        String[] p = arg.split("\\s+");
+        int sec = p.length > 1 ? Math.min(20, Math.max(1, Integer.parseInt(p[1]))) : 8;
+        final StringBuilder r = new StringBuilder();
+        android.content.IntentFilter f = new android.content.IntentFilter();
+        for (String a : p[0].split(",")) if (a.length() > 0) f.addAction(a);
+        android.content.BroadcastReceiver br = new android.content.BroadcastReceiver() {
+            public void onReceive(Context x, android.content.Intent i) {
+                synchronized (r) {
+                    if (r.length() > 20000) return;
+                    r.append(i.getAction());
+                    android.os.Bundle b = i.getExtras();
+                    if (b != null) for (String k : b.keySet()) r.append(' ').append(k).append('=').append(b.get(k));
+                    r.append('\n');
+                }
+            }
+        };
+        android.os.HandlerThread ht = new android.os.HandlerThread("dinle"); ht.start();
+        c.getApplicationContext().registerReceiver(br, f, null, new android.os.Handler(ht.getLooper()));
+        try { Thread.sleep(sec * 1000L); } catch (InterruptedException ignored) { }
+        try { c.getApplicationContext().unregisterReceiver(br); } catch (Throwable ignored) { }
+        ht.quitSafely();
+        synchronized (r) { return r.length() == 0 ? "(yayın yok)" : r.toString(); }
     }
 }
